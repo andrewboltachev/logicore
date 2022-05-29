@@ -14,6 +14,8 @@ process.on('unhandledRejection', err => {
 // Ensure environment variables are read.
 require('../config/env');
 
+
+const rimraf = require('rimraf');
 const path = require('path');
 const chalk = require('react-dev-utils/chalk');
 const fs = require('fs-extra');
@@ -26,6 +28,7 @@ const formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
 const printHostingInstructions = require('react-dev-utils/printHostingInstructions');
 const FileSizeReporter = require('react-dev-utils/FileSizeReporter');
 const printBuildError = require('react-dev-utils/printBuildError');
+const mkdirp = require('mkdirp');
 
 const measureFileSizesBeforeBuild =
   FileSizeReporter.measureFileSizesBeforeBuild;
@@ -123,7 +126,39 @@ checkBrowsers(paths.appPath, isInteractive)
         process.exit(1);
       }
     }
-  )
+  ).then(function () {
+    const filename = __dirname + '/../build/asset-manifest.json';
+    const chunks = {};
+    JSON.parse(fs.readFileSync(filename)).entrypoints.map(e => {
+      let ext = e.split('.');
+      ext = ext[ext.length - 1];
+      if (!chunks[ext]) chunks[ext] = [];
+      chunks[ext].push(e.replace('static/', '/static/react/'));
+    });
+		const appBase = __dirname + '/../../main/';
+    const templates = {
+      css: url => `<link rel="stylesheet" type="text/css" href="${url}" />`,
+      js: url => `<script type="text/javascript" src="${url}"></script>`,
+    }
+    for (let [k, v] of Object.entries(templates)) {
+      const html = chunks[k]?.map(v).join('');
+      const fileDir = `${appBase}templates/react/`;
+      mkdirp.sync(fileDir);
+      fs.writeFileSync(`${fileDir}bundle_${k}.html`, html);
+    }
+    const srcDir = __dirname + '/../build/static/';
+    const destDir = appBase + 'static/react/';
+
+    console.log(`will remove dir ${destDir}`);
+    rimraf.sync(destDir);
+    fs.copySync(srcDir, destDir, { overwrite: true }, function (err) {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log(chalk.green("copy assets to build: success!"));
+      }
+    });
+  })
   .catch(err => {
     if (err && err.message) {
       console.log(err.message);

@@ -15,7 +15,7 @@ import moment from "moment";
 
 import {
   BrowserRouter as Router,
-  Switch as Routes,
+  Routes,
   Route,
   Link,
   useLocation,
@@ -69,10 +69,36 @@ const wrapperComponents = {
   MainWrapper,
 };
 
+const result_worth_processing = ({ result, loc, navigate }) => {
+  if (result?.notification) {
+    NotificationManager[result.notification.type]("", result.notification.text);
+  }
+  if (result?.redirect) {
+    window.location.href = result.redirect;
+    return false;
+  }
+  if (result?.navigate) {
+    navigate(result.navigate);
+    return false;
+  }
+  return true;
+};
+
+const gatherFileUids = (data) => {
+  if (Array.isArray(data)) return data.reduce((a, b) => ({...a, ...gatherFileUids(b)}), null);
+  if (data && typeof data === 'object') {
+    if (data.its_uid_for_file_to_upload_239r8h239rh239r) {
+      const uid = data.its_uid_for_file_to_upload_239r8h239rh239r;
+      return {[uid]: window[uid].file};
+    }
+    return Object.entries(data).reduce((a, [_, b]) => ({...a, ...gatherFileUids(b)}), null);
+  }
+};
+
 const BaseLayout = () => {
   const loc = useLocation();
   const navigate = useNavigate();
-  const apiUrl = "/api2" + loc.pathname + loc.search;
+  const apiUrl = "/api" + loc.pathname + loc.search;
   const [result, loading, _] = useApi(apiUrl, loc.key);
   const [show, setShow] = useState(false);
 
@@ -142,9 +168,7 @@ function App() {
     <>
       <Router>
         <Routes>
-          <Route>
-            <BaseLayout />
-          </Route>
+          <Route path="*" element={<BaseLayout />} />
         </Routes>
       </Router>
       <NotificationContainer enterTimeout={10} leaveTimeout={10} />

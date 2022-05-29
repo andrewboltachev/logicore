@@ -128,14 +128,13 @@ class ApiView(View):
                 "last_name": self.request.user.last_name,
                 "email": self.request.user.email,
             }
-        else:
-            data = {
-                "title": self.title,
-                "wrapper": self.WRAPPER,
-                "template": self.TEMPLATE,
-                "user": user,
-            }
-            data.update(self.get_data(request, *args, **kwargs))
+        data = {
+            "title": self.title,
+            "wrapper": self.WRAPPER,
+            "template": self.TEMPLATE,
+            "user": user,
+        }
+        data.update(self.get_data(request, *args, **kwargs))
         return JsonResponse(data, safe=False)
 
     def should_login(self):
@@ -269,4 +268,16 @@ class Error404ApiView(MainView):
     TEMPLATE = "PageNotFound"
 
     def get_data(self, request, *args, **kwargs):
+        return {}
+
+
+class HomeApiView(MainView):
+    in_menu = False
+    url_path = "/"
+    title = "Hello world"
+    TEMPLATE = "HomePage"
+
+    def get_data(self, request, *args, **kwargs):
+        now_dt = now()
+        now_date = now_dt.date()
         return {}
