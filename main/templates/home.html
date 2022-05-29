@@ -1,0 +1,26 @@
+{% load static react_tags %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="/static/fontawesome-free-5.15.4-web/css/all.min.css" rel="stylesheet">
+
+    <title>Project</title>
+		{% if not FRONTEND_DEV_MODE %}
+			{% include "react/bundle_css.html" %}
+		{% endif %}
+  </head>
+  <body>
+    {% csrf_token %}
+    <div id="root"></div>
+
+  {% if FRONTEND_DEV_MODE %}
+    {% include_react %}
+  {% else %}
+    {% include "react/bundle_js.html" %}
+  {% endif %}
+  </body>
+</html>
