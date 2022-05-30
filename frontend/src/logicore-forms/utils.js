@@ -1,4 +1,12 @@
 import React, { useState, useEffect } from "react";
+import update, { extend } from "immutability-helper";
+
+extend("$auto", function (value, object) {
+  return object ? update(object, value) : update({}, value);
+});
+extend("$autoArray", function (value, object) {
+  return object ? update(object, value) : update([], value);
+});
 
 export const move = function(existing, element, delta) {
   const array = [];
@@ -170,3 +178,18 @@ export function pathToUpdate (path, value) {
   p[vv_key][ee] = value;
   return r;
 };
+
+export function getByPath(struct, path) {
+  let v = struct;
+  for (const e of path) {
+    const d = typeof e === "number" ? [] : {};
+    v = (v || d)[e];
+  }
+  return v;
+}
+
+export function setByPath(struct, path, value) {
+  return update(value, pathToUpdate(path, {$set: value}));
+}
+
+export { update };

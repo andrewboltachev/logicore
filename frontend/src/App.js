@@ -48,12 +48,36 @@ import {
   FormWithValidation,
 } from "./logicore-forms";
 
-const HomePage = () => {
-  return "hello world";
+const ListView = ({create_form, items}) => {
+  return <div className="container">
+    <div className="d-flex align-items-center justify-content-between">
+      <h1>Stratagems</h1>
+      <FormWithValidation
+        fields={create_form.fields}
+        value={create_form.data}
+        onChange={_ => _}
+      />
+    </div>
+    <table className="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items?.map((item) => (<tr>
+          <td><Link to={`/${item.id}`}>{item.name}</Link></td>
+        </tr>))}
+        {!items?.length && <tr>
+          <td><em>No items</em></td>
+        </tr>}
+      </tbody>
+    </table>
+  </div>;
 }
 
 const mainComponents = {
-  HomePage,
+  ListView,
 };
 
 const MainWrapper = ({ result, onChange }) => {

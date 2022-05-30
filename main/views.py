@@ -275,9 +275,20 @@ class HomeApiView(MainView):
     in_menu = False
     url_path = "/"
     title = "Hello world"
-    TEMPLATE = "HomePage"
+    TEMPLATE = "ListView"
 
     def get_data(self, request, *args, **kwargs):
         now_dt = now()
         now_date = now_dt.date()
-        return {}
+        return {
+            'items': list(
+                models.Stratagem.objects.values('id', 'name', 'created_dt', 'modified_dt')
+            ),
+            'create_form': read_fields({
+                "type": "Fields",
+                "fields": [
+                    {"from_field": "name"},
+                ],
+                #"layout": "ModalLayout"
+            }, models.Stratagem())
+        }

@@ -18,21 +18,17 @@ import {
   capitalize,
   partition2,
   orderBy,
+  pathToUpdate,
+  zipArrays,
 } from "./utils";
 
-
-extend("$auto", function (value, object) {
-  return object ? update(object, value) : update({}, value);
-});
-extend("$autoArray", function (value, object) {
-  return object ? update(object, value) : update([], value);
-});
-
-let validateDefinition, definitionIsInvalid;
+export let validateDefinition, definitionIsInvalid;
 
 // Main extension point
 
 export let formComponents, FormComponent;
+
+export let fieldsLayouts = {};
 
 export let interceptors = {};
 
@@ -104,7 +100,7 @@ const Fields = (fieldsProps) => {
   });
   return (
     <Layout
-      {...{ definition, value, onChange, error, onReset, path, context }}
+      {...{ definition, value, onChange, error, path, context }}
       renderedFields={renderedFields}
     />
   );
@@ -138,7 +134,6 @@ const DefinedField = ({
   error,
   definition,
   context,
-  onReset,
   path,
   current,
 }) => {
@@ -150,17 +145,12 @@ const DefinedField = ({
   }
   // TODO
   let newCurrent = definition.current;
-  if (definition.has_fields_included_and_required) {
-    //console.log('!!!', applyIncludedAndRequired(newCurrent, definition.fields_included_and_required));
-    newCurrent = applyIncludedAndRequired(newCurrent, definition.fields_included_and_required || {}, definition.required_by_default);
-  }
   return (<>
-    <FieldLabel definition={definition} context={context} />
     {definition.label && <><hr style={{ marginBottom: "1em" }}/></>}
     <FormComponent
       context={{...context, ...definition.context}}
       value={value}
-      onChange={x => {onChange(x); onReset(path);}}
+      onChange={x => {onChange(path, x); }}
       onReset={_ => {}}
       path={[]}
       error={(error && typeof error === 'object') ? error : null}
@@ -382,8 +372,8 @@ definitionIsInvalid = (definition, error, state, parentState) => {
 const DefaultSubmitButtonWidget = _ => <button type="submit">Submit</button>;
 
 // Form with validation
-const FormWithValidation = (props) => {
-  const { value, onChange, externalErrors, context } = props;
+export const FormWithValidation = (props) => {
+  const { fields, value, onChange, externalErrors, context, onError } = props;
   const [state, setState] = useState(value || {});
   const [errors, setErrors] = useState(externalErrors || {});
 
