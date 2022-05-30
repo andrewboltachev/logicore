@@ -277,6 +277,15 @@ class HomeApiView(MainView):
     title = "Hello world"
     TEMPLATE = "ListView"
 
+    def get_fields(self):
+        return {
+            "type": "Fields",
+            "fields": [
+                {"from_field": "name"},
+            ],
+            "layout": "ModalLayout"
+        }
+
     def get_data(self, request, *args, **kwargs):
         now_dt = now()
         now_date = now_dt.date()
@@ -284,11 +293,40 @@ class HomeApiView(MainView):
             'items': list(
                 models.Stratagem.objects.values('id', 'name', 'created_dt', 'modified_dt')
             ),
-            'create_form': read_fields({
-                "type": "Fields",
-                "fields": [
-                    {"from_field": "name"},
-                ],
-                #"layout": "ModalLayout"
-            }, models.Stratagem())
+            'create_form': read_fields(self.get_fields(), models.Stratagem())
         }
+
+    def post(self, request, *args, **kwargs):
+        obj = write_fields(self.get_fields(), models.Stratagem(), json.loads(request.body)['data'])
+        return JsonResponse({"redirect": f"/{obj.id}"})
+
+
+class StratagemApiView(MainView):
+    in_menu = False
+    url_path = "/<int:id>"
+    title = "Hello world"
+    TEMPLATE = "GenericForm"
+
+    def get_fields(self):
+        return {
+            "type": "Fields",
+            "fields": [
+                {"from_field": "name"},
+                {"k": "data", "type": "FlowField"},
+            ],
+            #"layout": "ModalLayout"
+        }
+
+    def get_obj(self):
+        return models.Stratagem.objects.get(pk=self.kwargs["id"])
+
+    def get_data(self, request, *args, **kwargs):
+        now_dt = now()
+        now_date = now_dt.date()
+        return {
+            **read_fields(self.get_fields(), self.get_obj())
+        }
+
+    def post(self, request, *args, **kwargs):
+        obj = write_fields(self.get_fields(), self.get_obj(), json.loads(request.body)['data'])
+        return JsonResponse({"navigate": f"/{obj.id}"})

@@ -45,17 +45,112 @@ import {
   definitionIsInvalid,
   pathToUpdate,
   FormComponent,
-  FormWithValidation,
+  GenericForm,
+  formComponents,
+  FieldLabel,
 } from "./logicore-forms";
 
-const ListView = ({create_form, items}) => {
+import ReactFlow, {
+  addEdge,
+  MiniMap,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+	useReactFlow,
+} from 'react-flow-renderer';
+
+const FlowField = ({
+  value,
+  onChange,
+  error,
+  definition,
+  context,
+  onReset,
+  path,
+  disabled,
+}) => {
+  const id = "id_" + uuidv4();
+  const { label } = definition;
+  const [nodes, setNodes, onNodesChange] = useNodesState(value?.nodes || []);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(value?.edges || []);
+  const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
+  const [reactFlowInstance, setReactFlowInstance] = useState({});
+	const onInit = setReactFlowInstance;
+
+  useEffect(() => {
+    console.log('change', nodes);
+    onChange({
+      nodes: Array.from(nodes),
+      edges: Array.from(edges),
+    });
+  }, [nodes, edges]);
+
+  return (
+    <FieldLabel definition={definition} id={id} context={context}>
+			<div style={{width: "100%", height: "80vh"}}>
+				<ReactFlow
+					nodes={nodes}
+					edges={edges}
+					onNodesChange={onNodesChange}
+					onEdgesChange={onEdgesChange}
+					onConnect={onConnect}
+					onInit={onInit}
+					onPaneClick={_ => {
+            reactFlowInstance.addNodes(
+              {
+                id: 'id_' + uuidv4(),
+                type: 'input',
+                data: {
+                  label: 'Welcome to React Flow!',
+                },
+                position: { x: 250, y: 0 },
+              },
+            );
+					}}
+					fitView
+					attributionPosition="top-right"
+				>
+					<MiniMap
+						nodeStrokeColor={(n) => {
+							if (n.style?.background) return n.style.background;
+							if (n.type === 'input') return '#0041d0';
+							if (n.type === 'output') return '#ff0072';
+							if (n.type === 'default') return '#1a192b';
+
+							return '#eee';
+						}}
+						nodeColor={(n) => {
+							if (n.style?.background) return n.style.background;
+
+							return '#fff';
+						}}
+						nodeBorderRadius={2}
+					/>
+					<Controls />
+					<Background color="#aaa" gap={16} />
+				</ReactFlow>
+			</div>
+      {error && <div className="invalid-feedback d-block">{error}</div>}
+    </FieldLabel>
+  );
+};
+
+Object.assign(formComponents, {
+  FlowField,
+});
+
+const ListView = ({create_form, items, onChange}) => {
   return <div className="container">
     <div className="d-flex align-items-center justify-content-between">
       <h1>Stratagems</h1>
-      <FormWithValidation
-        fields={create_form.fields}
+      <FormComponent
+        path={[]}
+        definition={create_form.fields}
         value={create_form.data}
-        onChange={_ => _}
+        onChange={onChange}
+        onReset={_ => _}
+        error={null}
       />
     </div>
     <table className="table">
@@ -78,6 +173,7 @@ const ListView = ({create_form, items}) => {
 
 const mainComponents = {
   ListView,
+  GenericForm,
 };
 
 const MainWrapper = ({ result, onChange }) => {

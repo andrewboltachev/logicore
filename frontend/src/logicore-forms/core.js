@@ -21,6 +21,7 @@ import {
   pathToUpdate,
   zipArrays,
 } from "./utils";
+import _ from "lodash";
 
 export let validateDefinition, definitionIsInvalid;
 
@@ -50,6 +51,7 @@ const Fields = (fieldsProps) => {
     definition,
     value,
     error,
+    onReset,
     path,
     context,
     disabled
@@ -80,27 +82,43 @@ const Fields = (fieldsProps) => {
     interceptorContext = interceptor.fieldsContext({ fields: definition.fields, definition, value, context, onChange });
   }
   const renderedFields = theFields.map((child, i) => {
+    const vvalue = !!child.k ? value?.[child.k] : value;
+    const additionalProps = {};
+    let imposed_value = void 0; // TODO use undefined
+    if (child.type === 'DefinedField' && child.master_field) {
+      additionalProps.current =  child.definitions[(value[child?.master_field] || {}).value] || {type: 'Fields', fields: []}; // TODO assumption
+    } else if (child.impositions) {
+      imposed_value = child?.impositions?.[(value?.[child.master_field] || {}).value]; // TODO assumption
+    }
     return (
       <ItemWrapper key={i}>
         <FormComponent
           definition={{
             index: definition.index,
-            parentPath: path,
+            parent: definition.parent,
+            onChangeParent: definition.onChangeParent,
             ...child,
+            ...additionalProps,
           }}
-          value={value}
-          error={error}
-          onChange={onChange}
+          value={(imposed_value !== void 0) ? imposed_value : vvalue}
+          error={!!child.k ? error?.[child.k] : error}
           context={{ ...context, ...definition.context, ...child.context, ...interceptorContext }}
+          onChange={(imposed_value !== void 0) ? (_ => null) : ((v) =>
+            onChange(
+                { ...(value || {}), ...(!!child.k ? { [child.k]: v } : v) },
+                definition.constraints || []
+            ))
+          }
+          onReset={onReset}
           path={[...path, ...(!!child.k ? [child.k] : [])]}
-          disabled={disabled}
+          disabled={(imposed_value !== void 0) ? true : !!disabled}
         />
       </ItemWrapper>
     );
   });
   return (
     <Layout
-      {...{ definition, value, onChange, error, path, context }}
+      {...{ definition, value, onChange, error, onReset, path, context }}
       renderedFields={renderedFields}
     />
   );
@@ -134,6 +152,7 @@ const DefinedField = ({
   error,
   definition,
   context,
+  onReset,
   path,
   current,
 }) => {
@@ -146,17 +165,16 @@ const DefinedField = ({
   // TODO
   let newCurrent = definition.current;
   return (<>
-    {definition.label && <><hr style={{ marginBottom: "1em" }}/></>}
     <FormComponent
       context={{...context, ...definition.context}}
       value={value}
-      onChange={x => {onChange(path, x); }}
+      onChange={x => {onChange(x); onReset(path);}}
       onReset={_ => {}}
       path={[]}
       error={(error && typeof error === 'object') ? error : null}
       definition={{...newCurrent, layout: newCurrent?.layout || definition?.layout, itemWrapper: definition.itemWrapper}}
     />
-    {(error && typeof error === 'string') ? <div style={{color: 'red'}}>{error + ''}</div> : null}
+    {(error && typeof error === 'string') ? <div className="invalid-feedback d-block">{error + ''}</div> : null}
     </>
   );
 };
@@ -371,15 +389,56 @@ definitionIsInvalid = (definition, error, state, parentState) => {
 
 const DefaultSubmitButtonWidget = _ => <button type="submit">Submit</button>;
 
+const externalInterceptors = {
+};
+
+
+const interceptStateChange = _.debounce(({ oldState, newState, externalContext, setExternalContext, externalInterceptor, setState, serverContext }) => {
+  //console.log('check');
+  const intcpt = externalInterceptors[externalInterceptor];
+  if (intcpt) {
+    const newExternalContext = intcpt.getExternalContext({ state: newState, serverContext });
+    setExternalContext(newExternalContext);
+    if (JSON.stringify(externalContext) !== JSON.stringify()) {
+      setState(state => intcpt.updateState({ state: newState, context: newExternalContext }));
+    }
+  }
+}, 100, { leading: true, trailing: true });
+
+const GenericFormContext = React.createContext({});
+
+const addOptionById = (node, id, option) => {
+  const result = {...node};
+  if (node.fields?.length) {
+    result.fields = node.fields.map(field => addOptionById(field, id, option))
+  } else if (node?.id === id) {
+    result.options.push(option); // TODO optgroup
+  }
+  return result;
+};
+
+const DefaultContainer = ({ children }) => <div>{children}</div>;
+
 // Form with validation
-export const FormWithValidation = (props) => {
-  const { fields, value, onChange, externalErrors, context, onError } = props;
-  const [state, setState] = useState(value || {});
-  const [errors, setErrors] = useState(externalErrors || {});
+export const GenericForm = (props) => {
+  const { serverErrors, data, onChange, externalInterceptor, serverContext } = props;
+  const [fields, setFields] = useState(props.fields);
 
-  let SubmitButtonWidget = DefaultSubmitButtonWidget;
+  const [state, setState] = useState(data || {});
+  const [externalContext, setExternalContext] = useState({});
+  window.state = state; /// XXX hack
+  const [errors, setErrors1] = useState(serverErrors || {});
+  const [formWideError, setFormWideError] = useState(null);
+  const setErrors = (es, e) => {
+    setErrors1(es);
+    setFormWideError(e);
+  };
+  const onReset = (path) => {
+    setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
+  };
+  const SubmitContainerWrapper = React.Fragment;
+  let SubmitButtonWidget = null;
   if (props.submitButtonWidget) SubmitButtonWidget = submitButtonWidgets[props.submitButtonWidget];
-
   const onSubmit = (onChange) => {
     const errors = validateDefinition(fields, state);
     setErrors(errors, null);
@@ -387,11 +446,49 @@ export const FormWithValidation = (props) => {
       // ok
       onChange(state, setErrors);
     } else {
-      onError && onError(errors);
+      /*NotificationManager.error(
+        "Please fix the errors below",
+        "Error"
+      );
+      setTimeout(() => {
+        try {
+          document
+            .getElementsByClassName("invalid-feedback d-block")[0]
+            .parentNode.scrollIntoViewIfNeeded();
+        } catch (e) {
+          console.warn(e);
+        }
+      }, 50);*/
     }
   };
+  let ControlsClass = _ => null;
+  const Container = DefaultContainer;
+
+  //useEffect(() => {
+  //  console.log('state changed', state);
+  //}, [state]);
+
+
+  const interceptSetState = (newState) => {
+    setState(newState);
+    interceptStateChange({ oldState: state, newState, externalContext, setExternalContext, externalInterceptor, setState, serverContext });
+  };
+
+  useEffect(() => {
+    interceptStateChange({ oldState: null, newState: state, externalContext, setExternalContext, externalInterceptor, setState, serverContext });
+  }, []);
   
-  return (<form
+  return (<GenericFormContext.Provider value={{
+    onChange,
+    addOptionById: (id, option) => {
+      setFields(addOptionById(fields, id, option))
+    },
+  }}>
+  <Container
+    title={props.title}
+    controls={<ControlsClass {...props} />}
+    contentOutside={props.boxLayoutContentOutside}>
+    <form
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
@@ -399,25 +496,35 @@ export const FormWithValidation = (props) => {
         return false;
       }}
     >
+    {formWideError && <div className="form-row normal-spacing"><div className="field-container">
+      <div style={
+        {border: '1px solid #E55934', borderRadius: 3, padding: 8, color: '#E55934', fontWeight: 'bold'}
+      }>{formWideError}</div>
+    </div></div>}
       <FormComponent
         definition={fields}
         value={state}
-        onChange={(path, newState) => {
-          setState(update(state, pathToUpdate(path, { $set: newState } )));
-          setErrors(update(errors, pathToUpdate(path, { $set: null })));
-        }}
+        onChange={interceptSetState}
         error={errors}
+        onReset={onReset}
         path={[]}
-        context={context}
+        context={externalContext}
       />
-      <SubmitButtonWidget
+      {!props.noStandardSubmitButton && !props.submitButtonWidget && <SubmitContainerWrapper>
+        <div className="submit-button-container">
+          <button disabled={false} className="btn btn-green" type="submit">
+            <i className="fas fa-arrow-circle-right" /> {props?.formAction || 'Save'}
+          </button>
+        </div>
+        </SubmitContainerWrapper>}
+      {SubmitButtonWidget  && <SubmitButtonWidget
         {...props}
         value={state}
         onChange={setState}
         onChangeTop={onChange}
         onSubmit={onSubmit}
-        context={context}
-      />
+      />}
     </form>
-  );
+  </Container>
+  </GenericFormContext.Provider>);
 };

@@ -25,7 +25,7 @@ import {
   validateDefinition,
   definitionIsInvalid,
   FormComponent,
-  FormWithValidation,
+  GenericForm,
   formValidators,
   fieldsLayouts,
 } from "./core";
@@ -120,6 +120,7 @@ const TextField = ({
   error,
   definition,
   context,
+  onReset,
   path,
   disabled,
 }) => {
@@ -131,9 +132,10 @@ const TextField = ({
         id={id}
         type={definition.subtype || "text"}
         className={classd`form-control ${{ "is-invalid": error }}`}
-        value={getByPath(value, path) || ""}
+        value={value || ""}
         onChange={(e) => {
-          onChange(path, e.target.value);
+          onChange(e.target.value);
+          onReset(path);
         }}
         placeholder={definition.placeholder || ''}
         style={context.style}
@@ -224,7 +226,7 @@ const NumberField = ({
 const ModalLayoutWrapper = ({ children }) => <div className="field-container">{children}</div>;
 
 const ModalLayout = (props) => {
-  const { value, onChange, definition, error, context } = props;
+  const { value, onChange, definition, error, context, onReset, path } = props;
   /* this is Fields, but renderedFields are thrown away */
 	const [show, setShow] = useState(false);
 	const [state, setState] = useState(value);
@@ -234,14 +236,17 @@ const ModalLayout = (props) => {
     setState(value);
     setErrors(null);
   }, [show]);
+  const onReset1 = (path) => {
+    setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
+  };
 	const handleClose = _ => setShow(false);
   const handleSubmit = () => {
     const error = validateDefinition(definition, state);
     setErrors(error);
     if (!definitionIsInvalid(definition, error, state)) {
       // ok
-      console.log('popup will change you', state);
       onChange(state);
+      onReset(path);
       handleClose();
     } else {
       /*NotificationManager.error(
@@ -281,6 +286,7 @@ const ModalLayout = (props) => {
           value={state}
           onChange={setState}
           error={errors}
+          onReset={onReset1}
           path={[]}
           context={{
             ...context,
@@ -311,5 +317,7 @@ export {
   definitionIsInvalid,
   pathToUpdate,
   FormComponent,
-  FormWithValidation,
+  formComponents,
+  GenericForm,
+  FieldLabel,
 };
