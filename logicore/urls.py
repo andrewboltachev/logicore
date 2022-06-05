@@ -14,11 +14,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import path, re_path, include
 from django.views.generic.base import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from main import views as main_views
+from main import models
+
+from rest_framework import routers, serializers, viewsets
 
 
 api_views_patterns = [
@@ -26,11 +29,26 @@ api_views_patterns = [
     for v in main_views.all_api_views()
 ]
 
+class StratagemSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = models.Stratagem
+        fields = ['id', 'data']
+
+
+class StratagemViewSet(viewsets.ModelViewSet):
+    queryset = models.Stratagem.objects.all()
+    serializer_class = StratagemSerializer
+
+router = routers.DefaultRouter()
+router.register(r'stratagem', StratagemViewSet)
+
+
 urlpatterns = [
     path(
         "robots.txt",
         TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
     ),
+    path('rest-api/', include(router.urls)),
     path('media-upload/', main_views.media_upload), # TODO protect?
     path('admin/', admin.site.urls),
     *api_views_patterns,
