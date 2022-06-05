@@ -20,6 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from main import views as main_views
 from main import models
+import pprint
 
 from rest_framework import routers, serializers, viewsets
 
@@ -56,6 +57,9 @@ urlpatterns = [
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + [
     re_path(r'^(?P<path>.*)$', main_views.HomeView.as_view()),
 ]
+
+pprint.pprint(router.get_urls())
+
 
 
 if settings.FRONTEND_DEV_MODE:
