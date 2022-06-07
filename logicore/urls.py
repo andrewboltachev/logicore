@@ -49,6 +49,7 @@ urlpatterns = [
         "robots.txt",
         TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
     ),
+    path('graph-layout/', main_views.GraphLayoutView.as_view()), # TODO protect?
     path('rest-api/', include(router.urls)),
     path('media-upload/', main_views.media_upload), # TODO protect?
     path('admin/', admin.site.urls),

@@ -150,8 +150,65 @@ const StringNode = memo((nodeProps) => {
   );
 });
 
+
+const Literal = memo((nodeProps) => {
+  const { data, isConnectable, id } = nodeProps;
+  return (
+    <>
+      <Handle
+        type="target"
+        position="left"
+        style={{ background: '#555' }}
+        onConnect={(params) => console.log('handle onConnect', params)}
+        isConnectable={isConnectable}
+      />
+      {data?.value}
+      <Handle
+        type="source"
+        position="right"
+        id="a"
+        style={{ top: 10, background: '#555' }}
+        isConnectable={isConnectable}
+      />
+    </>
+  );
+});
+
+const HEAD_SYMBOLS = {
+  'Map': '{}',
+  'MapEntry': '-{}',
+  'Set': '#{}',
+  'List': '()',
+  'Vector': '[]',
+};
+
+const Head = memo((nodeProps) => {
+  const { data, isConnectable, id } = nodeProps;
+  return (
+    <>
+      <Handle
+        type="target"
+        position="left"
+        style={{ background: '#555' }}
+        onConnect={(params) => console.log('handle onConnect', params)}
+        isConnectable={isConnectable}
+      />
+      <Handle
+        type="source"
+        position="right"
+        id="a"
+        style={{ top: 10, background: '#555' }}
+        isConnectable={isConnectable}
+      />
+    {HEAD_SYMBOLS[data?.subtype] || '?'}
+    </>
+  );
+});
+
 const nodeTypes = {
   StringNode,
+  Literal,
+  Head,
 };
 
 const FlowField = ({

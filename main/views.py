@@ -4,6 +4,9 @@ import uuid
 from itertools import groupby
 from collections import defaultdict
 from decimal import Decimal
+from rest_framework.views import APIView
+from rest_framework.response import Response
+import networkx as nx
 
 from django.conf import settings
 from django.db import models as db_models
@@ -330,3 +333,23 @@ class StratagemApiView(MainView):
     def post(self, request, *args, **kwargs):
         obj = write_fields(self.get_fields(), self.get_obj(), json.loads(request.body)['data'])
         return JsonResponse({"navigate": f"/{obj.id}"})
+
+
+class GraphLayoutView(APIView):
+    def post(self, request, format=None):
+        data = request.data["data"]
+        g = nx.Graph()
+        for item in data["nodes"]:
+            g.add_node(item["id"])
+        pos = nx.nx_pydot.pydot_layout(g)
+        return Response({
+            'nodes': [{
+                **node,
+                "position": {
+                    'x': pos[node["id"]][0],
+                    'y': pos[node["id"]][1],
+                },
+                #'width': 230, 'height': '50'
+                } for node in data["nodes"]],
+            'edges': data['edges']
+        })
