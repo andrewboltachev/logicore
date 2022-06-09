@@ -338,10 +338,13 @@ class StratagemApiView(MainView):
 class GraphLayoutView(APIView):
     def post(self, request, format=None):
         data = request.data["data"]
-        g = nx.Graph()
+        g = nx.DiGraph()
         for item in data["nodes"]:
             g.add_node(item["id"])
+        for item in data["edges"]:
+            g.add_edge(item["source"], item["target"])
         pos = nx.nx_pydot.pydot_layout(g)
+        #pos = nx.spectral_layout(g, scale=200)
         return Response({
             'nodes': [{
                 **node,
