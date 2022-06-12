@@ -74,7 +74,6 @@ const FileItem = ({ file, internalSelected, setInternalSelected }) => {
 
 const DirNode = React.forwardRef(({ value, onChange, onFocus, onTab }, ref) => {
   const { files, selected } = value;
-  console.log('VALUE HERE', value);
   const [internalSelected, setInternalSelected] = useInternalValue({
     value: selected || null,
     onChange: v => onChange({ action: "select", selected: v})

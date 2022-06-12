@@ -121,31 +121,50 @@ export default function PythonRefactoring1Field({
     });
   }, [nodes, edges]);
 
-  const Modal1 = useModal({
-    definition: {
-      type: 'Fields',
-      title: 'Add file',
-      fields: [
-        {
-          k: 'foo1',
-          type: 'SelectFileField',
-        },
-      ],
-    },
+  /*const addFileModal = useModal({
+    definition: ,
     onChange: value => {
-      console.log('add file', value);
+      console.log('add file', addFileModal);
     },
-  });
+  });*/
 
   return (
     <FieldLabel definition={definition} id={id} context={context}>
-      {Modal1.element}
       <div className="btn-group">
-        <button className="btn btn-outline-secondary" type="button" onClick={Modal1.setShow}>
+        <button className="btn btn-outline-secondary" type="button">
           <i className="fa fa-file" />
           {" "}
           Add file
         </button>
+        <FormComponent
+          definition={{
+            type: 'Fields',
+            title: 'Add file',
+            fields: [
+              {
+                k: 'foo1',
+                type: 'SelectFileField',
+              },
+            ],
+            layout: 'ModalLayout',
+          }}
+          value={{}}
+          onChange={v => {
+            reactFlowInstance.addNodes(
+              {
+                id,
+                type: 'FileNode',
+                data: {
+                  value: v.foo1,
+                },
+                position: { x: 0, y: 0 },
+              },
+            );
+          }}
+          path={[]}
+          onReset={_ => _}
+          errors={null}
+         />
         <button className="btn btn-outline-secondary" type="button" onClick={syncGraph}>Sync</button>
       </div>
 			<div style={{width: "100%", height: "80vh"}}>

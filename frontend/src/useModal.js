@@ -42,6 +42,7 @@ export default function useModal (props) {
     setErrors(error);
     if (!definitionIsInvalid(definition, error, state)) {
       // ok
+      console.log('onchaaaaaaaaaaaaaange', state);
       onChange(state);
       //onReset(path);
       handleClose();
@@ -62,6 +63,7 @@ export default function useModal (props) {
     }
   };
   return {
+    state,
     setShow,
     element: (<Modal show={show} onHide={handleClose} animation={false} container={_ => document.getElementById('bootstrap-modals')} size={context?.modalSize || "lg"}>
 			<Modal.Header closeButton>
@@ -69,6 +71,7 @@ export default function useModal (props) {
 			</Modal.Header>
 			<Modal.Body>
         <div>
+        <div>{JSON.stringify(state)}</div>
         <FormComponent
           definition={{...definition, layout: void 0}}
           value={state}
