@@ -396,8 +396,15 @@ class GraphLayoutView(APIView):
 
 class GetFileView(APIView):
     def get(self, request, *args, **kwargs):
-        path = request.GET.get('path', '/')
-        return Response({'files': [{
-            'filename': filename,
+        path = request.GET.get('path')
+        files = [{
+            'filename': filename.replace(f'{path}/', ''),
             'dir': os.path.isdir(filename),
-        } for filename in glob.glob(f'{path}**')]})
+        } for filename in glob.glob(f'{path}/**')]
+        if path:
+            files.insert(0, {'filename': '..', 'dir': True})
+        return Response({
+            'path': path,
+            'files': files,
+            'selected': files[1]['filename'],
+        })

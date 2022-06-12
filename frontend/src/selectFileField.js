@@ -74,12 +74,13 @@ const FileItem = ({ file, internalSelected, setInternalSelected }) => {
 
 const DirNode = React.forwardRef(({ value, onChange, onFocus, onTab }, ref) => {
   const { files, selected } = value;
+  console.log('VALUE HERE', value);
   const [internalSelected, setInternalSelected] = useInternalValue({
     value: selected || null,
     onChange: v => onChange({ action: "select", selected: v})
   });
   useEffect(() => {
-    if (!internalSelected && selected) setInternalSelected(selected);
+    setInternalSelected(selected);
   }, [selected]);
   const keyMoves = {down: 1, up: -1};
   const current = files.map(file => file.filename).indexOf(internalSelected);
@@ -101,7 +102,7 @@ const DirNode = React.forwardRef(({ value, onChange, onFocus, onTab }, ref) => {
             e.persist();
             if (current === -1) return;
             if (keycode.isEventKey(e, "Enter")) {
-              onChange({ action: "enter", enter: internalSelected})
+              onChange({ action: "enter", enter: internalSelected, file: files[current]})
               return;
             }
             if (keycode.isEventKey(e, "Tab")) {
@@ -149,15 +150,15 @@ export default function SelectFileField({
   const { label } = definition;
   const ref = useRef(null);
 
-  const [files, setFiles] = useState([]);
+  const [val, setVal] = useState({'files': [], 'path': '', selected: null});
 
-  const getFiles = async () => {
-    const resp = await axios.get('/get-file/');
-    setFiles(resp.data.files);
+  const getFiles = async (path) => {
+    const resp = await axios.get(`/get-file/?path=${path}`);
+    setVal(resp.data);
   }
 
   useEffect(() => {
-    getFiles('/');
+    getFiles(val.path);
     setTimeout(() => {
       ref?.current.focus();
     }, 100);
@@ -168,8 +169,12 @@ export default function SelectFileField({
         <div className="d-flex flex-column" style={{maxHeight: '60vh'}}>
         <DirNode
           ref={ref}
-          value={{files, selected: files?.length ? files[0].filename : null}}
-          onChange={_ => _}
+          value={val}
+          onChange={action => {
+            if (action?.action === 'enter') {
+              getFiles(val.path + '/' + action?.enter);
+            }
+          }}
           onTab={_ => _}
           onFocus={_ => _}
         />
