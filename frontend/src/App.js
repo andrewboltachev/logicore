@@ -12,6 +12,8 @@ import {
 } from "react-notifications";
 import { alert, confirm } from "react-bootstrap-confirmation";
 import moment from "moment";
+import SelectFileField from "./selectFileField"; // register
+
 
 import {
   BrowserRouter as Router,
@@ -77,6 +79,7 @@ Object.assign(formComponents, {
   PythonRefactoring1Field,
   ClojureGraph1Field,
   FolderField,
+  SelectFileField,
 });
 
 const ListView = ({create_form, items, onChange}) => {
