@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef, memo } from "react";
 import {
+  formComponents,
+  validateDefinition,
+  definitionIsInvalid,
+  FormComponent,
+  GenericForm,
+  formValidators,
+  fieldsLayouts,
   FieldLabel,
 } from "../logicore-forms";
 import { v4 as uuidv4 } from "uuid";
@@ -14,44 +21,16 @@ import ReactFlow, {
 	useReactFlow,
 } from 'react-flow-renderer';
 
-import { Handle } from 'react-flow-renderer';
+import {
+  pathToUpdate,
+  getByPath,
+  setByPath,
+  update,
+} from "../logicore-forms/utils";
 
-const ColorSelectorNode = memo(({ data, isConnectable }) => {
-  return (
-    <>
-      <Handle
-        type="target"
-        position="left"
-        style={{ background: '#555' }}
-        onConnect={(params) => console.log('handle onConnect', params)}
-        isConnectable={isConnectable}
-      />
-      <div>
-        Custom Color Picker Node: <strong>{data.color}</strong>
-      </div>
-      <input
-        className="nodrag"
-        type="color"
-        onChange={data.onChange}
-        defaultValue={data.color}
-      />
-      <Handle
-        type="source"
-        position="right"
-        id="a"
-        style={{ top: 10, background: '#555' }}
-        isConnectable={isConnectable}
-      />
-      <Handle
-        type="source"
-        position="right"
-        id="b"
-        style={{ bottom: 10, top: 'auto', background: '#555' }}
-        isConnectable={isConnectable}
-      />
-    </>
-  );
-});
+import { Button, Modal } from "react-bootstrap";
+
+import { Handle } from 'react-flow-renderer';
 
 const changeNode = (id, newValue) => window.setNodes((nds) => nds.map(node => {
   if (node.id === id) {
@@ -67,7 +46,7 @@ const unchainNode = (id) => {
 }
 
 
-const StringNode = memo((nodeProps) => {
+const FileNode = memo((nodeProps) => {
   const { data, isConnectable, id } = nodeProps;
   return (
     <>
@@ -104,65 +83,82 @@ const StringNode = memo((nodeProps) => {
   );
 });
 
-
-const Literal = memo((nodeProps) => {
-  const { data, isConnectable, id } = nodeProps;
-  return (
-    <>
-      <Handle
-        type="target"
-        position="left"
-        style={{ background: '#555' }}
-        onConnect={(params) => console.log('handle onConnect', params)}
-        isConnectable={isConnectable}
-      />
-      {data?.value}
-      <Handle
-        type="source"
-        position="right"
-        id="a"
-        style={{ top: 10, background: '#555' }}
-        isConnectable={isConnectable}
-      />
-    </>
-  );
-});
-
-const HEAD_SYMBOLS = {
-  'Map': '{}',
-  'MapEntry': '-{}',
-  'Set': '#{}',
-  'List': '()',
-  'Vector': '[]',
+const nodeTypes = {
+  FileNode,
 };
 
-const Head = memo((nodeProps) => {
-  const { data, isConnectable, id } = nodeProps;
-  return (
-    <>
-      <Handle
-        type="target"
-        position="left"
-        style={{ background: '#555' }}
-        onConnect={(params) => console.log('handle onConnect', params)}
-        isConnectable={isConnectable}
-      />
-      <Handle
-        type="source"
-        position="right"
-        id="a"
-        style={{ top: 10, background: '#555' }}
-        isConnectable={isConnectable}
-      />
-    {HEAD_SYMBOLS[data?.subtype] || '?'}
-    </>
-  );
-});
-
-const nodeTypes = {
-  StringNode,
-  Literal,
-  Head,
+const useModal = (props) => {
+  const { value, onChange, definition, error, context, onReset, path } = props;
+  /* this is Fields, but renderedFields are thrown away */
+	const [show, setShow] = useState(false);
+	const [state, setState] = useState(value);
+	const [errors, setErrors] = useState(null);
+  useEffect(() => {
+    //console.log('reset to', value);
+    setState(value);
+    setErrors(null);
+  }, [show]);
+  const onReset1 = (path) => {
+    setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
+  };
+	const handleClose = _ => setShow(false);
+  const handleSubmit = () => {
+    const error = validateDefinition(definition, state);
+    setErrors(error);
+    if (!definitionIsInvalid(definition, error, state)) {
+      // ok
+      onChange(state);
+      //onReset(path);
+      handleClose();
+    } else {
+      /*NotificationManager.error(
+        "Please fix the errors below",
+        "Error"
+      );
+      setTimeout(() => {
+        try {
+          document
+            .getElementsByClassName("invalid-feedback d-block")[0]
+            .parentNode.scrollIntoViewIfNeeded();
+        } catch (e) {
+          console.warn(e);
+        }
+      }, 50);*/
+    }
+  };
+  return {
+    setShow,
+    element: (<Modal show={show} onHide={handleClose} animation={false} container={_ => document.getElementById('bootstrap-modals')} size={context?.modalSize || "lg"}>
+			<Modal.Header closeButton>
+				<Modal.Title>{definition.title || "Edit"}</Modal.Title>
+			</Modal.Header>
+			<Modal.Body>
+        <div>
+        <FormComponent
+          definition={{...definition, layout: void 0}}
+          value={state}
+          onChange={setState}
+          error={errors}
+          onReset={onReset1}
+          path={[]}
+          context={{
+            ...context,
+						forceLabelWidth: '100%',
+						labelPlacement: 'horizontalPlus',
+					}}
+        />
+        </div>
+      </Modal.Body>
+			<Modal.Footer>
+				<Button variant="secondary" onClick={handleClose}>
+					Close
+				</Button>
+				<Button variant="primary" onClick={handleSubmit}>
+					OK
+				</Button>
+			</Modal.Footer>
+    </Modal>),
+  };
 };
 
 export default function PythonRefactoring1Field({
@@ -184,43 +180,7 @@ export default function PythonRefactoring1Field({
   const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
   const [reactFlowInstance, setReactFlowInstance] = useState({});
 	const onInit = setReactFlowInstance;
-  const recalcGraph = () => {
-    const updates = {};
-    const dependant = {};
-    const getNodeValue = id => {
-      if (updates.hasOwnProperty(id)) {
-        return updates[id];
-      }
-      for (const node of nodes) {
-        if (node.id === id) {
-          return node.data.value;
-        }
-      }
-    }
-    const checkNode = id => {
-      const nodeValue = getNodeValue(id);
-      for (const edge of edges) {
-        if (edge.target === id) dependant[id] = true;
-        if (edge.source === id) {
-          updates[edge.target] = nodeValue;
-          checkNode(edge.target);
-        }
-      }
-    };
-    for (const node of nodes) {
-      checkNode(node.id);
-    }
-    setNodes((nds) => nds.map(node => {
-      const update = updates[node.id];
-      //if (!node.dependant !== !dependant[node.id]) {
-      console.log('d', dependant[node.id]);
-        node.data = {...node.data, dependant: dependant[node.id]};
-      //}
-      if (update) {
-        node.data = {...node.data, value: update};
-      }
-      return node;
-    }));
+  const syncGraph = () => {
   };
 
   useEffect(() => {
@@ -230,9 +190,33 @@ export default function PythonRefactoring1Field({
     });
   }, [nodes, edges]);
 
+  const Modal1 = useModal({
+    definition: {
+      type: 'Fields',
+      title: 'Add file',
+      fields: [
+        {
+          k: 'foo1',
+          type: 'TextField',
+        },
+      ],
+    },
+    onChange: value => {
+      console.log('add file', value);
+    },
+  });
+
   return (
     <FieldLabel definition={definition} id={id} context={context}>
-      <button className="btn" type="button" onClick={recalcGraph}>Sync</button>
+      {Modal1.element}
+      <div className="btn-group">
+        <button className="btn btn-outline-secondary" type="button" onClick={Modal1.setShow}>
+          <i className="fa fa-file" />
+          {" "}
+          Add file
+        </button>
+        <button className="btn btn-outline-secondary" type="button" onClick={syncGraph}>Sync</button>
+      </div>
 			<div style={{width: "100%", height: "80vh"}}>
 				<ReactFlow
 					nodes={nodes}
@@ -245,7 +229,7 @@ export default function PythonRefactoring1Field({
           onPaneClick={e => {
             e.persist();
             const id = 'id_' + uuidv4();
-            reactFlowInstance.addNodes(
+            /*reactFlowInstance.addNodes(
               {
                 id,
                 type: 'StringNode',
@@ -254,7 +238,7 @@ export default function PythonRefactoring1Field({
                 },
                 position: { x: 250, y: 0 },
               },
-            );
+            );*/
 					}}
 					fitView
 					attributionPosition="top-right"
