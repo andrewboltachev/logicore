@@ -285,6 +285,26 @@ class HomeApiView(MainView):
             "type": "Fields",
             "fields": [
                 {"from_field": "name"},
+                {"from_field": "kind"},
+                {
+                    "type": "DefinedField",
+                    "master_field": "kind",
+                    "k": "params",
+                    "definitions": {
+                        "PYTHONREFACTORING1": {
+                            "type": "Fields",
+                            "fields": [
+                                #{"from_field": "directory"},
+                                {
+                                    "k": "directory",
+                                    "type": "TextField",
+                                    "label": "Choose a directory",
+                                    "required": True,
+                                },
+                            ],
+                        },
+                    },
+                },
             ],
             "layout": "ModalLayout"
         }
@@ -314,12 +334,20 @@ class StratagemApiView(MainView):
     title = "Hello world"
     TEMPLATE = "GenericForm"
 
-    def get_fields(self):
+    def get_fields(self, kind):
+        fields = {
+            'CLOJUREGRAPH1': [
+                {"k": "data", "type": "ClojureGraph1Field"},
+            ],
+            'PYTHONREFACTORING1': [
+                {"k": "data", "type": "PythonRefactoring1Field"},
+            ],
+        }
         return {
             "type": "Fields",
             "fields": [
                 {"from_field": "name"},
-                {"k": "data", "type": "FlowField"},
+                *fields[kind],
             ],
             #"layout": "ModalLayout"
         }
@@ -330,12 +358,14 @@ class StratagemApiView(MainView):
     def get_data(self, request, *args, **kwargs):
         now_dt = now()
         now_date = now_dt.date()
+        obj = self.get_obj()
         return {
-            **read_fields(self.get_fields(), self.get_obj())
+            **read_fields(self.get_fields(obj.kind), obj)
         }
 
     def post(self, request, *args, **kwargs):
-        obj = write_fields(self.get_fields(), self.get_obj(), json.loads(request.body)['data'])
+        obj = self.get_obj()
+        obj = write_fields(self.get_fields(obj.kind), obj, json.loads(request.body)['data'])
         return JsonResponse({"navigate": f"/{obj.id}"})
 
 

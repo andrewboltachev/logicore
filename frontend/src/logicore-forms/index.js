@@ -11,6 +11,7 @@ import React, {
 import { v4 as uuidv4 } from "uuid";
 import classd from "classd";
 import { Button, Modal } from "react-bootstrap";
+import Select, { components as reactSelectComponents } from "react-select";
 import {
   moveUp,
   moveDown,
@@ -176,6 +177,10 @@ const TextareaField = ({
     </FieldLabel>
   );
 };
+TextareaField.isEmpty = (x) => !x;
+Object.assign(formComponents, {
+  TextareaField,
+});
 
 const NumberField = ({
   value,
@@ -221,7 +226,149 @@ const NumberField = ({
     </FieldLabel>
   );
 };
+NumberField.isEmpty = (x) => !x;
+Object.assign(formComponents, {
+  NumberField,
+});
 
+
+export let selectCustomStyles = {};
+
+export let selectCustomComponents = {};
+
+const removeOptions = (options, notAllowedOptions) => {
+  return options?.filter(({ value }) => {
+    return !value || !notAllowedOptions.has(value);
+  }).map(({ value, options, ...props }) => {
+    if (options) {
+      return { ...props, options: removeOptions(options, notAllowedOptions) };
+    } else {
+      return { value, ...props };
+    }
+  });
+};
+
+
+const SelectField = ({
+  value,
+  onChange,
+  error,
+  definition,
+  onReset,
+  path,
+  context,
+  disabled,
+}) => {
+  const id = "id_" + uuidv4();
+  const { label } = definition;
+  const labelStyle = {};
+  const inputStyle = {};
+  if (context.labelColor) {
+    labelStyle.style = { color: context.labelColor };
+  }
+  let options = definition.options;
+  if (context?.exhaustOptions?.[definition.k]) {
+    //console.log('kkk', context);
+    const notAllowedOptions = new Set(context?.exhaustOptions?.[definition.k]);
+    if (value) notAllowedOptions.delete(value?.value);
+    options = removeOptions(options, notAllowedOptions);
+  }
+  const applySortValue = (x) => {
+    if (definition.sort_value_by)
+      return orderBy(x, (i) => i[definition.sort_value_by]);
+    return x;
+  };
+  const additionalProps = {
+    styles: {
+      control: (provided, state) => {
+        const result = { ...provided };
+        if (error) result.borderColor = 'red';
+        return result;
+      },
+      menu: (provided, state) => {
+        const result = { ...provided };
+        result.zIndex = 2; // intlTelInput glitch
+        return result;
+      },
+    },
+  };
+  if (context.select_custom_styles) {
+    additionalProps.styles = {
+      ...additionalProps.styles,
+      ...selectCustomStyles[context.select_custom_styles],
+    };
+    additionalProps.components =
+      selectCustomComponents[context.select_custom_styles];
+  }
+
+    /*const ctx = useContext(GenericFormContext);
+
+  // create_form
+  const onSubmit = async (value) => {
+    // ok
+    //onChange(state, setErrors);
+    const result = await ctx.onChange({...value, id: definition?.id});
+    ctx.addOptionById(definition?.id, result.value);
+    onChange(result.value);
+  };*/
+  const Wrapper = /*definition?.create_form ? ({ children }) => <div style={{display: "flex", alignItems: "center"}}>
+    <div style={{flex: 1}}>
+      {children[0]}
+    </div>
+    <div style={{flex: 0, marginLeft: "0.25rem"}}>
+      {children[1]}
+    </div>
+  </div> :*/ React.Fragment;
+  return (
+    <Wrapper>
+      <FieldLabel definition={definition} id={id} context={context}>
+        <div
+          style={{
+            margin: "0.6em 0",
+            ...(context.selectWidth ? { width: context.selectWidth } : {}),
+          }}
+        >
+          <Select
+            id={id}
+            isClearable={!definition.multiple && !definition.required && !definition.nonCleanable}
+            isMulti={!!definition.multiple}
+            type="text"
+            className={classd`${{ "is-invalid": error }}`}
+            value={value || null}
+            onChange={(x) => {
+              onChange(applySortValue(x));
+              onReset(path);
+            }}
+            placeholder={definition.placeholder}
+            options={options}
+            style={inputStyle}
+            isOptionDisabled={(option) => option.disabled}
+            isDisabled={!!disabled}
+            {...additionalProps}
+          />
+        </div>
+        {error && <div className="invalid-feedback d-block">{error}</div>}
+      </FieldLabel>
+      {/*definition.create_form && <>
+        <FormComponent
+          definition={{...definition.create_form.fields, layout: "ModalLayout", inside: ({ setShow }) => (
+            <button type="button" className="el-button el-button--text" onClick={setShow}>
+              <i className="fas fa-plus-square fa-2x" />
+            </button>
+          ), title: `Create ${definition.create_form.verbose_name}`}}
+          value={definition.create_form?.data || {}}
+          onChange={onSubmit}
+          context={{}}
+          path={[]}
+        />
+      </>*/}
+    </Wrapper>
+  );
+};
+SelectField.isEmpty = (x) => !x?.value;
+Object.assign(formComponents, {
+  SelectField,
+});
 
 const ModalLayoutWrapper = ({ children }) => <div className="field-container">{children}</div>;
 

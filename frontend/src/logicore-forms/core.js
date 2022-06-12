@@ -86,7 +86,8 @@ const Fields = (fieldsProps) => {
     const additionalProps = {};
     let imposed_value = void 0; // TODO use undefined
     if (child.type === 'DefinedField' && child.master_field) {
-      additionalProps.current =  child.definitions[(value[child?.master_field] || {}).value] || {type: 'Fields', fields: []}; // TODO assumption
+      console.log('CURRENT FOR', (value?.[child?.master_field] || {}).value);
+      additionalProps.current =  child.definitions[(value?.[child?.master_field] || {}).value] || {type: 'Fields', fields: []}; // TODO assumption
     } else if (child.impositions) {
       imposed_value = child?.impositions?.[(value?.[child.master_field] || {}).value]; // TODO assumption
     }

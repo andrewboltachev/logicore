@@ -21,6 +21,7 @@ class Stratagem(models.Model):
     data = models.JSONField(default=dict)
     created_dt = models.DateTimeField(auto_now_add=True)
     modified_dt = models.DateTimeField(auto_now=True)
+    params = models.JSONField(default=dict)
 
     def __str__(self):
         return self.name
