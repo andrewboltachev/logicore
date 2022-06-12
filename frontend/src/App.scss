@@ -53,11 +53,6 @@
   flex: 1;
 }
 
-#root {
-  height: 100vh;
-  @extend .horizontal-view;
-}
-
 .perspective {
   display: flex;
   align-items: stretch;

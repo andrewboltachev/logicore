@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from "uuid";
 import classd from "classd";
 import keycode from "keycode";
 import _ from "lodash";
+import { axios } from "./imports";
 
 import {
   pathToUpdate,
@@ -65,7 +66,7 @@ const FileItem = ({ file, internalSelected, setInternalSelected }) => {
   
   >
     <div className="perspective__file-icon">
-      <i className={file.icon || 'far fa-file'} />
+      <i className={file.icon || (file.dir ? 'fa fa-folder' : 'far fa-file')} />
     </div>
     <div className="perspective__file-field">{file.filename}</div>
   </div>);
@@ -77,6 +78,9 @@ const DirNode = React.forwardRef(({ value, onChange, onFocus, onTab }, ref) => {
     value: selected || null,
     onChange: v => onChange({ action: "select", selected: v})
   });
+  useEffect(() => {
+    if (!internalSelected && selected) setInternalSelected(selected);
+  }, [selected]);
   const keyMoves = {down: 1, up: -1};
   const current = files.map(file => file.filename).indexOf(internalSelected);
 
@@ -145,7 +149,15 @@ export default function SelectFileField({
   const { label } = definition;
   const ref = useRef(null);
 
+  const [files, setFiles] = useState([]);
+
+  const getFiles = async () => {
+    const resp = await axios.get('/get-file/');
+    setFiles(resp.data.files);
+  }
+
   useEffect(() => {
+    getFiles('/');
     setTimeout(() => {
       ref?.current.focus();
     }, 100);
@@ -153,19 +165,16 @@ export default function SelectFileField({
 
   return (
     <FieldLabel definition={definition} id={id} context={context}>
-      <DirNode
-        ref={ref}
-        value={{files: [
-          {'filename': 'aaa1'},
-          {'filename': 'aaa2'},
-          {'filename': 'aaa3'},
-          {'filename': 'aaa4'},
-        ], selected: 'aaa1'}}
-        onChange={_ => _}
-        onTab={_ => _}
-        onFocus={_ => _}
-      />
-      {error && <div className="invalid-feedback d-block">{error}</div>}
+        <div className="d-flex flex-column" style={{maxHeight: '60vh'}}>
+        <DirNode
+          ref={ref}
+          value={{files, selected: files?.length ? files[0].filename : null}}
+          onChange={_ => _}
+          onTab={_ => _}
+          onFocus={_ => _}
+        />
+        </div>
+        {error && <div className="invalid-feedback d-block">{error}</div>}
     </FieldLabel>
   );
 };

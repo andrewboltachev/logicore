@@ -1,3 +1,5 @@
+import os
+import glob
 import json
 import locale
 import uuid
@@ -390,3 +392,12 @@ class GraphLayoutView(APIView):
                 } for node in data["nodes"]],
             'edges': data['edges']
         })
+
+
+class GetFileView(APIView):
+    def get(self, request, *args, **kwargs):
+        path = request.GET.get('path', '/')
+        return Response({'files': [{
+            'filename': filename,
+            'dir': os.path.isdir(filename),
+        } for filename in glob.glob(f'{path}**')]})
