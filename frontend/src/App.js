@@ -351,11 +351,23 @@ const ListView = ({create_form, items, onChange}) => {
       <thead>
         <tr>
           <th>Name</th>
+          <th>Kind</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {items?.map((item) => (<tr>
           <td><Link to={`/${item.id}`}>{item.name}</Link></td>
+          <td>{item.kind}</td>
+          <td>
+            <button
+              className="btn btn-sm btn-outline-danger"
+              type="button"
+              onClick={_ => confirm('Do you really want to delete this graph?').then(value => value && onChange({'action': 'delete', 'id': item.id}))}
+            >
+              <i className="fa fa-times" />
+            </button>
+          </td>
         </tr>))}
         {!items?.length && <tr>
           <td><em>No items</em></td>

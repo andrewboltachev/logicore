@@ -682,8 +682,6 @@ class StatusOptions:
 
     @classmethod
     def get_for(cls, value):
-        from . import models
-        print(models.TourRequestStatus.__subclasses__())
         for c in cls.__subclasses__():
             if c.get_code() == value:
                 return c

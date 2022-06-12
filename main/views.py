@@ -294,13 +294,17 @@ class HomeApiView(MainView):
         now_date = now_dt.date()
         return {
             'items': list(
-                models.Stratagem.objects.values('id', 'name', 'created_dt', 'modified_dt')
+                models.Stratagem.objects.values('id', 'name', 'kind', 'created_dt', 'modified_dt')
             ),
             'create_form': read_fields(self.get_fields(), models.Stratagem())
         }
 
     def post(self, request, *args, **kwargs):
-        obj = write_fields(self.get_fields(), models.Stratagem(), json.loads(request.body)['data'])
+        data = json.loads(request.body)['data']
+        if data.get('action') == 'delete':
+            models.Stratagem.objects.filter(id=data['id']).delete()
+            return JsonResponse({"redirect": f"/"})
+        obj = write_fields(self.get_fields(), models.Stratagem(), data)
         return JsonResponse({"redirect": f"/{obj.id}"})
 
 
