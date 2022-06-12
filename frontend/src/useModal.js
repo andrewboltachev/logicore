@@ -80,6 +80,7 @@ export default function useModal (props) {
             ...context,
 						forceLabelWidth: '100%',
 						labelPlacement: 'horizontalPlus',
+            handleSubmit,
 					}}
         />
         </div>

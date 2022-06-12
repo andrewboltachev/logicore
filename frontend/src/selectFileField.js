@@ -172,7 +172,13 @@ export default function SelectFileField({
           value={val}
           onChange={action => {
             if (action?.action === 'enter') {
-              getFiles(val.path + '/' + action?.enter);
+              if (action?.file?.dir) {
+                getFiles(val.path + '/' + action?.enter);
+              } else if (/\.py$/i.exec(action?.file?.filename)) {
+                console.log('wow python', val.path + '/' + action?.file?.filename);
+                onChange(val.path + '/' + action?.file?.filename);
+                context?.handleSubmit && context?.handleSubmit();
+              }
             }
           }}
           onTab={_ => _}
