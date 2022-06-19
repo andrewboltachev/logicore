@@ -54,7 +54,8 @@ const Fields = (fieldsProps) => {
     onReset,
     path,
     context,
-    disabled
+    disabled,
+    formValue,
   } = fieldsProps;
   function onChange(v) {
     let vv = v;
@@ -94,6 +95,7 @@ const Fields = (fieldsProps) => {
     return (
       <ItemWrapper key={i}>
         <FormComponent
+          formValue={formValue || value}
           definition={{
             index: definition.index,
             parent: definition.parent,
@@ -325,6 +327,7 @@ formComponents = {
 // Core component
 
 FormComponent = ({
+  formValue,
   definition,
   error,
   value,
@@ -339,7 +342,7 @@ FormComponent = ({
     throw new Error(`No field type ${definition.type}`);
   return (
     <Component
-      {...{ value, onChange, error, definition, context, path, onReset, disabled: disabled || definition?.disabled }}
+      {...{ formValue: formValue || value, value, onChange, error, definition, context, path, onReset, disabled: disabled || definition?.disabled }}
     />
   );
 };

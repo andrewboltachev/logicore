@@ -51,6 +51,13 @@ const unchainNode = (id) => {
 }
 
 
+const deleteNode = (id) => {
+  window.setNodes((nds) => nds.filter(node => {
+    return node.id !== id;
+  }));
+}
+
+
 const FileNode = memo((nodeProps) => {
   const { data, isConnectable, id } = nodeProps;
   return (
@@ -62,21 +69,53 @@ const FileNode = memo((nodeProps) => {
         onConnect={(params) => console.log('handle onConnect', params)}
         isConnectable={isConnectable}
       />
-      <div className="d-flex" style={{height: 20}}>
-        {data?.dependant && <a href="#" onClick={e => {
-          e.preventDefault();
-          unchainNode(id);
-        }} style={{color: "var(--bs-dark)"}}>
-          <i className="fa fa-times" />
-        </a>}
+      <div style={{border: "1px solid gray", padding: 5, borderRadius: 10}}>
+        <div style={{display: 'inline-grid', gridAutoFlow: 'column', gridGap: 5}}>
+          <a href="#" className="drag-handle" onClick={e => e.preventDefault()}>
+            <i className="fas fa-bars" />
+          </a>
+          <a href="#" onClick={e => {
+            e.preventDefault();
+            deleteNode(id);
+          }}>
+            <i className="fa fa-times" />
+          </a>
+          <FormComponent
+            definition={{
+              type: 'Fields',
+              title: 'Pick file positions',
+              fields: [
+                {
+                  k: 'code',
+                  type: 'PickFilePositionsField',
+                  filePath: data?.filePath,
+                  basePath: window?.formValue?.params?.directory,
+                },
+              ],
+              layout: 'ModalLayout',
+              AddButton: ({onClick}) => (
+                <a href="#" onClick={e => {
+                  e.preventDefault();
+                  onClick();
+                }}>
+                  <i className="fa fa-edit" />
+                </a>
+              )
+            }}
+            value={{}}
+            onChange={v => {
+              console.log('');
+            }}
+            path={[]}
+            onReset={_ => _}
+            errors={null}
+          />
+        </div>
+        <div
+        >
+          {data.filePath}
+        </div>
       </div>
-      <input
-        className="nodrag form-control form-control-sm"
-        type="text"
-        onChange={e => changeNode(id, e.target.value)}
-        value={data.value}
-        disabled={data.dependant}
-      />
       <Handle
         type="source"
         position="right"
@@ -93,6 +132,7 @@ const nodeTypes = {
 };
 
 export default function PythonRefactoring1Field({
+  formValue,
   value,
   onChange,
   error,
@@ -108,11 +148,11 @@ export default function PythonRefactoring1Field({
   const [edges, setEdges, onEdgesChange] = useEdgesState(value?.edges || []);
   window.setNodes = setNodes;
   window.setEdges = setEdges;
+  window.formValue = formValue;
   const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
   const [reactFlowInstance, setReactFlowInstance] = useState({});
 	const onInit = setReactFlowInstance;
-  const syncGraph = () => {
-  };
+  const syncGraph = () => {};
 
   useEffect(() => {
     onChange({
@@ -128,25 +168,29 @@ export default function PythonRefactoring1Field({
     },
   });*/
 
+  console.log('formValue', formValue);
+
   return (
     <FieldLabel definition={definition} id={id} context={context}>
       <div className="btn-group">
-        <button className="btn btn-outline-secondary" type="button">
-          <i className="fa fa-file" />
-          {" "}
-          Add file
-        </button>
         <FormComponent
           definition={{
             type: 'Fields',
             title: 'Add file',
             fields: [
               {
-                k: 'foo1',
+                k: 'filename',
                 type: 'SelectFileField',
+                basePath: formValue?.params?.directory || '',
               },
             ],
             layout: 'ModalLayout',
+            AddButton: ({onClick}) => (
+              <button className="btn btn-outline-secondary" type="button" onClick={onClick}>
+                <i className="fa fa-file" />
+                {" "}
+                Add file
+              </button>)
           }}
           value={{}}
           onChange={v => {
@@ -155,8 +199,9 @@ export default function PythonRefactoring1Field({
                 id,
                 type: 'FileNode',
                 data: {
-                  value: v.foo1,
+                  filePath: v.filename,
                 },
+                dragHandle: '.drag-handle',
                 position: { x: 0, y: 0 },
               },
             );

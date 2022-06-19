@@ -13,7 +13,7 @@ import {
 import { alert, confirm } from "react-bootstrap-confirmation";
 import moment from "moment";
 import SelectFileField from "./selectFileField"; // register
-
+import PickFilePositionsField from "./pickFilePositionsField"; // register
 
 import {
   BrowserRouter as Router,
@@ -80,6 +80,7 @@ Object.assign(formComponents, {
   ClojureGraph1Field,
   FolderField,
   SelectFileField,
+  PickFilePositionsField,
 });
 
 const ListView = ({create_form, items, onChange}) => {

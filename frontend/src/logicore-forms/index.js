@@ -411,8 +411,11 @@ const ModalLayout = (props) => {
       }, 50);*/
     }
   };
+  const { AddButton } = definition;
   return (<div>
-    <button
+    {AddButton ? <AddButton onClick={_ => {
+        setShow(true);
+      }} /> : <button
       className="btn btn-primary"
       type="button"
       onClick={e => {
@@ -421,7 +424,7 @@ const ModalLayout = (props) => {
       <i className="fa fa-plus" />
       {" "}
       Add
-    </button>
+    </button>}
 		<Modal show={show} onHide={handleClose} animation={false} container={_ => document.getElementById('bootstrap-modals')} size={context?.modalSize || "lg"}>
 			<Modal.Header closeButton>
 				<Modal.Title>{definition.title || "Edit"}</Modal.Title>

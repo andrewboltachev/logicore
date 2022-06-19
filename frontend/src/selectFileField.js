@@ -152,7 +152,7 @@ export default function SelectFileField({
   const [val, setVal] = useState({'files': [], 'path': '', selected: null});
 
   const getFiles = async (path) => {
-    const resp = await axios.get(`/get-file/?path=${path}`);
+    const resp = await axios.get(`/get-file/?path=${path}&basePath=${definition.basePath}`);
     setVal(resp.data);
   }
 

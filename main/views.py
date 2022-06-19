@@ -39,6 +39,7 @@ from django.views.generic.base import TemplateView
 from django.contrib.auth.password_validation import validate_password
 from proxy.views import proxy_view
 from typing import Generator
+from django.http import JsonResponse as JsonResponseOriginal
 
 from . import models
 from .framework import (
@@ -291,6 +292,7 @@ class HomeApiView(MainView):
                 {
                     "type": "DefinedField",
                     "master_field": "kind",
+                    "simple_defined_field": True,
                     "k": "params",
                     "definitions": {
                         "PYTHONREFACTORING1": {
@@ -349,6 +351,7 @@ class StratagemApiView(MainView):
             "type": "Fields",
             "fields": [
                 {"from_field": "name"},
+                {"k": "params", "type": "HiddenField"},
                 *fields[kind],
             ],
             #"layout": "ModalLayout"
@@ -397,14 +400,68 @@ class GraphLayoutView(APIView):
 class GetFileView(APIView):
     def get(self, request, *args, **kwargs):
         path = request.GET.get('path')
+        basePath = request.GET.get('basePath')
+        if not basePath:
+            basePath = ''
+        else:
+            basePath = basePath.rstrip('/')
+        if basePath and path:
+            basePath += '/'
+        fullPath = f'{basePath}{path}/'
         files = [{
-            'filename': filename.replace(f'{path}/', ''),
+            'filename': filename.replace(fullPath, ''),
             'dir': os.path.isdir(filename),
-        } for filename in glob.glob(f'{path}/**')]
+        } for filename in glob.glob(f'{fullPath}**')]
         if path:
             files.insert(0, {'filename': '..', 'dir': True})
         return Response({
             'path': path,
             'files': files,
             'selected': files[1]['filename'],
+        })
+
+
+def read_file(filename):
+    with open(filename, 'r') as f:
+        return f.read()
+
+
+def default_json(x):
+    if isinstance(x, Generator):
+        return [i for i in x]
+    if isinstance(x, python_datetime.datetime):
+        return str(x)
+    if isinstance(x, python_datetime.date):
+        return str(x)
+    if isinstance(x, Decimal):
+        return str(x)
+    try:
+        return str(x)
+    except Exception as e:
+        print(f"Don't know how to convert: {x} {type(x)}")
+        return repr(x)
+
+
+def JsonResponse(*args, **kwargs):
+    kwargs["json_dumps_params"] = {"default": default_json}
+    return JsonResponseOriginal(*args, **kwargs)
+
+
+class GetFileNodesView(View):
+    def get(self, request, *args, **kwargs):
+        filePath = request.GET.get('path')
+        basePath = request.GET.get('basePath')
+        if not basePath:
+            basePath = ''
+        else:
+            basePath = basePath.rstrip('/')
+        if basePath and filePath:
+            basePath += '/'
+        path = f'{basePath}{filePath}'
+        import libcst
+        from main.parser.python import serialize_dc
+        module = libcst.parse_module(read_file(path))
+        serialized = serialize_dc(module)
+        return JsonResponse({
+            'code': serialized
         })
