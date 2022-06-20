@@ -41,17 +41,28 @@ export default function PickFilePositionsField({
   const ref = useRef(null);
 
   const [val, setVal] = useState({});
+  const [ctrl, setCtrl] = useState(null);
+  console.log('ctrl is', ctrl);
 
-  const getFileNodes = async () => {
-    const resp = await axios.get(`/get-file-nodes/?path=${definition.filePath}&basePath=${definition.basePath}`);
-    setVal(resp.data);
+  const getFileNodes = () => {
   }
 
   useEffect(() => {
-    getFileNodes();
+    const CancelToken = axios.CancelToken;
+    const source = CancelToken.source();
+
+    console.log('ctrl is', ctrl);
+    setCtrl(source);
+    const req = axios.get(`/get-file-nodes/?path=${definition.filePath}&basePath=${definition.basePath}`, {
+      cancelToken: source.token,
+    });
+    req.then(resp => setVal(resp.data));
     /*setTimeout(() => {
       ref?.current.focus();
     }, 100);*/
+    return _ => {
+      source && source.cancel();
+    };
   }, []);
 
   return (
