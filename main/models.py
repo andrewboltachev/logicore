@@ -16,6 +16,14 @@ class PythonRefactoring1(StratagemKind):
     name = "PythonRefactoring1"
 
 
+class WebDashboard1(StratagemKind):
+    name = "WebDashboard1"
+
+
+class ZenDocument1(StratagemKind):
+    name = "ZenDocument1"
+
+
 class Stratagem(models.Model):
     name = models.CharField(max_length=1024)
     kind = StratagemKind.get_field()

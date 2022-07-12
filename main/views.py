@@ -307,6 +307,11 @@ class HomeApiView(MainView):
                                 },
                             ],
                         },
+                        "WEBDASHBOARD1": {
+                            "type": "Fields",
+                            "fields": [
+                            ],
+                        },
                     },
                 },
             ],
@@ -328,6 +333,8 @@ class HomeApiView(MainView):
         if data.get('action') == 'delete':
             models.Stratagem.objects.filter(id=data['id']).delete()
             return JsonResponse({"redirect": f"/"})
+        if not data.get("params"):
+            data["params"] = {}
         obj = write_fields(self.get_fields(), models.Stratagem(), data)
         return JsonResponse({"redirect": f"/{obj.id}"})
 
@@ -345,6 +352,12 @@ class StratagemApiView(MainView):
             ],
             'PYTHONREFACTORING1': [
                 {"k": "data", "type": "PythonRefactoring1Field"},
+            ],
+            'WEBDASHBOARD1': [
+                {"k": "data", "type": "WebDashboard1Field"},
+            ],
+            'ZENDOCUMENT1': [
+                {"k": "data", "type": "ZenDocument1Field"},
             ],
         }
         return {
@@ -370,7 +383,8 @@ class StratagemApiView(MainView):
 
     def post(self, request, *args, **kwargs):
         obj = self.get_obj()
-        obj = write_fields(self.get_fields(obj.kind), obj, json.loads(request.body)['data'])
+        data = json.loads(request.body)['data']
+        obj = write_fields(self.get_fields(obj.kind), obj, data)
         return JsonResponse({"navigate": f"/{obj.id}"})
 
 
