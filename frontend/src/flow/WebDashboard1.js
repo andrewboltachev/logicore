@@ -23,47 +23,34 @@ export default function WebDashboard1Field({
           definition={{
             type: 'Fields',
             fields: [
-              {k: 'name', 'label': 'Zen Desc', 'type': 'TextField'},
-              {k: 'keys', 'type': 'ForeignKeyListField', addWhat: 'field',
+              {k: 'fields', 'type': 'ForeignKeyListField', addWhat: 'field',
                 fields: [
                   {
-                    k: 'key',
+                    k: 'name',
                     type: 'TextField',
-                    label: 'Key',
+                    label: 'Name',
                   },
                   {
                     k: 'type',
                     type: 'SelectField',
                     label: 'Type',
                     options: [
-                      {value: 'quantity', label: 'Quantity'},
-                      {value: 'choice', label: 'Choice'},
-                    ]
-                  },
-                  {
-                    k: 'params',
-                    'master_field': 'type',
-                    type: 'DefinedField',
-                    definitions: {
-                      quantity: {
-                        type: 'Fields',
-                        fields: [
-                          {
-                            k: 'min',
-                            type: 'NumberField',
-                            label: 'Min',
-                          },
-                          {
-                            k: 'max',
-                            type: 'NumberField',
-                            label: 'Max',
-                          },
-                        ]
-                      },
-                    },
+                      {value: 'CharField', label: 'CharField'},
+                      {value: 'IntegerField', label: 'IntegerField'},
+                      {value: 'BooleanField', label: 'BooleanField'},
+                    ],
                   },
                 ],
-              }
+              },
+              {k: 'ordering', 'type': 'ForeignKeyListField', addWhat: 'ordering',
+                fields: [
+                  {
+                    k: 'field',
+                    type: 'SelectField',
+                    label: 'Field',
+                  },
+                ],
+              },
             ],
           }}
           value={value}

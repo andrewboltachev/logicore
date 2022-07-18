@@ -42,6 +42,7 @@ import {
 import ClojureGraph1Field from "./flow/ClojureGraph1";
 import PythonRefactoring1Field from "./flow/PythonRefactoring1";
 import ZenDocument1Field from "./flow/ZenDocument1";
+import WebDashboard1Field from "./flow/WebDashboard1";
 
 import { ComponentType, ReactNode } from "react";
 import { jsx } from "@emotion/react";
@@ -80,6 +81,7 @@ Object.assign(formComponents, {
   PythonRefactoring1Field,
   ClojureGraph1Field,
   ZenDocument1Field,
+  WebDashboard1Field,
   FolderField,
   SelectFileField,
   PickFilePositionsField,
