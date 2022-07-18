@@ -5,7 +5,7 @@ import {
 } from "../logicore-forms";
 import { v4 as uuidv4 } from "uuid";
 
-export default function ZenDocument1Field({
+export default function WebDashboard1Field({
   value,
   onChange,
   error,
