@@ -20,6 +20,9 @@ import {
   orderBy,
   pathToUpdate,
   zipArrays,
+  getByPath,
+  setByPath,
+  modifyHelper,
 } from "./utils";
 import _ from "lodash";
 
@@ -243,7 +246,7 @@ const ForeignKeyListField = ({
         addButton={<button
           style={definition?.addButtonStyle || {}}
           type="button"
-          onClick={(_) => onChange([...vvalue, newValue])}
+          onClick={(_) => onChange([...vvalue, {...newValue, ...(definition.uuid ? {uuid: uuidv4()} : {})}])}
         >
           Add {definition?.addWhat}
         </button>}

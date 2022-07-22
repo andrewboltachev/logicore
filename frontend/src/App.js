@@ -55,6 +55,10 @@ import {
   GenericForm,
   formComponents,
   FieldLabel,
+  interceptors,
+  getByPath,
+  setByPath,
+  modifyHelper,
 } from "./logicore-forms";
 
 const FolderField = ({
@@ -75,7 +79,6 @@ const FolderField = ({
     </FieldLabel>
   );
 };
-
 
 Object.assign(formComponents, {
   PythonRefactoring1Field,
@@ -241,6 +244,62 @@ const BaseLayout = () => {
     <Wrapper {...{ loc, navigate, result, apiUrl, onChange }} />
   </>;
 };
+
+const updateFieldsByPath = (fields, path, f) => {
+  if (path.length) {
+    const [pathHead, ...nextPath] = path;
+    if (!fields.fields) return fields;
+    const fields2 = fields.fields.map(field => field?.k === pathHead ? updateFieldsByPath(field, nextPath, f) : field);
+    console.log('reassemble', fields2);
+    return {...fields, fields: fields2};
+  } else {
+    return f(fields);
+  }
+};
+
+const RefsInterceptor = {
+  processFields({ fields, definition, value }) {
+    const options = value[definition.refsSource].map(item => ({value: item.uuid, label: definition.refsLabel(item)}));
+    const ff = updateFieldsByPath({fields}, [...definition.refsNest, ...definition.refsTarget], field => ({...field, options})).fields;
+    console.log('ff', ff[1].fields[0]);
+    return ff;
+  },
+  onChange(newValue, oldValue, definition, context) {
+    let v = {...newValue};
+    if (newValue[definition.refsSource] !== oldValue[definition.refsSource]) {
+      const available = Object.fromEntries(newValue[definition.refsSource].map(item => [item.uuid, item]));
+      const r = modifyHelper(
+        definition.refsNest, v, items => items.map(
+          (item) => {
+            const v = getByPath(item, definition.refsTarget);
+            const found = available[v?.value];
+            if (!found && v?.value) return null;
+            const vv = v?.value ? {value: v.value, label: definition.refsLabel(found)} : null;
+            return modifyHelper(definition.refsTarget, item, _ => vv);
+          }
+        ).filter(x => x)
+      ); /*setByPath(
+        v,
+        definition.refsNest,
+        (getByPath(v, definition.refsNest) || []).map(
+          (item) => {
+            const v = getByPath(item, definition.refsTarget);
+            const found = available[v?.value];
+            if (!found && v?.value) return null;
+            const vv = v?.value ? {value: v.value, label: definition.refsLabel(found)} : null;
+            return setByPath(item, definition.refsTarget, vv);
+          }
+        ).filter(x => x)
+      );*/
+      return r;
+    };
+    return v;
+  },
+};
+
+Object.assign(interceptors, {
+  RefsInterceptor,
+});
 
 function App() {
   return (

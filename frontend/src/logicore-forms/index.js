@@ -19,6 +19,7 @@ import {
   capitalize,
   partition2,
   orderBy,
+  modifyHelper,
 } from "./utils";
 
 import {
@@ -29,6 +30,7 @@ import {
   GenericForm,
   formValidators,
   fieldsLayouts,
+  interceptors,
 } from "./core";
 
 import {
@@ -470,4 +472,8 @@ export {
   formComponents,
   GenericForm,
   FieldLabel,
+  interceptors,
+  getByPath,
+  setByPath,
+  modifyHelper,
 };
