@@ -421,7 +421,8 @@ class GetFileView(APIView):
             basePath = basePath.rstrip('/')
         if basePath and path:
             basePath += '/'
-        fullPath = f'{basePath}{path}/'
+        fullPath = os.path.abspath(basePath + path) + '/'
+        print('fullPath', fullPath)
         files = [{
             'filename': filename.replace(fullPath, ''),
             'dir': os.path.isdir(filename),
@@ -429,9 +430,9 @@ class GetFileView(APIView):
         if path:
             files.insert(0, {'filename': '..', 'dir': True})
         return Response({
-            'path': path,
+            'path': fullPath.replace(basePath, ''),
             'files': files,
-            'selected': files[1]['filename'],
+            'selected': files[0]['filename'],
         })
 
 

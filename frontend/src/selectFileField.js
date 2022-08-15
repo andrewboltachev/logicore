@@ -80,7 +80,7 @@ const DirNode = React.forwardRef(({ value, onChange, onFocus, onTab }, ref) => {
   });
   useEffect(() => {
     setInternalSelected(selected);
-  }, [selected]);
+  }, [selected, value]);
   const keyMoves = {down: 1, up: -1};
   const current = files.map(file => file.filename).indexOf(internalSelected);
 
@@ -172,10 +172,10 @@ export default function SelectFileField({
           onChange={action => {
             if (action?.action === 'enter') {
               if (action?.file?.dir) {
-                getFiles(val.path + '/' + action?.enter);
+                getFiles(val.path + action?.enter);
               } else if (/\.py$/i.exec(action?.file?.filename)) {
-                console.log('wow python', val.path + '/' + action?.file?.filename);
-                onChange(val.path + '/' + action?.file?.filename);
+                console.log('wow python', val.path + action?.file?.filename);
+                onChange(val.path + action?.file?.filename);
                 context?.handleSubmit && context?.handleSubmit();
               }
             }
