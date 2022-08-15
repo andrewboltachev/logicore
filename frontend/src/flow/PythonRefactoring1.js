@@ -152,8 +152,6 @@ export default function PythonRefactoring1Field({
   const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
   const [reactFlowInstance, setReactFlowInstance] = useState({});
 	const onInit = setReactFlowInstance;
-  const syncGraph = () => {};
-
   useEffect(() => {
     onChange({
       nodes: Array.from(nodes),
@@ -210,7 +208,6 @@ export default function PythonRefactoring1Field({
           onReset={_ => _}
           errors={null}
          />
-        <button className="btn btn-outline-secondary" type="button" onClick={syncGraph}>Sync</button>
       </div>
 			<div style={{width: "100%", height: "80vh"}}>
 				<ReactFlow
