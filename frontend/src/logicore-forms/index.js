@@ -389,7 +389,7 @@ const ModalLayout = (props) => {
     setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
   };
 	const handleClose = _ => setShow(false);
-  const handleSubmit = () => {
+  const handleSubmit = (state) => {
     const error = validateDefinition(definition, state);
     setErrors(error);
     if (!definitionIsInvalid(definition, error, state)) {
@@ -444,6 +444,7 @@ const ModalLayout = (props) => {
             ...context,
 						forceLabelWidth: '100%',
 						labelPlacement: 'horizontalPlus',
+            handleSubmit
 					}}
         />
         </div>
@@ -452,7 +453,7 @@ const ModalLayout = (props) => {
 				<Button variant="secondary" onClick={handleClose}>
 					Close
 				</Button>
-        {!hidePrimaryButton && <Button variant="primary" onClick={handleSubmit}>
+        {!hidePrimaryButton && <Button variant="primary" onClick={_ => handleSubmit(state)}>
 					OK
 				</Button>}
 			</Modal.Footer>
