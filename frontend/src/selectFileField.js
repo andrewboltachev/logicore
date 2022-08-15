@@ -176,7 +176,9 @@ export default function SelectFileField({
               } else if (/\.py$/i.exec(action?.file?.filename)) {
                 console.log('wow python', val.path + action?.file?.filename);
                 onChange(val.path + action?.file?.filename);
-                context?.handleSubmit && context?.handleSubmit();
+                context?.handleSubmit && context?.handleSubmit(
+                  {filename: val.path + action?.file?.filename}
+                );
               }
             }
           }}

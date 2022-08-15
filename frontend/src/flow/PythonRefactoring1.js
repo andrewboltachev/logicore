@@ -188,7 +188,8 @@ export default function PythonRefactoring1Field({
                 <i className="fa fa-file" />
                 {" "}
                 Add file
-              </button>)
+                </button>),
+            hidePrimaryButton: true,
           }}
           value={{}}
           onChange={v => {

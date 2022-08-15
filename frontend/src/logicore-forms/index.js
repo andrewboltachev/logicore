@@ -413,7 +413,7 @@ const ModalLayout = (props) => {
       }, 50);*/
     }
   };
-  const { AddButton } = definition;
+  const { AddButton, hidePrimaryButton } = definition;
   return (<div>
     {AddButton ? <AddButton onClick={_ => {
         setShow(true);
@@ -452,9 +452,9 @@ const ModalLayout = (props) => {
 				<Button variant="secondary" onClick={handleClose}>
 					Close
 				</Button>
-				<Button variant="primary" onClick={handleSubmit}>
+        {!hidePrimaryButton && <Button variant="primary" onClick={handleSubmit}>
 					OK
-				</Button>
+				</Button>}
 			</Modal.Footer>
     </Modal>
     {error?.__own && <div className="invalid-feedback d-block">{error.__own + ''}</div>}
