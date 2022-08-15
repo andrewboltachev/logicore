@@ -56,6 +56,7 @@ import {
   formComponents,
   FieldLabel,
   interceptors,
+  fieldsLayouts,
   getByPath,
   setByPath,
   modifyHelper,
@@ -88,6 +89,30 @@ Object.assign(formComponents, {
   FolderField,
   SelectFileField,
   PickFilePositionsField,
+});
+
+const WithDeleteButton = ({ definition, renderedFields }) => {
+  return (
+    <div className="d-flex align-items-center">
+    <div className="flex-grow-1">
+    {renderedFields}
+    </div>
+      <a
+          href="#"
+          className="text-red"
+          onClick={(e) => {
+            e.preventDefault();
+                definition.onChangeParent(
+                  definition.parent.filter((x, i) => i != definition.index)
+                );
+          }}
+      >× Remove</a>
+    </div>
+  );
+};
+
+Object.assign(fieldsLayouts, {
+  WithDeleteButton,
 });
 
 const ListView = ({create_form, items, onChange}) => {
@@ -261,7 +286,6 @@ const RefsInterceptor = {
   processFields({ fields, definition, value }) {
     const options = value[definition.refsSource].map(item => ({value: item.uuid, label: definition.refsLabel(item)}));
     const ff = updateFieldsByPath({fields}, [...definition.refsNest, ...definition.refsTarget], field => ({...field, options})).fields;
-    console.log('ff', ff[1].fields[0]);
     return ff;
   },
   onChange(newValue, oldValue, definition, context) {
@@ -273,7 +297,7 @@ const RefsInterceptor = {
           (item) => {
             const v = getByPath(item, definition.refsTarget);
             const found = available[v?.value];
-            if (!found && v?.value) return null;
+            if (!found || !v?.value) return null;
             const vv = v?.value ? {value: v.value, label: definition.refsLabel(found)} : null;
             return modifyHelper(definition.refsTarget, item, _ => vv);
           }

@@ -35,6 +35,7 @@ export default function WebDashboard1Field({
             type: 'Fields',
             fields: [
               {k: 'fields', 'type': 'ForeignKeyListField', addWhat: 'field',
+                layout: 'WithDeleteButton',
                 fields: [
                   {
                     k: 'name',
@@ -57,6 +58,7 @@ export default function WebDashboard1Field({
                 //},
               },
               {k: 'ordering', 'type': 'ForeignKeyListField', addWhat: 'ordering',
+                layout: 'WithDeleteButton',
                 fields: [
                   {
                     k: 'field',

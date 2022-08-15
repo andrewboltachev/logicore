@@ -476,4 +476,5 @@ export {
   getByPath,
   setByPath,
   modifyHelper,
+  fieldsLayouts,
 };
