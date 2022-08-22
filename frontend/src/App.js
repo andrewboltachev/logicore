@@ -93,20 +93,23 @@ Object.assign(formComponents, {
 
 const WithDeleteButton = ({ definition, renderedFields }) => {
   return (
-    <div className="d-flex align-items-center">
+    <div className="card mb-1">
+    <div className="card-body d-flex align-items-start">
     <div className="flex-grow-1">
     {renderedFields}
     </div>
       <a
           href="#"
-          className="text-red"
+          className="btn btn-sm btn-outline-danger"
+          style={{marginLeft: 16}}
           onClick={(e) => {
             e.preventDefault();
                 definition.onChangeParent(
                   definition.parent.filter((x, i) => i != definition.index)
                 );
           }}
-      >× Remove</a>
+      >×</a>
+    </div>
     </div>
   );
 };

@@ -213,7 +213,7 @@ DefinedField.validatorChecker = (definition, error, value, parentValue) => {
 };
 
 
-const DefaultForeignKeyListFieldWrapper = ({ children, addButton }) => (
+const DefaultListFieldWrapper = ({ children, addButton }) => (
   <div>{children}{addButton}</div>
 );
 
@@ -230,7 +230,7 @@ const ForeignKeyListField = ({
   const id = "id_" + uuidv4();
   const { label } = definition;
   const vvalue = value || [];
-  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultForeignKeyListFieldWrapper;
+  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper;
   const newValue = definition?.new_value || {};
   let processList = _ => {};
   let extraContext = {}
@@ -244,9 +244,10 @@ const ForeignKeyListField = ({
       <Wrapper
         {...{ definition, value, onChange, error, onReset, path, context }}
         addButton={<button
+          className="btn btn-primary"
           style={definition?.addButtonStyle || {}}
           type="button"
-          onClick={(_) => onChange([...vvalue, {...newValue, ...(definition.uuid ? {uuid: uuidv4()} : {})}])}
+          onClick={(_) => onChange([...vvalue, newValue])}
         >
           Add {definition?.addWhat}
         </button>}
@@ -293,6 +294,82 @@ ForeignKeyListField.validatorChecker = (definition, error, state) => {
   }
 };
 
+const UUIDListField = ({
+  definition,
+  value,
+  onChange,
+  error,
+  onReset,
+  path,
+  context,
+}) => {
+  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null;
+  const id = "id_" + uuidv4();
+  const { label } = definition;
+  const vvalue = value || [];
+  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper;
+  const newValue = definition?.new_value || {};
+  let processList = _ => {};
+  let extraContext = {}
+  if (interceptor?.processList) {
+    extraContext = interceptor?.processList(
+      { fields: definition.fields, definition, valueList: vvalue }
+    );
+  }
+  return (
+    <div>
+      <Wrapper
+        {...{ definition, value, onChange, error, onReset, path, context }}
+        addButton={<button
+          style={definition?.addButtonStyle || {}}
+          type="button"
+          onClick={(_) => onChange([...vvalue, {...newValue, uuid: uuidv4()}])}
+        >
+          Add {definition?.addWhat}
+        </button>}
+      >
+        {vvalue.map((item, i) => {
+          return (
+            <FormComponent
+              key={i}
+              definition={{
+                ...definition,
+                type: "Fields",
+                index: i,
+                parent: vvalue,
+                onChangeParent: onChange,
+              }}
+              value={item}
+              error={(error || [])[i]}
+              onChange={($set) => onChange(update(vvalue, { [i]: { $set } }))}
+              context={{ ...context, ...definition.context, ...extraContext }}
+              onReset={onReset}
+              path={[...path, i]}
+            />
+          );
+        })}
+      </Wrapper>
+    </div>
+  );
+};
+UUIDListField.isEmpty = (x) => !x || !x.length;
+UUIDListField.validatorRunner = (definition, value) => {
+  if (definition.required && !value?.length) {
+    return "This is required";
+  }
+  return (value || []).map((v) =>
+    validateDefinition({ ...definition, type: "Fields" }, v, value)
+  );
+};
+UUIDListField.validatorChecker = (definition, error, state) => {
+  if (typeof error === "string") return true;
+  for (const [e, s] of zipArrays(error || [], state || [])) {
+    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, s)) {
+      return true;
+    }
+  }
+};
+
 const HiddenField = ({
   value,
   onChange,
@@ -321,6 +398,7 @@ formComponents = {
   // Collections/containers
   Fields,
   ForeignKeyListField,
+  UUIDListField,
   DefinedField,
   // Individual fields
   HiddenField,
