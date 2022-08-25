@@ -85,6 +85,22 @@ const Fields = (fieldsProps) => {
   if (interceptor && interceptor.fieldsContext) {
     interceptorContext = interceptor.fieldsContext({ fields: definition.fields, definition, value, context, onChange });
   }
+  function doOnChange(child_k, v) {
+    const newV = { ...(value || {}), ...(!!child_k ? { [child_k]: v } : v) };
+    if (child_k) {
+      theFields.forEach(ff => {
+        if (ff.type === 'DefinedField' && ff.master_field === child_k) {
+          if (value?.[child_k]?.value !== v?.value) {
+            newV[ff.k] = {};
+          }
+        }
+      });
+    }
+    onChange(
+      newV,
+      definition.constraints || []
+    );
+  }
   const renderedFields = theFields.map((child, i) => {
     const vvalue = !!child.k ? value?.[child.k] : value;
     const additionalProps = {};
@@ -109,12 +125,7 @@ const Fields = (fieldsProps) => {
           value={(imposed_value !== void 0) ? imposed_value : vvalue}
           error={!!child.k ? error?.[child.k] : error}
           context={{ ...context, ...definition.context, ...child.context, ...interceptorContext }}
-          onChange={(imposed_value !== void 0) ? (_ => null) : ((v) =>
-            onChange(
-                { ...(value || {}), ...(!!child.k ? { [child.k]: v } : v) },
-                definition.constraints || []
-            ))
-          }
+          onChange={(imposed_value !== void 0) ? (_ => null) : ((v) => doOnChange(child.k, v))}
           onReset={onReset}
           path={[...path, ...(!!child.k ? [child.k] : [])]}
           disabled={(imposed_value !== void 0) ? true : !!disabled}
@@ -321,6 +332,7 @@ const UUIDListField = ({
       <Wrapper
         {...{ definition, value, onChange, error, onReset, path, context }}
         addButton={<button
+          className="btn btn-primary"
           style={definition?.addButtonStyle || {}}
           type="button"
           onClick={(_) => onChange([...vvalue, {...newValue, uuid: uuidv4()}])}
@@ -370,6 +382,150 @@ UUIDListField.validatorChecker = (definition, error, state) => {
   }
 };
 
+const RecursiveListField = ({
+  definition,
+  value,
+  onChange,
+  error,
+  onReset,
+  path,
+  context,
+}) => {
+  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null;
+  const id = "id_" + uuidv4();
+  const { label } = definition;
+  const vvalue = value || [];
+  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper;
+  const newValue = definition?.new_value || {};
+  let processList = _ => {};
+  let extraContext = {}
+  const fields = context?.nodeById?.[definition.definition_id]?.fields;
+  if (!fields) {
+    return <div className="text-danger">No definition_id found</div>;
+  }
+  console.log('fields', fields);
+  if (interceptor?.processList) {
+    extraContext = interceptor?.processList(
+      { fields, definition, valueList: vvalue }
+    );
+  }
+  return (
+    <div>
+      <Wrapper
+        {...{ definition, value, onChange, error, onReset, path, context }}
+        addButton={<button
+          className="btn btn-primary"
+          style={definition?.addButtonStyle || {}}
+          type="button"
+          onClick={(_) => onChange([...vvalue, {...newValue, uuid: uuidv4()}])}
+        >
+          Add {definition?.addWhat}
+        </button>}
+      >
+        {vvalue.map((item, i) => {
+          return (
+            <FormComponent
+              key={i}
+              definition={{
+                ...{...definition, fields},
+                type: "Fields",
+                index: i,
+                parent: vvalue,
+                onChangeParent: onChange,
+              }}
+              value={item}
+              error={(error || [])[i]}
+              onChange={($set) => onChange(update(vvalue, { [i]: { $set } }))}
+              context={{ ...context, ...definition.context, ...extraContext }}
+              onReset={onReset}
+              path={[...path, i]}
+            />
+          );
+        })}
+      </Wrapper>
+    </div>
+  );
+};
+RecursiveListField.isEmpty = (x) => !x || !x.length;
+RecursiveListField.validatorRunner = (definition, value) => {
+  if (definition.required && !value?.length) {
+    return "This is required";
+  }
+  return (value || []).map((v) =>
+    validateDefinition({ ...definition, type: "Fields" }, v, value)
+  );
+};
+RecursiveListField.validatorChecker = (definition, error, state) => {
+  if (typeof error === "string") return true;
+  for (const [e, s] of zipArrays(error || [], state || [])) {
+    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, s)) {
+      return true;
+    }
+  }
+};
+
+const RecursiveField = ({
+  value,
+  onChange,
+  error,
+  definition,
+  context,
+  onReset,
+  path,
+  current,
+}) => {
+  const id = "id_" + uuidv4();
+  const { label } = definition;
+  const labelStyle = {};
+  if (context.labelColor) {
+    labelStyle.style = { color: context.labelColor };
+  }
+  // TODO
+  const newCurrent = context?.nodeById?.[definition.definition_id]?.fields;
+  if (!newCurrent || !newCurrent?.fields) {
+    return <div className="text-danger">No definition_id found</div>;
+  }
+  return (<>
+    <FormComponent
+      context={{...context, ...definition.context}}
+      value={value}
+      onChange={x => {onChange(x); onReset(path);}}
+      onReset={_ => {}}
+      path={[]}
+      error={(error && typeof error === 'object') ? error : null}
+      definition={{...newCurrent, layout: newCurrent?.layout || definition?.layout, itemWrapper: definition.itemWrapper}}
+    />
+    {(error && typeof error === 'string') ? <div className="invalid-feedback d-block">{error + ''}</div> : null}
+    </>
+  );
+};
+RecursiveField.isEmpty = (x) => false; // TODO remove
+RecursiveField.validatorRunner = (definition, value, parentValue) => {
+  let result = {};
+  const context = {};
+  const current = context?.nodeById?.[definition.definition_id]?.fields;
+  if (!current || !current.fields) return null;
+  for (const f of current.fields) {
+    if (f.k) {
+      result[f.k] = validateDefinition(f, value?.[f.k]);
+    } else {
+      result = { ...result, ...validateDefinition(f, value) };
+    }
+  }
+  return result;
+};
+RecursiveField.validatorChecker = (definition, error, value, parentValue) => {
+  const context = {};
+  const current = context?.nodeById?.[definition.definition_id]?.fields;
+  if (!current || !current.fields) return null;
+
+  for (const f of (current?.fields || [])) {
+    if (definitionIsInvalid(f, !!f.k ? error?.[f.k] : error, !!f.k ? value?.[f.k] : value)) {
+      return true;
+    }
+  }
+};
+
 const HiddenField = ({
   value,
   onChange,
@@ -399,6 +555,7 @@ formComponents = {
   Fields,
   ForeignKeyListField,
   UUIDListField,
+  RecursiveListField,
   DefinedField,
   // Individual fields
   HiddenField,
@@ -419,8 +576,10 @@ FormComponent = ({
   disabled,
 }) => {
   const Component = formComponents[definition.type];
-  if (!Component)
-    throw new Error(`No field type ${definition.type}`);
+  if (!Component) return <div className="text-danger">
+    {`No field type ${definition.type || JSON.stringify(definition)}`}
+  </div>;
+    //throw new Error(`No field type ${definition.type || JSON.stringify(definition)}`);
   return (
     <Component
       {...{ formValue: formValue || value, value, onChange, error, definition, context, path, onReset, disabled: disabled || definition?.disabled }}
@@ -613,3 +772,30 @@ export const GenericForm = (props) => {
   </Container>
   </GenericFormContext.Provider>);
 };
+
+function nodesIdMap(node) {
+  const result = {};
+  function doWalk(node) {
+    if (node.id) {
+      result[node.id] = node;
+    }
+    if (Array.isArray(node.fields)) {
+      node.fields.forEach(doWalk);
+    }
+  }
+  doWalk(node);
+  return result;
+}
+
+interceptors.recursiveFields = {
+  onChange(newValue, value, definition, context) {
+    return newValue; // trivial
+  },
+  processFields({ fields, definition, value }) {
+    return fields; // trivial
+  },
+  fieldsContext({ fields, definition, context }) {
+    const nodeById = nodesIdMap(definition);
+    return {...context, nodeById};
+  },
+}

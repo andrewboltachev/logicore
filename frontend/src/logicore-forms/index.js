@@ -56,14 +56,6 @@ Object.assign(formValidators, {
   },
 });
 
-const formEmptyPred = {
-  BooleanField: (x) => !x,
-  TextareaField: (x) => !x || !x.replace("\n", ""),
-  DecimalField: (x) => !x,
-  NumberField: (x) => !x && x !== 0,
-};
-
-
 const RequiredWrapper = ({ required, children }) => (
   required ? (
     <span style={{ fontWeight: "bold" }}>
@@ -104,7 +96,7 @@ const BooleanField = ({
         type="checkbox"
         checked={!!value}
         onChange={(e) => {
-          onChange(path, e.target.checked);
+          onChange(e.target.checked);
         }}
         id={id}
         disabled={!!disabled}
@@ -116,6 +108,10 @@ const BooleanField = ({
     </div>
   );
 };
+BooleanField.isEmpty = (x) => !x;
+Object.assign(formComponents, {
+  BooleanField,
+});
 
 const TextField = ({
   value,

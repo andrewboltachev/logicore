@@ -15,26 +15,11 @@ import { v4 as uuidv4 } from "uuid";
  * Additional:
  * FormWithRefs <-> Graph conversion
  */
-
-export default function WebDashboard1Field({
-  value,
-  onChange,
-  error,
-  definition,
-  context,
-  onReset,
-  path,
-  disabled,
-}) {
-  const id = "id_" + uuidv4();
-  return (
-    <FieldLabel definition={definition} id={id} context={context}>
-      <div className="container my-5">
-        <FormComponent
-          definition={{
+/*
+{
             type: 'Fields',
             fields: [
-              {k: 'fields', 'type': 'ForeignKeyListField', addWhat: 'field',
+              {k: 'fields', 'type': 'UUIDListField', addWhat: 'field',
                 layout: 'WithDeleteButton',
                 fields: [
                   {
@@ -68,21 +53,257 @@ export default function WebDashboard1Field({
                 ],
               },
             ],
-            interceptor: 'RefsInterceptor',
+              //interceptor: 'RefsInterceptor',
             refsSource: ['fields'],
             refsNest: ['ordering'],
             refsTarget: ['field'],
             refsLabel: (item) => {
               return item?.name || '(no name)';
             },
-          }}
+          }
+*/
+
+export default function WebDashboard1Field({
+  value,
+  onChange,
+  error,
+  definition,
+  context,
+  onReset,
+  path,
+  disabled,
+}) {
+  const id = "id_" + uuidv4();
+  return (
+    <FieldLabel definition={definition} id={id} context={context}>
+      <div className="container-fluid my-5">
+        <FormComponent
+        definition={
+{ 
+  "type": "Fields",
+  "fields": [
+          { 
+  "type": "Fields",
+  "fields": [
+    {
+      "type": "TextField",
+      "k": "k",
+      "label": "K",
+      "required": true, // TODO k not on fields?
+    },
+    {
+      "type": "TextField",
+      "k": "label",
+      "label": "Label",
+      "required": false,
+    },
+    {
+      "type": "BooleanField",
+      "k": "required",
+      "label": "Required?",
+      "required": false,
+    },
+    {
+      "type": "SelectField",
+      "k": "type",
+      "label": "Type",
+      "required": true,
+      "options": [
+        {"value": "Fields", "label": "Fields"},
+        {"value": "HiddenField", "label": "HiddenField"},
+        {"value": "TextField", "label": "TextField"},
+        {"value": "TextareaField", "label": "TextareaField"},
+        {"value": "BooleanField", "label": "BooleanField"},
+        {"value": "NumberField", "label": "NumberField"},
+        {"value": "SelectField", "label": "SelectField"},
+        {"value": "DefinedField", "label": "DefinedField"},
+        {"value": "ForeignKeyListField", "label": "ForeignKeyListField"},
+      ],
+    },
+    // TODO validators (type-dependant?)
+    {
+      "type": "DefinedField",
+      "k": "definition",
+      "master_field": "type",
+      "definitions": {
+        "Fields": {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "RecursiveListField",
+              "k": "fields",
+              "label": "Fields",
+              "definition_id": "id_of_the_field",
+              "layout": "WithDeleteButton",
+            },
+            {
+              "type": "TextField",
+              "k": "layout",
+              "label": "Layout", // TODO pre-fill?
+            },
+          ],
+          "id": "id_of_the_fields",
+        },
+        "HiddenField": {"type": "Fields", "fields": []},
+        "TextField": {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "SelectField",
+              "k": "subtype",
+              "label": "Sub-type",
+              "options": [
+                {"value": "text", "label": "Text"},
+                {"value": "password", "label": "Password"},
+                {"value": "email", "label": "Email"},
+              ]
+            },
+            {
+              "type": "TextField",
+              "k": "placeholder",
+              "label": "Placeholder",
+            },
+          ]
+        },
+        "TextareaField": {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "TextField",
+              "k": "placeholder",
+              "label": "Placeholder",
+            },
+          ]
+        },
+        "BooleanField": {"type": "Fields", "fields": []},
+        "NumberField": {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "TextField",
+              "k": "placeholder",
+              "label": "Placeholder",
+            },
+          ],
+        },
+        "SelectField": {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "UUIDListField", // TODO
+              "k": "options",
+              "label": "Options",
+              "fields": [
+                {
+                  "type": "TextField",
+                  "k": "value",
+                  "label": "Value",
+                  "required": true,
+                  // TODO validate machine-readable value?
+                  // TODO interceptor-validate uniqueness for value
+                },
+                {
+                  "type": "TextField",
+                  "k": "label",
+                  "label": "Label",
+                  "required": true,
+                },
+              ],
+              "layout": "WithDeleteButton",
+            },
+            {
+              "type": "TextField",
+              "k": "placeholder",
+              "label": "Placeholder",
+              "required": false,
+            },
+            {
+              "type": "BooleanField",
+              "k": "multiple",
+              "label": "Multiple?",
+              "required": false,
+            },
+            /*{
+              "type": "BooleanField",
+              "k": "disabled",
+              "label": "Disabled?"
+              "required": false,
+            },*/
+          ]
+        },
+        "DefinedField": {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "TextField",
+              "k": "master_field",
+              "label": "Master field",
+            },
+            {
+              "type": "UUIDListField", // MapField
+              "k": "definitions",
+              "label": "Definitions",
+              "fields": [
+                {
+                  "type": "TextField",
+                  "k": "value",
+                  "label": "Value",
+                  "required": true,
+                  // TODO validate machine-readable value?
+                  // TODO define order of complex/dynamic validation?
+                },
+                {
+                  "type": "RecursiveField",
+                  "k": "definition",
+                  "label": "Definition",
+                  "definition_id": "id_of_the_field",
+                  "layout": "WithDeleteButton",
+                },
+              ],
+            },
+          ],
+        },
+        "ForeignKeyListField": {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "RecursiveListField",
+              "k": "fields",
+              "label": "Fields",
+              "definition_id": "id_of_the_field",
+              "layout": "WithDeleteButton",
+            },
+            {
+              "type": "TextField",
+              "k": "layout",
+              "label": "Layout", // TODO pre-fill?
+            },
+            {
+              "type": "TextField",
+              "k": "wrapper",
+              "label": "Wrapper", // TODO pre-fill?
+            },
+          ],
+          "id": "id_of_the_fields",
+        },
+      },
+    },
+  ],
+  "id": "id_of_the_field",
+    },
+  ],
+  "interceptor": "recursiveFields",
+}}
           value={value}
           onChange={onChange}
           path={[]}
           error={null}
           onReset={_ => _}
         />
-      </div>
+        </div>
+        <div className="container my-5">
+          <code>{JSON.stringify(value)}</code>
+        </div>
     </FieldLabel>
   );
 };
