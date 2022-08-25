@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, memo } from "react";
 import {
   FieldLabel,
   FormComponent,
+  validateDefinition,
+  definitionIsInvalid,
 } from "../logicore-forms";
 import { v4 as uuidv4 } from "uuid";
 
@@ -61,25 +63,9 @@ import { v4 as uuidv4 } from "uuid";
               return item?.name || '(no name)';
             },
           }
-*/
+          */
 
-export default function WebDashboard1Field({
-  value,
-  onChange,
-  error,
-  definition,
-  context,
-  onReset,
-  path,
-  disabled,
-}) {
-  const id = "id_" + uuidv4();
-  return (
-    <FieldLabel definition={definition} id={id} context={context}>
-      <div className="container-fluid my-5">
-        <FormComponent
-        definition={
-{ 
+const FIELD_DEF = { 
   "type": "Fields",
   "fields": [
           { 
@@ -293,18 +279,47 @@ export default function WebDashboard1Field({
     },
   ],
   "interceptor": "recursiveFields",
-}}
+};
+
+function WebDashboard1Field({
+  value,
+  onChange,
+  error,
+  definition,
+  context,
+  onReset,
+  path,
+  disabled,
+}) {
+  const id = "id_" + uuidv4();
+  return (<>
+    <FieldLabel definition={definition} id={id} context={context}>
+      <div className="container-fluid my-5">
+        <FormComponent
+          definition={FIELD_DEF}
           value={value}
           onChange={onChange}
-          path={[]}
-          error={null}
-          onReset={_ => _}
+          path={path}
+          error={error}
+          onReset={onReset}
         />
         </div>
         <div className="container my-5">
           <code>{JSON.stringify(value)}</code>
         </div>
     </FieldLabel>
+    </>
   );
 };
 
+WebDashboard1Field.isEmpty = (x) => false; // TODO remove
+WebDashboard1Field.validatorRunner = (definition, value, parentValue) => {
+  const current = FIELD_DEF;
+  console.log('call validateDefinition', validateDefinition(current, value, parentValue));
+  return validateDefinition(current, value, parentValue);
+};
+WebDashboard1Field.validatorChecker = (definition, error, value, parentValue) => {
+  const current = FIELD_DEF;
+  return definitionIsInvalid(current, error, value, parentValue);
+};
+export default WebDashboard1Field;

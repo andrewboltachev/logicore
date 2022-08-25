@@ -145,7 +145,7 @@ Fields.validatorRunner = (definition, value, parentValue) => {
   if (definition.validators) {
     result.__own = validatorsValidatorRunner(definition, value, parentValue);
   }
-  for (const f of definition.fields) {
+  for (const f of definition.fields || []) {
     if (f.k) {
       result[f.k] = validateDefinition(f, value?.[f.k], value);
     } else {
@@ -156,7 +156,7 @@ Fields.validatorRunner = (definition, value, parentValue) => {
 };
 Fields.validatorChecker = (definition, error, state) => {
   if (error?.__own) return true;
-  for (const f of definition.fields) {
+  for (const f of definition.fields || []) {
     if (definitionIsInvalid(f, !!f.k ? error?.[f.k] : error, !!f.k ? state?.[f.k] : state, state)) {
       return true;
     }
