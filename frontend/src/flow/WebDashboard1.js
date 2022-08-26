@@ -313,13 +313,13 @@ function WebDashboard1Field({
 };
 
 WebDashboard1Field.isEmpty = (x) => false; // TODO remove
-WebDashboard1Field.validatorRunner = (definition, value, parentValue) => {
+WebDashboard1Field.validatorRunner = (definition, value, parentValue, context) => {
   const current = FIELD_DEF;
-  console.log('call validateDefinition', validateDefinition(current, value, parentValue));
+  console.log('call validateDefinition', validateDefinition(current, value, parentValue, context));
   return validateDefinition(current, value, parentValue);
 };
-WebDashboard1Field.validatorChecker = (definition, error, value, parentValue) => {
+WebDashboard1Field.validatorChecker = (definition, error, value, parentValue, context) => {
   const current = FIELD_DEF;
-  return definitionIsInvalid(current, error, value, parentValue);
+  return definitionIsInvalid(current, error, value, parentValue, context);
 };
 export default WebDashboard1Field;

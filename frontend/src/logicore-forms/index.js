@@ -386,9 +386,9 @@ const ModalLayout = (props) => {
   };
 	const handleClose = _ => setShow(false);
   const handleSubmit = (state) => {
-    const error = validateDefinition(definition, state);
+    const error = validateDefinition(definition, state, state, context); // TODO parent state?
     setErrors(error);
-    if (!definitionIsInvalid(definition, error, state)) {
+    if (!definitionIsInvalid(definition, error, state, state, context)) {
       // ok
       onChange(state);
       onReset(path);

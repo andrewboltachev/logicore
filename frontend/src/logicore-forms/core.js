@@ -83,7 +83,7 @@ const Fields = (fieldsProps) => {
   }
   let interceptorContext = {};
   if (interceptor && interceptor.fieldsContext) {
-    interceptorContext = interceptor.fieldsContext({ fields: definition.fields, definition, value, context, onChange });
+    interceptorContext = interceptor.fieldsContext({ fields: theFields, definition, value, context, onChange });
   }
   function doOnChange(child_k, v) {
     const newV = { ...(value || {}), ...(!!child_k ? { [child_k]: v } : v) };
@@ -140,24 +140,30 @@ const Fields = (fieldsProps) => {
     />
   );
 };
-Fields.validatorRunner = (definition, value, parentValue) => {
+Fields.validatorRunner = (definition, value, parentValue, context) => {
   let result = {};
   if (definition.validators) {
-    result.__own = validatorsValidatorRunner(definition, value, parentValue);
+    result.__own = validatorsValidatorRunner(definition, value, parentValue, context);
   }
   for (const f of definition.fields || []) {
     if (f.k) {
-      result[f.k] = validateDefinition(f, value?.[f.k], value);
+      result[f.k] = validateDefinition(f, value?.[f.k], value, context);
     } else {
-      result = { ...result, ...validateDefinition(f, value) };
+      result = { ...result, ...validateDefinition(f, value, parentValue, context) };
     }
   }
   return result;
 };
-Fields.validatorChecker = (definition, error, state) => {
+Fields.validatorChecker = (definition, error, state, parentState, context) => {
   if (error?.__own) return true;
   for (const f of definition.fields || []) {
-    if (definitionIsInvalid(f, !!f.k ? error?.[f.k] : error, !!f.k ? state?.[f.k] : state, state)) {
+    if (definitionIsInvalid(
+      f,
+      !!f.k ? error?.[f.k] : error,
+      !!f.k ? state?.[f.k] : state,
+      !!f.k ? state : parentState,
+      context
+    )) {
       return true;
     }
   }
@@ -196,7 +202,7 @@ const DefinedField = ({
   );
 };
 DefinedField.isEmpty = (x) => false; // TODO remove
-DefinedField.validatorRunner = (definition, value, parentValue) => {
+DefinedField.validatorRunner = (definition, value, parentValue, context) => {
   let result = {};
   const current = definition?.current ? definition.current : definition?.definitions?.[
     (parentValue?.[definition?.master_field] || {}).value
@@ -204,20 +210,26 @@ DefinedField.validatorRunner = (definition, value, parentValue) => {
   if (!current || !current.fields) return null;
   for (const f of current.fields) {
     if (f.k) {
-      result[f.k] = validateDefinition(f, value?.[f.k]);
+      result[f.k] = validateDefinition(f, value?.[f.k], value, context);
     } else {
-      result = { ...result, ...validateDefinition(f, value) };
+      result = { ...result, ...validateDefinition(f, value, parentValue, context) };
     }
   }
   return result;
 };
-DefinedField.validatorChecker = (definition, error, value, parentValue) => {
+DefinedField.validatorChecker = (definition, error, value, parentValue, context) => {
   const current = definition?.current ? definition.current : definition?.definitions?.[
     (parentValue?.[definition?.master_field] || {}).value
   ];
 
   for (const f of (current?.fields || [])) {
-    if (definitionIsInvalid(f, !!f.k ? error?.[f.k] : error, !!f.k ? value?.[f.k] : value)) {
+    if (definitionIsInvalid(
+      f,
+      !!f.k ? error?.[f.k] : error,
+      !!f.k ? value?.[f.k] : value,
+      !!f.k ? value : parentValue,
+      context
+    )) {
       return true;
     }
   }
@@ -288,18 +300,18 @@ const ForeignKeyListField = ({
   );
 };
 ForeignKeyListField.isEmpty = (x) => !x || !x.length;
-ForeignKeyListField.validatorRunner = (definition, value) => {
+ForeignKeyListField.validatorRunner = (definition, value, parentValue, context) => {
   if (definition.required && !value?.length) {
     return "This is required";
   }
   return (value || []).map((v) =>
-    validateDefinition({ ...definition, type: "Fields" }, v, value)
+    validateDefinition({ ...definition, type: "Fields" }, v, parentValue, context)
   );
 };
-ForeignKeyListField.validatorChecker = (definition, error, state) => {
+ForeignKeyListField.validatorChecker = (definition, error, state, parentState, context) => {
   if (typeof error === "string") return true;
   for (const [e, s] of zipArrays(error || [], state || [])) {
-    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, s)) {
+    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, parentState, context)) {
       return true;
     }
   }
@@ -365,18 +377,18 @@ const UUIDListField = ({
   );
 };
 UUIDListField.isEmpty = (x) => !x || !x.length;
-UUIDListField.validatorRunner = (definition, value) => {
+UUIDListField.validatorRunner = (definition, value, parentValue, context) => {
   if (definition.required && !value?.length) {
     return "This is required";
   }
   return (value || []).map((v) =>
-    validateDefinition({ ...definition, type: "Fields" }, v, value)
+    validateDefinition({ ...definition, type: "Fields" }, v, parentValue, context)
   );
 };
-UUIDListField.validatorChecker = (definition, error, state) => {
+UUIDListField.validatorChecker = (definition, error, state, parentState, context) => {
   if (typeof error === "string") return true;
   for (const [e, s] of zipArrays(error || [], state || [])) {
-    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, s)) {
+    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, parentState, context)) {
       return true;
     }
   }
@@ -447,18 +459,22 @@ const RecursiveListField = ({
   );
 };
 RecursiveListField.isEmpty = (x) => !x || !x.length;
-RecursiveListField.validatorRunner = (definition, value) => {
+RecursiveListField.validatorRunner = (definition, value, parentValue, context) => {
+  const fields = context?.nodeById?.[definition.definition_id]?.fields;
+  if (!fields) return null;
   if (definition.required && !value?.length) {
     return "This is required";
   }
   return (value || []).map((v) =>
-    validateDefinition({ ...definition, type: "Fields" }, v, value)
+    validateDefinition({ ...definition, fields, type: "Fields" }, v, parentValue, context)
   );
 };
-RecursiveListField.validatorChecker = (definition, error, state) => {
+RecursiveListField.validatorChecker = (definition, error, state, parentState, context) => {
+  const fields = context?.nodeById?.[definition.definition_id]?.fields;
+  if (!fields) return null;
   if (typeof error === "string") return true;
   for (const [e, s] of zipArrays(error || [], state || [])) {
-    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, s)) {
+    if (definitionIsInvalid({ ...definition, fields, type: "Fields" }, e, s, parentState, context)) {
       return true;
     }
   }
@@ -500,27 +516,31 @@ const RecursiveField = ({
   );
 };
 RecursiveField.isEmpty = (x) => false; // TODO remove
-RecursiveField.validatorRunner = (definition, value, parentValue) => {
+RecursiveField.validatorRunner = (definition, value, parentValue, context) => {
   let result = {};
-  const context = {};
   const current = context?.nodeById?.[definition.definition_id]?.fields;
   if (!current || !current.fields) return null;
   for (const f of current.fields) {
     if (f.k) {
-      result[f.k] = validateDefinition(f, value?.[f.k]);
+      result[f.k] = validateDefinition(f, value?.[f.k], value, context);
     } else {
-      result = { ...result, ...validateDefinition(f, value) };
+      result = { ...result, ...validateDefinition(f, value, parentValue, context) };
     }
   }
   return result;
 };
-RecursiveField.validatorChecker = (definition, error, value, parentValue) => {
-  const context = {};
+RecursiveField.validatorChecker = (definition, error, value, parentValue, context) => {
   const current = context?.nodeById?.[definition.definition_id]?.fields;
   if (!current || !current.fields) return null;
 
   for (const f of (current?.fields || [])) {
-    if (definitionIsInvalid(f, !!f.k ? error?.[f.k] : error, !!f.k ? value?.[f.k] : value)) {
+    if (definitionIsInvalid(
+      f,
+      !!f.k ? error?.[f.k] : error,
+      !!f.k ? value?.[f.k] : value,
+      !!f.k ? value : parentValue,
+      context
+    )) {
       return true;
     }
   }
@@ -588,7 +608,7 @@ FormComponent = ({
 };
 
 // Validator runners
-const validatorsValidatorRunner = (definition, value) => {
+const validatorsValidatorRunner = (definition, value, parentValue, context) => {
   const { type, required, validators } = definition;
   if (required && formComponents[type].isEmpty(value, definition)) {
     return "This is required";
@@ -606,21 +626,26 @@ const validatorsValidatorRunner = (definition, value) => {
   }
 };
 
-validateDefinition = (definition, state, parentState) => {
+validateDefinition = (definition, state, parentState, context) => {
   const validatorRunner =
     formComponents[definition.type].validatorRunner || validatorsValidatorRunner;
   let theFields = definition.fields;
   const interceptor = definition?.interceptor ? interceptors[definition?.interceptor] : null;
   if (interceptor && interceptor.processFields) {
-    theFields = interceptor.processFields({ fields: definition.fields, definition, value: state });
+    theFields = interceptor.processFields({ fields: theFields, definition, value: state });
   }
-  return validatorRunner({...definition, fields: theFields}, state, parentState);
+  let interceptorContext = {};
+  if (interceptor && interceptor.fieldsContext) {
+    interceptorContext = interceptor.fieldsContext({ fields: theFields, definition, value: state, context });
+  }
+  const theContext = {...context, ...interceptorContext};
+  return validatorRunner({...definition, fields: theFields}, state, parentState, theContext);
 };
 
 // Validator checkers
-const validatorsValidatorChecker = (definition, error, state, parentState) => !!error;
+const validatorsValidatorChecker = (definition, error, state, parentState, context) => !!error;
 
-definitionIsInvalid = (definition, error, state, parentState) => {
+definitionIsInvalid = (definition, error, state, parentState, context) => {
   const validatorChecker =
     formComponents[definition.type].validatorChecker || validatorsValidatorChecker;
   let theFields = definition.fields;
@@ -628,7 +653,12 @@ definitionIsInvalid = (definition, error, state, parentState) => {
   if (interceptor && interceptor.processFields) {
     theFields = interceptor.processFields({ fields: theFields, definition, value: state });
   }
-  return validatorChecker(definition, error, state, parentState); 
+  let interceptorContext = {};
+  if (interceptor && interceptor.fieldsContext) {
+    interceptorContext = interceptor.fieldsContext({ fields: theFields, definition, value: state, context });
+  }
+  const theContext = {...context, ...interceptorContext};
+  return validatorChecker(definition, error, state, parentState, theContext); 
 };
 
 const DefaultSubmitButtonWidget = _ => <button type="submit">Submit</button>;
