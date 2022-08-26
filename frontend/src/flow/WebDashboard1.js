@@ -243,9 +243,9 @@ const FIELD_DEF = {
                   "k": "definition",
                   "label": "Definition",
                   "definition_id": "id_of_the_field",
-                  "layout": "WithDeleteButton",
                 },
               ],
+              "layout": "WithDeleteButton",
             },
           ],
         },
@@ -270,7 +270,6 @@ const FIELD_DEF = {
               "label": "Wrapper", // TODO pre-fill?
             },
           ],
-          "id": "id_of_the_fields",
         },
       },
     },

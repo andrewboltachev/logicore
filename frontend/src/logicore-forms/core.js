@@ -497,9 +497,13 @@ const RecursiveField = ({
     labelStyle.style = { color: context.labelColor };
   }
   // TODO
-  const newCurrent = context?.nodeById?.[definition.definition_id]?.fields;
+  const newCurrent = context?.nodeById?.[definition.definition_id];
   if (!newCurrent || !newCurrent?.fields) {
     return <div className="text-danger">No definition_id found</div>;
+  }
+  let layout = newCurrent?.layout;
+  if (definition.hasOwnProperty('layout')) {
+    layout = definition?.layout;
   }
   return (<>
     <FormComponent
@@ -509,7 +513,7 @@ const RecursiveField = ({
       onReset={_ => {}}
       path={[]}
       error={(error && typeof error === 'object') ? error : null}
-      definition={{...newCurrent, layout: newCurrent?.layout || definition?.layout, itemWrapper: definition.itemWrapper}}
+      definition={{...newCurrent, layout, itemWrapper: definition.itemWrapper}}
     />
     {(error && typeof error === 'string') ? <div className="invalid-feedback d-block">{error + ''}</div> : null}
     </>
@@ -518,7 +522,7 @@ const RecursiveField = ({
 RecursiveField.isEmpty = (x) => false; // TODO remove
 RecursiveField.validatorRunner = (definition, value, parentValue, context) => {
   let result = {};
-  const current = context?.nodeById?.[definition.definition_id]?.fields;
+  const current = context?.nodeById?.[definition.definition_id];
   if (!current || !current.fields) return null;
   for (const f of current.fields) {
     if (f.k) {
@@ -530,7 +534,7 @@ RecursiveField.validatorRunner = (definition, value, parentValue, context) => {
   return result;
 };
 RecursiveField.validatorChecker = (definition, error, value, parentValue, context) => {
-  const current = context?.nodeById?.[definition.definition_id]?.fields;
+  const current = context?.nodeById?.[definition.definition_id];
   if (!current || !current.fields) return null;
 
   for (const f of (current?.fields || [])) {
@@ -577,6 +581,7 @@ formComponents = {
   UUIDListField,
   RecursiveListField,
   DefinedField,
+  RecursiveField,
   // Individual fields
   HiddenField,
   CustomDisplay,
@@ -811,6 +816,10 @@ function nodesIdMap(node) {
     }
     if (Array.isArray(node.fields)) {
       node.fields.forEach(doWalk);
+    }
+    if (node.type === 'DefinedField' && node.definitions) {
+      console.log('found definitions', node.definitions);
+      Object.values(node.definitions).forEach(doWalk);
     }
   }
   doWalk(node);
