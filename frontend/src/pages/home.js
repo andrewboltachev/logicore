@@ -16,9 +16,14 @@ import {
   useHistory,
 } from "react-router-dom";
 
+import "./home.scss";
+
 const HomeView = () => {
   return <div className="container my-4">
-    <div className="row">
+    <div className="row" style={{flexDirection: "row-reverse"}}>
+      <div className="col-md-4 personal-photo-container">
+        <img className="personal-photo" style={{borderRadius: 15, opacity: 0.75}} alt="" src="/static/JAU2gYJOCdI.jpg" />
+      </div>
       <div className="col-md-8">
         <h1>Andrei Boltachev</h1>
         <h5 className="text-muted">Full-stack software developer</h5>
@@ -44,9 +49,6 @@ const HomeView = () => {
             </dd>
           </dl>
         </div>
-      </div>
-      <div className="col-md-4">
-        <img style={{maxWidth: 300, borderRadius: 15, opacity: 0.75}} alt="" src="/static/JAU2gYJOCdI.jpg" />
       </div>
     </div>
   </div>;

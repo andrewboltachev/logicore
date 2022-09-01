@@ -1,0 +1,13 @@
+.personal-photo-container {
+  display: flex; align-items: flex-start; justify-content: center;
+  margin-bottom: 2rem;
+  @media (min-width: 992px) {
+    justify-content: flex-start;
+  }
+}
+.personal-photo {
+  max-width: 300px;
+  @media (max-width: 992px - 1) {
+    max-width: 200px;
+  }
+}
