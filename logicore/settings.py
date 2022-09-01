@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-lvmdan_6bv(i*4x#$6vh$o3ink=er6s+pfk-&1!b6z#z1*m@2*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["andrewboltachev.club"]
+ALLOWED_HOSTS = ["127.0.0.1", "andrewboltachev.club"]
 
 
 # Application definition
