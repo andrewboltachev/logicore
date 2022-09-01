@@ -45,6 +45,7 @@ import ZenDocument1Field from "./flow/ZenDocument1";
 import WebDashboard1Field from "./flow/WebDashboard1";
 
 import HomeView from "./pages/home";
+import LogicoreFormsDemoView from "./pages/logicore-forms-demo";
 
 import { ComponentType, ReactNode } from "react";
 import { jsx } from "@emotion/react";
@@ -167,6 +168,7 @@ const mainComponents = {
   ListView,
   GenericForm,
   HomeView,
+  LogicoreFormsDemoView,
 };
 
 const MainWrapper = ({ result, onChange }) => {

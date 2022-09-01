@@ -69,12 +69,12 @@ const RequiredWrapper = ({ required, children }) => (
 );
 
 const FieldLabel = ({ definition, id, context, children }) => {
-  return (<>
+  return (<div className="my-1">
     <RequiredWrapper required={definition.required}>
       {definition.label}
     </RequiredWrapper>
     {children}
-  </>);
+  </div>);
 };
 
 
@@ -212,7 +212,7 @@ const NumberField = ({
           className={classd`form-control ${{ "is-invalid": error }}`}
           value={(value + "") || ""}
           onChange={(e) => {
-            onChange(path, e.target.value);
+            onChange(e.target.value);
           }}
         />
         {definition.is_percent && <div style={{marginLeft: '0.25rem', fontSize: '0.825rem'}}>%</div>}

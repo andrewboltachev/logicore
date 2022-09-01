@@ -277,6 +277,22 @@ class Error404ApiView(MainView):
         return {}
 
 
+class LogicoreFormsDemoApiView(MainView):
+    in_menu = False
+    url_path = "/logicore-forms-demo"
+    title = "andrewboltachev.club"
+    TEMPLATE = "LogicoreFormsDemoView"
+
+    def get_fields(self):
+        return {}
+
+    def get_data(self, request, *args, **kwargs):
+        now_dt = now()
+        now_date = now_dt.date()
+        return {
+        }
+
+
 class HomeApiView(MainView):
     in_menu = False
     url_path = "/"
@@ -290,21 +306,7 @@ class HomeApiView(MainView):
         now_dt = now()
         now_date = now_dt.date()
         return {
-            'items': list(
-                models.Stratagem.objects.values('id', 'name', 'kind', 'created_dt', 'modified_dt')
-            ),
-            'create_form': read_fields(self.get_fields(), models.Stratagem())
         }
-
-    def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)['data']
-        if data.get('action') == 'delete':
-            models.Stratagem.objects.filter(id=data['id']).delete()
-            return JsonResponse({"redirect": f"/"})
-        if not data.get("params"):
-            data["params"] = {}
-        obj = write_fields(self.get_fields(), models.Stratagem(), data)
-        return JsonResponse({"redirect": f"/{obj.id}"})
 
 
 class StratagemsApiView(MainView):

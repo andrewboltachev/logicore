@@ -267,7 +267,7 @@ const ForeignKeyListField = ({
       <Wrapper
         {...{ definition, value, onChange, error, onReset, path, context }}
         addButton={<button
-          className="btn btn-primary"
+          className="btn btn-success"
           style={definition?.addButtonStyle || {}}
           type="button"
           onClick={(_) => onChange([...vvalue, newValue])}
@@ -344,7 +344,7 @@ const UUIDListField = ({
       <Wrapper
         {...{ definition, value, onChange, error, onReset, path, context }}
         addButton={<button
-          className="btn btn-primary"
+          className="btn btn-success"
           style={definition?.addButtonStyle || {}}
           type="button"
           onClick={(_) => onChange([...vvalue, {...newValue, uuid: uuidv4()}])}
@@ -426,7 +426,7 @@ const RecursiveListField = ({
       <Wrapper
         {...{ definition, value, onChange, error, onReset, path, context }}
         addButton={<button
-          className="btn btn-primary"
+          className="btn btn-success"
           style={definition?.addButtonStyle || {}}
           type="button"
           onClick={(_) => onChange([...vvalue, {...newValue, uuid: uuidv4()}])}
