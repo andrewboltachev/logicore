@@ -23,6 +23,7 @@ const HomeView = () => {
       <h5 className="text-muted">Full-stack software developer</h5>
     </div>
     <div className="col-md-4">
+      <img alt="" src="/" />
     </div>
   </div>;
 };
