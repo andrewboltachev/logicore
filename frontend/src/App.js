@@ -44,6 +44,8 @@ import PythonRefactoring1Field from "./flow/PythonRefactoring1";
 import ZenDocument1Field from "./flow/ZenDocument1";
 import WebDashboard1Field from "./flow/WebDashboard1";
 
+import HomeView from "./pages/home";
+
 import { ComponentType, ReactNode } from "react";
 import { jsx } from "@emotion/react";
 
@@ -164,6 +166,7 @@ const ListView = ({create_form, items, onChange}) => {
 const mainComponents = {
   ListView,
   GenericForm,
+  HomeView,
 };
 
 const MainWrapper = ({ result, onChange }) => {
