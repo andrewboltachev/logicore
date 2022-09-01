@@ -35,9 +35,12 @@ const HomeView = () => {
             </dd>
             <dt>Interests &amp; own projects</dt>
             <dd>
-              <p>Having certain natural-language processing (NLP) experience in the past, now I have formal languages analysis as my main interest. Modern ideas I believe in are functional and declarative programming, low-code systems and refactoring tools (to improve quality of existing systems). During my career, I created few tools that help editing :</p>
-              <p><a target="_blank" href="https://github.com/andrewboltachev/mega-copy">Mega-copy</a>, a tool that helps edit and copy code in bulk (mainly in Python/Django/ReactJS projects)</p>
-              <p>Logicore-forms — declarative form generator for ReactJS with extension for Django</p>
+              <p>Modern ideas I believe in are functional and declarative programming, low-code systems and refactoring tools (to improve quality of existing systems).</p>
+              <p>During my career, I created few tools that help building systems more quickly and effectively:<ul>
+            <li><a target="_blank" href="https://github.com/andrewboltachev/mega-copy">Mega-copy</a>, a tool that helps edit and copy code in bulk (mainly in Python/Django/ReactJS projects)</li>
+            <li><a href="/logicore-forms-demo">Logicore-forms</a> — declarative form generator for ReactJS with extension for Django</li>
+          </ul>
+          </p>
             </dd>
           </dl>
         </div>
