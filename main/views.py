@@ -311,7 +311,7 @@ class HomeApiView(MainView):
 
 class StratagemsApiView(MainView):
     in_menu = False
-    url_path = "/stratagems"
+    url_path = "/stratagems/"
     title = "Stratagems"
     TEMPLATE = "ListView"
 
@@ -364,7 +364,7 @@ class StratagemsApiView(MainView):
         data = json.loads(request.body)['data']
         if data.get('action') == 'delete':
             models.Stratagem.objects.filter(id=data['id']).delete()
-            return JsonResponse({"redirect": f"/"})
+            return JsonResponse({"redirect": f"/stratagems/"})
         if not data.get("params"):
             data["params"] = {}
         obj = write_fields(self.get_fields(), models.Stratagem(), data)
