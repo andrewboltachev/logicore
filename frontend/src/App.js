@@ -184,6 +184,7 @@ const LanguageView = ({onChange}) => {
         <button
           className="btn btn-primary my-2"
           onClick={_ => {
+            setResult(null);
             onChange({value: text}, null, ({result}) => setResult(result));
           }}
         >Update  -&gt;</button>

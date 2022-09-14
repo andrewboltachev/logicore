@@ -527,8 +527,14 @@ class PythonView(MainView):
         }
 
     def post(self, request, *args, **kwargs):
+        from main.parser.python import serialize_dc
+        import libcst
         data = json.loads(request.body)['data']
+        try:
+            result = serialize_dc(libcst.parse_module(data['value']))
+        except Exception as e:
+            result = str(e)
         return JsonResponse({
             #"navigate": f"/python"
-            "result": data['value'] + '!',
+            "result": result['body'][0] if len(result['body']) == 1 else result['body'],
         })
