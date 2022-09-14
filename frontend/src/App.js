@@ -164,11 +164,49 @@ const ListView = ({create_form, items, onChange}) => {
   </div>;
 }
 
+const LanguageView = ({onChange}) => {
+  const [text, setText] = useState('');
+  const [result, setResult] = useState(null);
+  return <div className="container-fluid my-4">
+    <div className="row">
+      <div className="col-md-6 d-flex justify-content-center">
+        <h3>Language</h3>
+      </div>
+      <div className="col-md-6 d-flex justify-content-center">
+        Result
+      </div>
+    </div>
+    <div className="row my-5">
+      <div className="col-md-6">
+        Code:
+        <textarea className="form-control" style={{height: "75vh", fontFamily: "Monaco, Menlo, Consolas, monospace"}} value={text} onChange={e => setText(e.target.value)}>
+        </textarea>
+        <button
+          className="btn btn-primary my-2"
+          onClick={_ => {
+            onChange({value: text}, null, ({result}) => setResult(result));
+          }}
+        >Update  -&gt;</button>
+      </div>
+      {typeof result === 'string' ? <div className="col-md-6 text-danger">
+          Error:
+          <hr style={{marginTop: 0}} />
+          <code>{result}</code>
+        </div> : <div className="col-md-6">
+          Result:
+          <hr style={{marginTop: 0}} />
+          <code style={{whiteSpace: 'pre'}}>{JSON.stringify(result, null, 2)}</code>
+      </div>}
+    </div>
+  </div>;
+};
+
 const mainComponents = {
   ListView,
   GenericForm,
   HomeView,
   LogicoreFormsDemoView,
+  LanguageView,
 };
 
 const MainWrapper = ({ result, onChange }) => {

@@ -512,3 +512,23 @@ class GetFileNodesView(View):
         return JsonResponse({
             'code': serialized
         })
+
+
+class PythonView(MainView):
+    in_menu = False
+    url_path = "/python"
+    title = "Hello world"
+    TEMPLATE = "LanguageView"
+
+    def get_data(self, request, *args, **kwargs):
+        return {
+            "value": "",
+            "result": None,
+        }
+
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)['data']
+        return JsonResponse({
+            #"navigate": f"/python"
+            "result": data['value'] + '!',
+        })

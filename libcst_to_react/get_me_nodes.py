@@ -2,7 +2,7 @@ import libcst
 from libcst._nodes.internal import CodegenState
 from collections.abc import Iterable
 from functools import reduce
-from ..main.parser.python import serialize_dc
+from main.parser.python import serialize_dc
 
 
 def all_subclasses(cls):
@@ -23,7 +23,12 @@ def write_file(filename, text):
 
 all_cst_nodes = list(all_subclasses(libcst.CSTNode))
 
-leaf_cst_nodes = [x for x in all_cst_nodes if not x.__subclasses__()]
+leaf_cst_nodes = []
+
+for x in all_cst_nodes:
+    if not x.__subclasses__():
+        if x not in leaf_cst_nodes:
+            leaf_cst_nodes.append(x)
 
 module_cache = {}
 
@@ -100,7 +105,11 @@ def load_codegen_impl(klass):
     return r
 
 #print(load_codegen_impl('Del'))
+seen = set([])
 for x in leaf_cst_nodes:
+    if x.__name__ in seen:
+        continue
+    seen.add(x.__name__)
     impl = load_codegen_impl(x)
     if impl:
         print('# ' + x.__name__)
