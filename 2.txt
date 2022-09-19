@@ -1,0 +1,751 @@
+value
+	SimpleWhitespace
+	Comment
+	BaseValueToken
+	Newline
+	NotEqual
+	Name
+	Attribute
+	Subscript
+	Integer
+	Float
+	Imaginary
+	SimpleString
+	Yield
+	StarredElement
+	DictComp
+	NamedExpr
+	MatchValue
+	MatchSingleton
+	FormattedStringText
+	Index
+	Arg
+	Element
+	DictElement
+	StarredDictElement
+	_BaseElementImpl
+	Return
+	Expr
+	Assign
+	AnnAssign
+	AugAssign
+	MatchSequenceElement
+first_line
+	ParenthesizedWhitespace
+empty_lines
+	ParenthesizedWhitespace
+indent
+	ParenthesizedWhitespace
+	EmptyLine
+	IndentedBlock
+	Match
+last_line
+	ParenthesizedWhitespace
+whitespace
+	TrailingWhitespace
+	EmptyLine
+comment
+	TrailingWhitespace
+	EmptyLine
+newline
+	TrailingWhitespace
+	EmptyLine
+whitespace_before
+	And
+	Or
+	Semicolon
+	Colon
+	Comma
+	Dot
+	AssignEqual
+	Add
+	Subtract
+	Multiply
+	Divide
+	FloorDivide
+	Modulo
+	Power
+	LeftShift
+	RightShift
+	BitOr
+	BitAnd
+	BitXor
+	MatrixMultiply
+	LessThan
+	GreaterThan
+	Equal
+	LessThanEqual
+	GreaterThanEqual
+	NotEqual
+	In
+	Is
+	AddAssign
+	SubtractAssign
+	MultiplyAssign
+	MatrixMultiplyAssign
+	DivideAssign
+	ModuloAssign
+	BitAndAssign
+	BitOrAssign
+	BitXorAssign
+	LeftShiftAssign
+	RightShiftAssign
+	PowerAssign
+	FloorDivideAssign
+	_BaseOneTokenOp
+	NotIn
+	IsNot
+	_BaseTwoTokenOp
+	RightSquareBracket
+	RightCurlyBrace
+	RightParen
+	CompFor
+	CompIf
+whitespace_after
+	And
+	Or
+	Semicolon
+	Colon
+	Comma
+	Dot
+	AssignEqual
+	Add
+	Subtract
+	Multiply
+	Divide
+	FloorDivide
+	Modulo
+	Power
+	LeftShift
+	RightShift
+	BitOr
+	BitAnd
+	BitXor
+	MatrixMultiply
+	LessThan
+	GreaterThan
+	Equal
+	LessThanEqual
+	GreaterThanEqual
+	NotEqual
+	In
+	Is
+	AddAssign
+	SubtractAssign
+	MultiplyAssign
+	MatrixMultiplyAssign
+	DivideAssign
+	ModuloAssign
+	BitAndAssign
+	BitOrAssign
+	BitXorAssign
+	LeftShiftAssign
+	RightShiftAssign
+	PowerAssign
+	FloorDivideAssign
+	_BaseOneTokenOp
+	NotIn
+	IsNot
+	_BaseTwoTokenOp
+	Plus
+	Minus
+	BitInvert
+	Not
+	BaseUnaryOp
+	LeftSquareBracket
+	LeftCurlyBrace
+	LeftParen
+	Asynchronous
+whitespace_between
+	NotIn
+	IsNot
+	_BaseTwoTokenOp
+	ConcatenatedString
+lpar
+	Name
+	Attribute
+	Subscript
+	Tuple
+	List
+	Ellipsis
+	Integer
+	Float
+	Imaginary
+	SimpleString
+	FormattedString
+	ConcatenatedString
+	Comparison
+	UnaryOperation
+	BinaryOperation
+	BooleanOperation
+	Lambda
+	Call
+	Await
+	IfExp
+	Yield
+	StarredElement
+	ListComp
+	BaseList
+	Set
+	SetComp
+	Dict
+	DictComp
+	_BaseSetOrDict
+	GeneratorExp
+	NamedExpr
+	MatchList
+	MatchTuple
+	MatchMapping
+	MatchClass
+	MatchAs
+	MatchOr
+	_BaseParenthesizedNode
+	ClassDef
+	With
+	ImportFrom
+rpar
+	Name
+	Attribute
+	Subscript
+	Tuple
+	List
+	Ellipsis
+	Integer
+	Float
+	Imaginary
+	SimpleString
+	FormattedString
+	ConcatenatedString
+	Comparison
+	UnaryOperation
+	BinaryOperation
+	BooleanOperation
+	Lambda
+	Call
+	Await
+	IfExp
+	Yield
+	StarredElement
+	ListComp
+	BaseList
+	Set
+	SetComp
+	Dict
+	DictComp
+	_BaseSetOrDict
+	GeneratorExp
+	NamedExpr
+	MatchList
+	MatchTuple
+	MatchMapping
+	MatchClass
+	MatchAs
+	MatchOr
+	_BaseParenthesizedNode
+	ClassDef
+	With
+	ImportFrom
+attr
+	Attribute
+dot
+	Attribute
+slice
+	Subscript
+	SubscriptElement
+lbracket
+	Subscript
+	List
+	ListComp
+	BaseList
+	MatchList
+rbracket
+	Subscript
+	List
+	ListComp
+	BaseList
+	MatchList
+whitespace_after_value
+	Subscript
+elements
+	Tuple
+	List
+	Set
+	Dict
+	MatchMapping
+parts
+	FormattedString
+start
+	FormattedString
+end
+	FormattedString
+left
+	ConcatenatedString
+	Comparison
+	BinaryOperation
+	BooleanOperation
+right
+	ConcatenatedString
+	BinaryOperation
+	BooleanOperation
+comparisons
+	Comparison
+operator
+	UnaryOperation
+	BinaryOperation
+	BooleanOperation
+	ComparisonTarget
+	AugAssign
+expression
+	UnaryOperation
+	Await
+	FormattedStringExpression
+params
+	Lambda
+	Parameters
+	FunctionDef
+body
+	Lambda
+	IfExp
+	SimpleStatementSuite
+	IndentedBlock
+	BaseSuite
+	SimpleStatementLine
+	If
+	Try
+	TryStar
+	FunctionDef
+	ClassDef
+	With
+	For
+	While
+	BaseCompoundStatement
+	_BaseSimpleStatement
+	Else
+	ExceptHandler
+	ExceptStarHandler
+	Finally
+	MatchCase
+	Module
+colon
+	Lambda
+whitespace_after_lambda
+	Lambda
+func
+	Call
+args
+	Call
+	_BaseExpressionWithArgs
+whitespace_after_func
+	Call
+whitespace_before_args
+	Call
+whitespace_after_await
+	Await
+test
+	IfExp
+	CompIf
+	If
+	While
+	Assert
+orelse
+	IfExp
+	If
+	Try
+	TryStar
+	For
+	While
+whitespace_before_if
+	IfExp
+	MatchCase
+whitespace_after_if
+	IfExp
+	MatchCase
+whitespace_before_else
+	IfExp
+whitespace_after_else
+	IfExp
+whitespace_after_yield
+	Yield
+comma
+	StarredElement
+	SubscriptElement
+	ParamStar
+	ParamSlash
+	Param
+	Arg
+	Element
+	DictElement
+	StarredDictElement
+	_BaseElementImpl
+	Assert
+	ImportAlias
+	WithItem
+	NameItem
+	MatchSequenceElement
+	MatchStar
+	MatchMappingElement
+	MatchKeywordElement
+whitespace_before_value
+	StarredElement
+	StarredDictElement
+elt
+	ListComp
+	SetComp
+	GeneratorExp
+	BaseSimpleComp
+for_in
+	ListComp
+	SetComp
+	DictComp
+	GeneratorExp
+	BaseSimpleComp
+	BaseComp
+lbrace
+	Set
+	SetComp
+	Dict
+	DictComp
+	_BaseSetOrDict
+	MatchMapping
+rbrace
+	Set
+	SetComp
+	Dict
+	DictComp
+	_BaseSetOrDict
+	MatchMapping
+key
+	DictComp
+	DictElement
+	MatchMappingElement
+	MatchKeywordElement
+whitespace_before_colon
+	DictComp
+	DictElement
+	Try
+	TryStar
+	FunctionDef
+	ClassDef
+	With
+	For
+	While
+	Match
+	Else
+	ExceptHandler
+	ExceptStarHandler
+	Finally
+	MatchCase
+	MatchMappingElement
+whitespace_after_colon
+	DictComp
+	DictElement
+	Match
+	MatchMappingElement
+target
+	NamedExpr
+	CompFor
+	For
+	Del
+	AnnAssign
+	AugAssign
+	AssignTarget
+whitespace_before_walrus
+	NamedExpr
+whitespace_after_walrus
+	NamedExpr
+patterns
+	MatchList
+	MatchTuple
+	MatchSequence
+	MatchClass
+	MatchOr
+rest
+	MatchMapping
+whitespace_before_rest
+	MatchMapping
+trailing_comma
+	MatchMapping
+cls
+	MatchClass
+kwds
+	MatchClass
+whitespace_after_cls
+	MatchClass
+whitespace_before_patterns
+	MatchClass
+whitespace_after_kwds
+	MatchClass
+pattern
+	MatchAs
+	MatchCase
+	MatchMappingElement
+	MatchKeywordElement
+	MatchOrElement
+name
+	MatchAs
+	Param
+	FunctionDef
+	ClassDef
+	AsName
+	ExceptHandler
+	ExceptStarHandler
+	ImportAlias
+	NameItem
+	MatchStar
+whitespace_before_as
+	MatchAs
+	AsName
+whitespace_after_as
+	MatchAs
+	AsName
+conversion
+	FormattedStringExpression
+format_spec
+	FormattedStringExpression
+whitespace_before_expression
+	FormattedStringExpression
+whitespace_after_expression
+	FormattedStringExpression
+equal
+	FormattedStringExpression
+	Param
+	Arg
+	AnnAssign
+comparator
+	ComparisonTarget
+star
+	Index
+	Param
+	Arg
+whitespace_after_star
+	Index
+	Param
+	Arg
+	ExceptStarHandler
+lower
+	Slice
+upper
+	Slice
+step
+	Slice
+first_colon
+	Slice
+second_colon
+	Slice
+annotation
+	Annotation
+	Param
+	AnnAssign
+whitespace_before_indicator
+	Annotation
+whitespace_after_indicator
+	Annotation
+default
+	Param
+whitespace_after_param
+	Param
+star_arg
+	Parameters
+kwonly_params
+	Parameters
+star_kwarg
+	Parameters
+posonly_params
+	Parameters
+posonly_ind
+	Parameters
+keyword
+	Arg
+whitespace_after_arg
+	Arg
+item
+	From
+	WithItem
+whitespace_before_from
+	From
+whitespace_after_from
+	From
+	ImportFrom
+iter
+	CompFor
+	For
+ifs
+	CompFor
+inner_for_in
+	CompFor
+asynchronous
+	CompFor
+	FunctionDef
+	With
+	For
+whitespace_after_for
+	CompFor
+	For
+whitespace_before_in
+	CompFor
+	For
+whitespace_after_in
+	CompFor
+	For
+whitespace_before_test
+	CompIf
+	If
+leading_whitespace
+	SimpleStatementSuite
+trailing_whitespace
+	SimpleStatementSuite
+	SimpleStatementLine
+	_BaseSimpleStatement
+	Decorator
+header
+	IndentedBlock
+	Module
+footer
+	IndentedBlock
+	Match
+	Module
+leading_lines
+	SimpleStatementLine
+	If
+	Try
+	TryStar
+	FunctionDef
+	ClassDef
+	With
+	For
+	While
+	Match
+	BaseCompoundStatement
+	Else
+	ExceptHandler
+	ExceptStarHandler
+	Finally
+	Decorator
+	MatchCase
+whitespace_after_test
+	If
+handlers
+	Try
+	TryStar
+finalbody
+	Try
+	TryStar
+decorators
+	FunctionDef
+	ClassDef
+returns
+	FunctionDef
+lines_after_decorators
+	FunctionDef
+	ClassDef
+whitespace_after_def
+	FunctionDef
+whitespace_after_name
+	FunctionDef
+	ClassDef
+whitespace_before_params
+	FunctionDef
+bases
+	ClassDef
+keywords
+	ClassDef
+whitespace_after_class
+	ClassDef
+items
+	With
+whitespace_after_with
+	With
+whitespace_after_while
+	While
+subject
+	Match
+cases
+	Match
+whitespace_after_match
+	Match
+whitespace_after_del
+	Del
+semicolon
+	Del
+	Pass
+	Break
+	Continue
+	Return
+	Expr
+	Import
+	ImportFrom
+	Assign
+	AnnAssign
+	AugAssign
+	Raise
+	Assert
+	Global
+	Nonlocal
+	BaseSmallStatement
+whitespace_after_return
+	Return
+names
+	Import
+	ImportFrom
+	Global
+	Nonlocal
+whitespace_after_import
+	Import
+	ImportFrom
+module
+	ImportFrom
+relative
+	ImportFrom
+whitespace_before_import
+	ImportFrom
+targets
+	Assign
+exc
+	Raise
+cause
+	Raise
+whitespace_after_raise
+	Raise
+msg
+	Assert
+whitespace_after_assert
+	Assert
+whitespace_after_global
+	Global
+whitespace_after_nonlocal
+	Nonlocal
+type
+	ExceptHandler
+	ExceptStarHandler
+whitespace_after_except
+	ExceptHandler
+	ExceptStarHandler
+asname
+	ImportAlias
+	WithItem
+whitespace_before_equal
+	AssignTarget
+	MatchKeywordElement
+whitespace_after_equal
+	AssignTarget
+	MatchKeywordElement
+decorator
+	Decorator
+whitespace_after_at
+	Decorator
+guard
+	MatchCase
+whitespace_after_case
+	MatchCase
+whitespace_before_name
+	MatchStar
+separator
+	MatchOrElement
+encoding
+	Module
+default_indent
+	Module
+default_newline
+	Module
+has_trailing_newline
+	Module

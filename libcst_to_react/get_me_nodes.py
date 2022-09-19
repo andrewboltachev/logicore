@@ -1,10 +1,17 @@
 import sys
 import re
 import libcst
+import json
 from libcst._nodes.internal import CodegenState
 from collections.abc import Iterable
 from functools import reduce
+from collections import defaultdict
 from main.parser.python import serialize_dc, unserialize_dc
+from libcst_to_react.nodes_params import nodes_params
+
+
+def clean_split(lines):
+    return [x for x in [x.strip() for x in lines.split("\n")] if x]
 
 
 def all_subclasses(cls):
@@ -107,6 +114,22 @@ def load_codegen_impl(klass):
     return r
 
 
+def load_statements(klass):
+    if type(klass) == str:
+        klass = locate_class(klass)
+    module = load_module(klass.__module__)
+    cdef = find_node(module, lambda x: is_a_class_of_name(x, klass.__name__))
+    r = []
+    for n in cdef.body.body:
+        if (
+            type(n) == libcst.SimpleStatementLine
+            and len(n.body) == 1
+            and type(n.body[0]) == libcst.AnnAssign
+        ):
+            r.append(n.body[0])
+    return r
+
+
 DEFAULT_MATCH_PATTERN = r"^___[\d]+$"
 
 
@@ -120,33 +143,50 @@ def match_code(code, pattern, match_pattern=DEFAULT_MATCH_PATTERN):
     acc = {}
 
     def walk(code, pattern):
+        #print('called with', pattern, code)
         # TODO special pattern nodes - hacks for grammar
-        if code.get("type") == pattern.get("type"):
-            # 1. Name pattern case
-            if pattern.get("type") == "Name" and re.match(match_pattern, pattern.get("value")):
-                if pattern["value"] not in acc:
-                    acc[pattern["value"]] = code["value"]
-                    return True
-                elif acc[pattern["value"]] == code["value"]:
-                    return True
-                else:
-                    print(f"type mismatch. expected: {pattern.get('type')}, found: {code.get('type')}")
-                    return False
-            # 2. Individual nodes
-            # 3. body (dict/list)
-            if "body" in pattern:
-                if type(pattern["body"]) != type(code.get("body")):
-                    return False
-                if type(pattern["body"]) == dict:
-                    return walk(code["body"], pattern["body"])
-                else: # must be list
-                    if len(pattern["body"]) != len(code["body"]):
-                        print(f"list length mismatch. expected: {len(pattern['body'])}, found: {len(code['body'])}")
+        if type(pattern) == dict:
+            if code.get("type") == pattern.get("type"):
+                # 1. Name pattern case
+                if pattern.get("type") == "Name" and re.match(match_pattern, pattern.get("value")):
+                    if pattern["value"] not in acc:
+                        acc[pattern["value"]] = code["value"]
+                        return True
+                    elif acc[pattern["value"]] == code["value"]:
+                        return True
+                    else:
+                        #print(f"type mismatch. expected: {pattern.get('type')}, found: {code.get('type')}")
                         return False
-                    for c, p in zip(code["body"], pattern["body"]):
-                        if not walk(c, p):
+                # 2. Individual nodes
+                node_params = nodes_params[pattern["type"]]
+                for k in node_params:
+                    if k not in ["body"]:
+                        if not walk(code[k], pattern[k]):
+                            #print(f"param mismatch: {k} expected to be {pattern[k]}, got {code[k]}")
                             return False
-                    return True
+                # 3. body (dict/list)
+                if "body" in pattern:
+                    if type(pattern["body"]) != type(code.get("body")):
+                        return False
+                    if type(pattern["body"]) == dict:
+                        return walk(code["body"], pattern["body"])
+                    else: # must be list
+                        if len(pattern["body"]) != len(code["body"]):
+                            #print(f"list length mismatch. expected: {len(pattern['body'])}, found: {len(code['body'])}")
+                            return False
+                        for c, p in zip(code["body"], pattern["body"]):
+                            if not walk(c, p):
+                                return False
+                        return True
+                # for case 2, after body also checked
+                return True
+        elif isinstance(pattern, Iterable) and not type(pattern) == str:
+            for c, p in zip(list(code), list(pattern)):
+                if not walk(c, p):
+                    return False
+            return True
+        else:
+            return pattern == code
     if not walk(code, pattern):
         return False
     elif acc:
@@ -166,8 +206,8 @@ def _codegen_impl(self, state: CodegenState) -> None:
 
 PATTERN = """\
 def _codegen_impl(self, state: CodegenState) -> None:
-    value = self.value
-    state.add_token(state.default_newline if value is None else value)
+    ___2 = self.___2
+    ___1.add_token(___1.default_newline if value is None else value)
 """
 
 
@@ -204,6 +244,71 @@ if cmd == "1":
             print('<-')
             break # only 1
 elif cmd == "2":
-    pass
+    result = defaultdict(list)
+    seen = set([])
+    for x in all_cst_nodes:
+        if x.__name__ in seen:
+            continue
+        #print('# ' + x.__name__)
+        seen.add(x.__name__) # FIXME what's that?
+        for r in load_statements(x):
+            #print('# ' + x.__name__)
+            #print(code_for_node(r.target))
+            result[r.target.value].append(x.__name__)
+    #print('-*- ' * 20)
+    for k, v in result.items():
+        print(k)
+        for z in v:
+            print(f"\t{z}")
+elif cmd == "3":
+    result = defaultdict(list)
+    seen = set([])
+    for x in all_cst_nodes:
+        if x.__name__ in seen:
+            continue
+        #print('# ' + x.__name__)
+        seen.add(x.__name__) # FIXME what's that?
+        for r in load_statements(x):
+            #print('# ' + x.__name__)
+            #print(code_for_node(r.target))
+            x = code_for_node(r)
+            if x not in result[r.target.value]:
+                result[r.target.value].append(x)
+    #print('-*- ' * 20)
+    for k, v in result.items():
+        print(k)
+        for z in v:
+            print(f"\t{z}")
+elif cmd == "4":
+    ignore_params = clean_split("""\
+    first_line
+    empty_lines
+    indent
+    newline
+    lpar
+    rpar
+    colon
+    header
+    footer
+    leading_lines
+    lines_after_decorators
+    """)
+    result = {}
+    seen = set([])
+    for x in all_cst_nodes:
+        if x.__name__ in seen:
+            continue
+        #print('# ' + x.__name__)
+        seen.add(x.__name__) # FIXME what's that?
+        result[x.__name__] = []
+        for r in load_statements(x):
+            if (
+                (r.target.value not in ignore_params)
+                and not re.match(r".*white.*", r.target.value)
+            ):
+                result[x.__name__].append(r.target.value)
+    print(json.dumps(result, indent=4))
+    # nodes params that ain't meaningful
+
 else:
     print("No command specified")

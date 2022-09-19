@@ -1,0 +1,426 @@
+value
+	value: str
+	value: Optional[str] = None
+	value: str = "!="
+	value: BaseExpression
+	value: Optional[Union[BaseExpression, From]] = None
+	value: BaseAssignTargetExpression
+	value: Name
+	value: Optional[BaseExpression] = None
+	value: MatchPattern
+first_line
+	first_line: TrailingWhitespace = TrailingWhitespace.field()
+empty_lines
+	empty_lines: Sequence[EmptyLine] = ()
+indent
+	indent: bool = False
+	indent: bool = True
+	indent: Optional[str] = None
+last_line
+	last_line: SimpleWhitespace = SimpleWhitespace.field("")
+whitespace
+	whitespace: SimpleWhitespace = SimpleWhitespace.field("")
+comment
+	comment: Optional[Comment] = None
+newline
+	newline: Newline = Newline.field()
+whitespace_before
+	whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+	whitespace_before: BaseParenthesizableWhitespace
+whitespace_after
+	whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+	whitespace_after: BaseParenthesizableWhitespace
+	whitespace_after: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_between
+	whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_between: BaseParenthesizableWhitespace
+	whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+lpar
+	lpar: Sequence[LeftParen] = ()
+	lpar: Sequence[LeftParen] = field(default_factory=lambda: (LeftParen(),))
+	lpar: Union[LeftParen, MaybeSentinel] = MaybeSentinel.DEFAULT
+	lpar: Optional[LeftParen] = None
+rpar
+	rpar: Sequence[RightParen] = ()
+	rpar: Sequence[RightParen] = field(default_factory=lambda: (RightParen(),))
+	rpar: Union[RightParen, MaybeSentinel] = MaybeSentinel.DEFAULT
+	rpar: Optional[RightParen] = None
+attr
+	attr: Name
+dot
+	dot: Dot = Dot()
+slice
+	slice: Sequence[SubscriptElement]
+	slice: BaseSlice
+lbracket
+	lbracket: LeftSquareBracket = LeftSquareBracket.field()
+	lbracket: Optional[LeftSquareBracket] = LeftSquareBracket.field()
+rbracket
+	rbracket: RightSquareBracket = RightSquareBracket.field()
+	rbracket: Optional[RightSquareBracket] = RightSquareBracket.field()
+whitespace_after_value
+	whitespace_after_value: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+elements
+	elements: Sequence[BaseElement]
+	elements: Sequence[BaseDictElement]
+	elements: Sequence[MatchMappingElement] = ()
+parts
+	parts: Sequence[BaseFormattedStringContent]
+start
+	start: str = 'f"'
+end
+	end: Literal['"', "'", '"""', "'''"] = '"'
+left
+	left: Union[SimpleString, FormattedString]
+	left: BaseExpression
+right
+	right: Union[SimpleString, FormattedString, "ConcatenatedString"]
+	right: BaseExpression
+comparisons
+	comparisons: Sequence[ComparisonTarget]
+operator
+	operator: BaseUnaryOp
+	operator: BaseBinaryOp
+	operator: BaseBooleanOp
+	operator: BaseCompOp
+	operator: BaseAugOp
+expression
+	expression: BaseExpression
+params
+	params: Parameters
+	params: Sequence[Param] = ()
+body
+	body: BaseExpression
+	body: Sequence[BaseSmallStatement]
+	body: Sequence[BaseStatement]
+	body: Union[Sequence["BaseStatement"], Sequence["BaseSmallStatement"]]
+	body: BaseSuite
+	body: Sequence[Union[SimpleStatementLine, BaseCompoundStatement]]
+colon
+	colon: Colon = Colon.field(whitespace_after=SimpleWhitespace(" "))
+whitespace_after_lambda
+	whitespace_after_lambda: Union[
+    BaseParenthesizableWhitespace, MaybeSentinel
+] = MaybeSentinel.DEFAULT
+func
+	func: BaseExpression
+args
+	args: Sequence[Arg] = ()
+whitespace_after_func
+	whitespace_after_func: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+whitespace_before_args
+	whitespace_before_args: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+whitespace_after_await
+	whitespace_after_await: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+test
+	test: BaseExpression
+orelse
+	orelse: BaseExpression
+	orelse: Union["If", Else, None] = None
+	orelse: Optional[Else] = None
+whitespace_before_if
+	whitespace_before_if: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_before_if: SimpleWhitespace = SimpleWhitespace.field("")
+whitespace_after_if
+	whitespace_after_if: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_after_if: SimpleWhitespace = SimpleWhitespace.field("")
+whitespace_before_else
+	whitespace_before_else: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+whitespace_after_else
+	whitespace_after_else: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+whitespace_after_yield
+	whitespace_after_yield: Union[
+    BaseParenthesizableWhitespace, MaybeSentinel
+] = MaybeSentinel.DEFAULT
+comma
+	comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+	comma: Comma = Comma.field(whitespace_after=SimpleWhitespace(" "))
+whitespace_before_value
+	whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+elt
+	elt: BaseAssignTargetExpression
+for_in
+	for_in: CompFor
+lbrace
+	lbrace: LeftCurlyBrace = LeftCurlyBrace.field()
+rbrace
+	rbrace: RightCurlyBrace = RightCurlyBrace.field()
+key
+	key: BaseAssignTargetExpression
+	key: BaseExpression
+	key: Name
+whitespace_before_colon
+	whitespace_before_colon: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+	whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
+whitespace_after_colon
+	whitespace_after_colon: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_after_colon: TrailingWhitespace = TrailingWhitespace.field()
+target
+	target: BaseExpression
+	target: BaseAssignTargetExpression
+	target: BaseDelTargetExpression
+whitespace_before_walrus
+	whitespace_before_walrus: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+    " "
+)
+whitespace_after_walrus
+	whitespace_after_walrus: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+patterns
+	patterns: Sequence[Union[MatchSequenceElement, MatchStar]]
+	patterns: Sequence[MatchSequenceElement] = ()
+	patterns: Sequence[MatchOrElement]
+rest
+	rest: Optional[Name] = None
+whitespace_before_rest
+	whitespace_before_rest: SimpleWhitespace = SimpleWhitespace.field("")
+trailing_comma
+	trailing_comma: Optional[Comma] = None
+cls
+	cls: BaseExpression
+kwds
+	kwds: Sequence[MatchKeywordElement] = ()
+whitespace_after_cls
+	whitespace_after_cls: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+whitespace_before_patterns
+	whitespace_before_patterns: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+    ""
+)
+whitespace_after_kwds
+	whitespace_after_kwds: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+pattern
+	pattern: Optional[MatchPattern] = None
+	pattern: MatchPattern
+name
+	name: Optional[Name] = None
+	name: Name
+	name: Union[Name, Tuple, List]
+	name: Optional[AsName] = None
+	name: Union[Attribute, Name]
+whitespace_before_as
+	whitespace_before_as: Union[
+    BaseParenthesizableWhitespace, MaybeSentinel
+] = MaybeSentinel.DEFAULT
+	whitespace_before_as: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+whitespace_after_as
+	whitespace_after_as: Union[
+    BaseParenthesizableWhitespace, MaybeSentinel
+] = MaybeSentinel.DEFAULT
+	whitespace_after_as: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+conversion
+	conversion: Optional[str] = None
+format_spec
+	format_spec: Optional[Sequence[BaseFormattedStringContent]] = None
+whitespace_before_expression
+	whitespace_before_expression: BaseParenthesizableWhitespace = (
+    SimpleWhitespace.field("")
+)
+whitespace_after_expression
+	whitespace_after_expression: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+    ""
+)
+equal
+	equal: Optional[AssignEqual] = None
+	equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
+comparator
+	comparator: BaseExpression
+star
+	star: Optional[Literal["*"]] = None
+	star: Union[str, MaybeSentinel] = MaybeSentinel.DEFAULT
+	star: Literal["", "*", "**"] = ""
+whitespace_after_star
+	whitespace_after_star: Optional[BaseParenthesizableWhitespace] = None
+	whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+	whitespace_after_star: SimpleWhitespace = SimpleWhitespace.field(" ")
+lower
+	lower: Optional[BaseExpression]
+upper
+	upper: Optional[BaseExpression]
+step
+	step: Optional[BaseExpression] = None
+first_colon
+	first_colon: Colon = Colon.field()
+second_colon
+	second_colon: Union[Colon, MaybeSentinel] = MaybeSentinel.DEFAULT
+annotation
+	annotation: BaseExpression
+	annotation: Optional[Annotation] = None
+	annotation: Annotation
+whitespace_before_indicator
+	whitespace_before_indicator: Union[
+    BaseParenthesizableWhitespace, MaybeSentinel
+] = MaybeSentinel.DEFAULT
+whitespace_after_indicator
+	whitespace_after_indicator: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+    " "
+)
+default
+	default: Optional[BaseExpression] = None
+whitespace_after_param
+	whitespace_after_param: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+star_arg
+	star_arg: Union[Param, ParamStar, MaybeSentinel] = MaybeSentinel.DEFAULT
+kwonly_params
+	kwonly_params: Sequence[Param] = ()
+star_kwarg
+	star_kwarg: Optional[Param] = None
+posonly_params
+	posonly_params: Sequence[Param] = ()
+posonly_ind
+	posonly_ind: Union[ParamSlash, MaybeSentinel] = MaybeSentinel.DEFAULT
+keyword
+	keyword: Optional[Name] = None
+whitespace_after_arg
+	whitespace_after_arg: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+item
+	item: BaseExpression
+whitespace_before_from
+	whitespace_before_from: Union[
+    BaseParenthesizableWhitespace, MaybeSentinel
+] = MaybeSentinel.DEFAULT
+whitespace_after_from
+	whitespace_after_from: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_after_from: SimpleWhitespace = SimpleWhitespace.field(" ")
+iter
+	iter: BaseExpression
+ifs
+	ifs: Sequence["CompIf"] = ()
+inner_for_in
+	inner_for_in: Optional["CompFor"] = None
+asynchronous
+	asynchronous: Optional[Asynchronous] = None
+whitespace_after_for
+	whitespace_after_for: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_after_for: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_before_in
+	whitespace_before_in: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_before_in: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_after_in
+	whitespace_after_in: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_after_in: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_before_test
+	whitespace_before_test: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+	whitespace_before_test: SimpleWhitespace = SimpleWhitespace.field(" ")
+leading_whitespace
+	leading_whitespace: SimpleWhitespace = SimpleWhitespace.field(" ")
+trailing_whitespace
+	trailing_whitespace: TrailingWhitespace = TrailingWhitespace.field()
+	trailing_whitespace: TrailingWhitespace
+header
+	header: TrailingWhitespace = TrailingWhitespace.field()
+	header: Sequence[EmptyLine] = ()
+footer
+	footer: Sequence[EmptyLine] = ()
+leading_lines
+	leading_lines: Sequence[EmptyLine] = ()
+	leading_lines: Sequence[EmptyLine]
+whitespace_after_test
+	whitespace_after_test: SimpleWhitespace = SimpleWhitespace.field("")
+handlers
+	handlers: Sequence[ExceptHandler] = ()
+	handlers: Sequence[ExceptStarHandler]
+finalbody
+	finalbody: Optional[Finally] = None
+decorators
+	decorators: Sequence[Decorator] = ()
+returns
+	returns: Optional[Annotation] = None
+lines_after_decorators
+	lines_after_decorators: Sequence[EmptyLine] = ()
+whitespace_after_def
+	whitespace_after_def: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_after_name
+	whitespace_after_name: SimpleWhitespace = SimpleWhitespace.field("")
+whitespace_before_params
+	whitespace_before_params: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+bases
+	bases: Sequence[Arg] = ()
+keywords
+	keywords: Sequence[Arg] = ()
+whitespace_after_class
+	whitespace_after_class: SimpleWhitespace = SimpleWhitespace.field(" ")
+items
+	items: Sequence[WithItem]
+whitespace_after_with
+	whitespace_after_with: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_after_while
+	whitespace_after_while: SimpleWhitespace = SimpleWhitespace.field(" ")
+subject
+	subject: BaseExpression
+cases
+	cases: Sequence["MatchCase"]
+whitespace_after_match
+	whitespace_after_match: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_after_del
+	whitespace_after_del: SimpleWhitespace = SimpleWhitespace.field(" ")
+semicolon
+	semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
+whitespace_after_return
+	whitespace_after_return: Union[
+    SimpleWhitespace, MaybeSentinel
+] = MaybeSentinel.DEFAULT
+names
+	names: Sequence[ImportAlias]
+	names: Union[Sequence[ImportAlias], ImportStar]
+	names: Sequence[NameItem]
+whitespace_after_import
+	whitespace_after_import: SimpleWhitespace = SimpleWhitespace.field(" ")
+module
+	module: Optional[Union[Attribute, Name]]
+relative
+	relative: Sequence[Dot] = ()
+whitespace_before_import
+	whitespace_before_import: SimpleWhitespace = SimpleWhitespace.field(" ")
+targets
+	targets: Sequence[AssignTarget]
+exc
+	exc: Optional[BaseExpression] = None
+cause
+	cause: Optional[From] = None
+whitespace_after_raise
+	whitespace_after_raise: Union[
+    SimpleWhitespace, MaybeSentinel
+] = MaybeSentinel.DEFAULT
+msg
+	msg: Optional[BaseExpression] = None
+whitespace_after_assert
+	whitespace_after_assert: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_after_global
+	whitespace_after_global: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_after_nonlocal
+	whitespace_after_nonlocal: SimpleWhitespace = SimpleWhitespace.field(" ")
+type
+	type: Optional[BaseExpression] = None
+	type: BaseExpression
+whitespace_after_except
+	whitespace_after_except: SimpleWhitespace = SimpleWhitespace.field(" ")
+	whitespace_after_except: SimpleWhitespace = SimpleWhitespace.field("")
+asname
+	asname: Optional[AsName] = None
+whitespace_before_equal
+	whitespace_before_equal: SimpleWhitespace = SimpleWhitespace.field(" ")
+	whitespace_before_equal: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+whitespace_after_equal
+	whitespace_after_equal: SimpleWhitespace = SimpleWhitespace.field(" ")
+	whitespace_after_equal: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+decorator
+	decorator: Union[Name, Attribute, Call]
+whitespace_after_at
+	whitespace_after_at: SimpleWhitespace = SimpleWhitespace.field("")
+guard
+	guard: Optional[BaseExpression] = None
+whitespace_after_case
+	whitespace_after_case: SimpleWhitespace = SimpleWhitespace.field(" ")
+whitespace_before_name
+	whitespace_before_name: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+separator
+	separator: Union[BitOr, MaybeSentinel] = MaybeSentinel.DEFAULT
+encoding
+	encoding: str = "utf-8"
+default_indent
+	default_indent: str = " " * 4
+default_newline
+	default_newline: str = "\n"
+has_trailing_newline
+	has_trailing_newline: bool = True
