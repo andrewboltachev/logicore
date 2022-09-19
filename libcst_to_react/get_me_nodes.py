@@ -130,7 +130,7 @@ def load_statements(klass):
     return r
 
 
-DEFAULT_MATCH_PATTERN = r"^___[\d]+$"
+DEFAULT_MATCH_PATTERN = r"^__[\d]+$"
 
 
 def match_code(code, pattern, match_pattern=DEFAULT_MATCH_PATTERN):
@@ -146,40 +146,41 @@ def match_code(code, pattern, match_pattern=DEFAULT_MATCH_PATTERN):
         #print('called with', pattern, code)
         # TODO special pattern nodes - hacks for grammar
         if type(pattern) == dict:
-            if code.get("type") == pattern.get("type"):
-                # 1. Name pattern case
-                if pattern.get("type") == "Name" and re.match(match_pattern, pattern.get("value")):
-                    if pattern["value"] not in acc:
-                        acc[pattern["value"]] = code["value"]
-                        return True
-                    elif acc[pattern["value"]] == code["value"]:
-                        return True
-                    else:
-                        #print(f"type mismatch. expected: {pattern.get('type')}, found: {code.get('type')}")
+            # 1. Name pattern case
+            if pattern.get("type") == "Name" and re.match(match_pattern, pattern.get("value")):
+                if pattern["value"] not in acc:
+                    acc[pattern["value"]] = code["value"]
+                    return True
+                elif acc[pattern["value"]] == code["value"]:
+                    return True
+                else:
+                    #print(f"type mismatch. expected: {pattern.get('type')}, found: {code.get('type')}")
+                    return False
+            if code.get("type") != pattern.get("type"):
+                return False
+            # 2. Individual nodes
+            node_params = nodes_params[pattern["type"]]
+            for k in node_params:
+                if k not in ["body"]:
+                    if not walk(code[k], pattern[k]):
+                        #print(f"param mismatch: {k} expected to be {pattern[k]}, got {code[k]}")
                         return False
-                # 2. Individual nodes
-                node_params = nodes_params[pattern["type"]]
-                for k in node_params:
-                    if k not in ["body"]:
-                        if not walk(code[k], pattern[k]):
-                            #print(f"param mismatch: {k} expected to be {pattern[k]}, got {code[k]}")
-                            return False
-                # 3. body (dict/list)
-                if "body" in pattern:
-                    if type(pattern["body"]) != type(code.get("body")):
+            # 3. body (dict/list)
+            if "body" in pattern:
+                if type(pattern["body"]) != type(code.get("body")):
+                    return False
+                if type(pattern["body"]) == dict:
+                    return walk(code["body"], pattern["body"])
+                else: # must be list
+                    if len(pattern["body"]) != len(code["body"]):
+                        #print(f"list length mismatch. expected: {len(pattern['body'])}, found: {len(code['body'])}")
                         return False
-                    if type(pattern["body"]) == dict:
-                        return walk(code["body"], pattern["body"])
-                    else: # must be list
-                        if len(pattern["body"]) != len(code["body"]):
-                            #print(f"list length mismatch. expected: {len(pattern['body'])}, found: {len(code['body'])}")
+                    for c, p in zip(code["body"], pattern["body"]):
+                        if not walk(c, p):
                             return False
-                        for c, p in zip(code["body"], pattern["body"]):
-                            if not walk(c, p):
-                                return False
-                        return True
-                # for case 2, after body also checked
-                return True
+                    return True
+            # for case 2, after body also checked
+            return True
         elif isinstance(pattern, Iterable) and not type(pattern) == str:
             for c, p in zip(list(code), list(pattern)):
                 if not walk(c, p):
@@ -194,20 +195,55 @@ def match_code(code, pattern, match_pattern=DEFAULT_MATCH_PATTERN):
     else:
         return True
 
-PATTERN = """\
-def _codegen_impl(self, state: CodegenState) -> None:
-    self.first_line._codegen(state)
-    for line in self.empty_lines:
-        line._codegen(___1)
-    if self.indent:
-        state.add_indent_tokens()
-    self.last_line._codegen(___1)
+
+class Pattern:
+    pass
+
+
+class VarAssign(Pattern):
+    pattern = """__1 = self.__1"""
+
+
+class AddNewLine(Pattern):
+    pattern = """state.add_token(state.default_newline if value is None else value)"""
+
+
+class AddToken(Pattern):
+    pattern = """state.add_token(__1)"""
+
+
+class ChildElement(Pattern):
+    pattern = """self.__1._codegen(state)"""
+
+
+class MultipleChildElements(Pattern):
+    pattern = """\
+for line in self.__1:
+    line._codegen(state)
+    """
+
+class Indent(Pattern):
+    pattern = """\
+if self.indent:
+    state.add_indent_tokens()
+    """
+
+class VarUse(Pattern):
+    pattern = """\
+if __1 is not None:
+    __1._codegen(state)
 """
 
-PATTERN = """\
-def _codegen_impl(self, state: CodegenState) -> None:
-    ___2 = self.___2
-    ___1.add_token(___1.default_newline if value is None else value)
+class SyntacticAddToken(Pattern):
+    pattern = """\
+with state.record_syntactic_position(self):
+    state.add_token(__1)
+"""
+
+class ParenthesizedAddToken(Pattern):
+    pattern = """\
+with self._parenthesize(state):
+    state.add_token(self.__1)
 """
 
 
@@ -218,7 +254,7 @@ def match_libcst_code_to_text_pattern(code, pattern):
     """
     code_1 = serialize_dc(code)
     pattern_1 = serialize_dc(libcst.parse_module(pattern.strip()))["body"][0]
-    print(code_for_node(unserialize_dc(pattern_1)))
+    #print(code_for_node(unserialize_dc(pattern_1)))
     return match_code(code_1, pattern_1)
 
 #print(load_codegen_impl('Del'))
@@ -237,12 +273,17 @@ if cmd == "1":
         impl = load_codegen_impl(x)
         if impl:
             print('# ' + x.__name__)
-            print(code_for_node(impl))
             print('->')
-            #print(impl)
-            print(match_libcst_code_to_text_pattern(impl, PATTERN))
+            for line in impl.body.body:
+                for p in all_subclasses(Pattern):
+                    r = match_libcst_code_to_text_pattern(line, p.pattern)
+                    if r:
+                        print(r)
+                        break
+                else:
+                    print('cannot match:\n\n' + code_for_node(line))
+                    sys.exit(1)
             print('<-')
-            break # only 1
 elif cmd == "2":
     result = defaultdict(list)
     seen = set([])
