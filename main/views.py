@@ -534,7 +534,12 @@ class PythonView(MainView):
             result = serialize_dc(libcst.parse_module(data['value']))
         except Exception as e:
             result = str(e)
+        else:
+            try:
+                result = result['body'][0] if len(result['body']) == 1 else result['body']
+            except Exception as e:
+                result = str(e)
         return JsonResponse({
             #"navigate": f"/python"
-            "result": result['body'][0] if len(result['body']) == 1 else result['body'],
+            "result": result,
         })

@@ -167,6 +167,7 @@ const ListView = ({create_form, items, onChange}) => {
 const LanguageView = ({onChange}) => {
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
+  console.log('got result', result);
   return <div className="container-fluid my-4">
     <div className="row">
       <div className="col-md-6 d-flex justify-content-center">
