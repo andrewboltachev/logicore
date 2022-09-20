@@ -200,8 +200,12 @@ class Pattern:
     pass
 
 
-class VarAssign(Pattern):
+class VarSelfAssign(Pattern):
     pattern = """__1 = self.__1"""
+
+
+class VarAssign(Pattern):
+    pattern = """__1 = __1""" # expr
 
 
 class AddNewLine(Pattern):
@@ -214,7 +218,6 @@ class AddToken(Pattern):
 
 class ChildElement(Pattern):
     pattern = """self.__1._codegen(state)"""
-
 
 class MultipleChildElements(Pattern):
     pattern = """\
@@ -234,17 +237,26 @@ if __1 is not None:
     __1._codegen(state)
 """
 
-class SyntacticAddToken(Pattern):
+
+class WithPattern:
+    pass
+
+
+class RecordSyntacticPosition(WithPattern):
     pattern = """\
 with state.record_syntactic_position(self):
-    state.add_token(__1)
+    pass
 """
 
-class ParenthesizedAddToken(Pattern):
+class Parenthesize(WithPattern):
     pattern = """\
 with self._parenthesize(state):
-    state.add_token(self.__1)
+    pass
 """
+
+
+class Root:
+    pass
 
 
 def match_libcst_code_to_text_pattern(code, pattern):
@@ -252,7 +264,7 @@ def match_libcst_code_to_text_pattern(code, pattern):
     code in form of libcst
     pattern in form of text
     """
-    code_1 = serialize_dc(code)
+    code_1 = serialize_dc(code) if type(code) != dict else code
     pattern_1 = serialize_dc(libcst.parse_module(pattern.strip()))["body"][0]
     #print(code_for_node(unserialize_dc(pattern_1)))
     return match_code(code_1, pattern_1)
@@ -263,6 +275,73 @@ try:
     cmd = sys.argv[1]
 except IndexError:
     pass
+
+
+def match_with(code):
+    """
+    Return first pattern matched
+    """
+    for p in all_subclasses(WithPattern):
+        r = match_libcst_code_to_text_pattern(code, p.pattern)
+        if r:
+            return (p, r)
+    return None
+
+
+def match_full(code):
+    """
+    Return first pattern matched
+    """
+    for p in all_subclasses(Pattern):
+        r = match_libcst_code_to_text_pattern(code, p.pattern)
+        if r:
+            return (p, r)
+    return None
+
+null = None # LOL yes
+
+EMPTY_WITH_BLOCK = {
+    "body": [
+        {
+            "body": [
+                {
+                    "semicolon": libcst.MaybeSentinel.DEFAULT,
+                    "type": "Pass"
+                }
+            ],
+            "leading_lines": (),
+            "trailing_whitespace": {
+                "whitespace": {
+                    "value": "",
+                    "type": "SimpleWhitespace"
+                },
+                "comment": null,
+                "newline": {
+                    "value": null,
+                    "type": "Newline"
+                },
+                "type": "TrailingWhitespace"
+            },
+            "type": "SimpleStatementLine"
+        }
+    ],
+    "header": {
+        "whitespace": {
+            "value": "",
+            "type": "SimpleWhitespace"
+        },
+        "comment": null,
+        "newline": {
+            "value": null,
+            "type": "Newline"
+        },
+        "type": "TrailingWhitespace"
+    },
+    "indent": null,
+    "footer": (),
+    "type": "IndentedBlock"
+}
+
 
 if cmd == "1":
     seen = set([])
@@ -275,14 +354,33 @@ if cmd == "1":
             print('# ' + x.__name__)
             print('->')
             for line in impl.body.body:
-                for p in all_subclasses(Pattern):
-                    r = match_libcst_code_to_text_pattern(line, p.pattern)
+                # "with" case
+                if type(line) == libcst.With:
+                    line_s = serialize_dc(line)
+                    line_s["body"] = EMPTY_WITH_BLOCK
+                    r = match_with(line_s)
                     if r:
                         print(r)
-                        break
+                    else:
+                        print('cannot match with:\n\n' + code_for_node(unserialize_dc(line_s)))
+                        sys.exit(1)
+                    print(r)
+                    for subline in line.body.body:
+                        # with's inner normal case
+                        r = match_full(subline)
+                        if r:
+                            print(f"\t{r}")
+                        else:
+                            print('cannot match:\n\n' + code_for_node(subline))
+                            sys.exit(1)
                 else:
-                    print('cannot match:\n\n' + code_for_node(line))
-                    sys.exit(1)
+                    # "normal" case
+                    r = match_full(line)
+                    if r:
+                        print(r)
+                    else:
+                        print('cannot match:\n\n' + code_for_node(line))
+                        sys.exit(1)
             print('<-')
 elif cmd == "2":
     result = defaultdict(list)
