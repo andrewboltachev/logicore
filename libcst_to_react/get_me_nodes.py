@@ -130,10 +130,15 @@ def load_statements(klass):
     return r
 
 
-DEFAULT_MATCH_PATTERN = r"^__[\d]+$"
+MATCH_PATTERN = r"^__[\d]+$"
+
+def node_by_name(pattern, name):
+    for node in all_subclasses(pattern.mro()[-2]): # TODO
+        if node.__name__ == name:
+            return node
 
 
-def match_code(code, pattern, match_pattern=DEFAULT_MATCH_PATTERN):
+def match_code(code, pattern):
     """
     If code matches pattern,
     returns map of substitutions, e.g. {"___1": "value"},
@@ -143,11 +148,29 @@ def match_code(code, pattern, match_pattern=DEFAULT_MATCH_PATTERN):
     acc = {}
 
     def walk(code, pattern):
-        #print('called with', pattern, code)
-        # TODO special pattern nodes - hacks for grammar
         if type(pattern) == dict:
             # 1. Name pattern case
-            if pattern.get("type") == "Name" and re.match(match_pattern, pattern.get("value")):
+            if (
+                pattern.get("type") == "Expr"
+                and pattern["value"]["type"] == "Call"
+                and pattern["value"]["func"]["type"] == "Name"
+                and "name" in pattern["value"]["func"]
+                and re.match(MATCH_PATTERN, pattern["value"]["func"]["name"])
+            ):
+                acc_param = pattern["value"]["func"]["name"]
+                reference = pattern["value"]["args"][0]["value"]["value"]
+                ref_node = node_by_name(pattern, reference)
+                r = match_code(code, ref_node)
+                if r:
+                    if acc_param in acc:
+                        if acc[acc_param] != r: # TODO: just False, i.e. aviod usage twice?
+                            return False
+                    else:
+                        acc[acc_param] = r
+                    return True
+                else:
+                    return False
+            elif pattern.get("type") == "Name" and re.match(MATCH_PATTERN, pattern.get("value")):
                 if pattern["value"] not in acc:
                     acc[pattern["value"]] = code["value"]
                     return True
@@ -188,115 +211,118 @@ def match_code(code, pattern, match_pattern=DEFAULT_MATCH_PATTERN):
             return True
         else:
             return pattern == code
-    if not walk(code, pattern):
+
+    kind = pattern.__dict__.get("kind", None)
+    if not kind:
+        if hasattr(pattern, "pattern"):
+            kind = "Pattern"
+        elif len(pattern.mro()) == 2: # TODO
+            kind = "Top"
+        else:
+            kind = "Or"
+
+    if kind == "Or":
+        for s in pattern.__subclasses__():
+            r = match_code(code, s)
+            if r:
+                return (pattern, r)
         return False
-    elif acc:
-        return acc
+    elif kind == "PlusOr": # code is IntendedBlock...
+        result = []
+        for code1 in code['body']:
+            for s in pattern.__subclasses__():
+                r = match_code(code1, s)
+                if r:
+                    result.append((s, r))
+                    break
+            else:
+                return False
+        return (pattern, result)
+    elif kind == "Pattern":
+        orig_pattern = pattern
+        if hasattr(orig_pattern, "_serialized"):
+            pattern = orig_pattern._serialized
+        else:
+            pattern = serialize_dc(libcst.parse_module(pattern.pattern))["body"][0]
+            orig_pattern._serialized = pattern
+        if not walk(code, pattern):
+            return False
+        else:
+            return (orig_pattern, acc)
     else:
-        return True
+        raise Exception(f"Unknown node kind: {kind}")
 
 
 class Pattern:
     pass
 
 
-class VarSelfAssign(Pattern):
+class Root(Pattern):
+    pass
+
+
+class Main(Root):
+    pass
+
+
+class VarSelfAssign(Main):
     pattern = """__1 = self.__1"""
 
 
-class VarAssign(Pattern):
-    pattern = """__1 = __1""" # expr
+class VarAssign(Main):
+    pattern = """__1 = __0(Expr)"""
 
 
-class AddNewLine(Pattern):
+class AddNewLine(Main):
     pattern = """state.add_token(state.default_newline if value is None else value)"""
 
 
-class AddToken(Pattern):
+class AddToken(Main):
     pattern = """state.add_token(__1)"""
 
 
-class ChildElement(Pattern):
+class ChildElement(Main):
     pattern = """self.__1._codegen(state)"""
 
-class MultipleChildElements(Pattern):
+class MultipleChildElements(Main):
     pattern = """\
 for line in self.__1:
     line._codegen(state)
     """
 
-class Indent(Pattern):
+class Indent(Main):
     pattern = """\
 if self.indent:
     state.add_indent_tokens()
     """
 
-class VarUse(Pattern):
+class VarUse(Main):
     pattern = """\
 if __1 is not None:
     __1._codegen(state)
 """
 
-
-class WithPattern:
-    pass
-
-
-class RecordSyntacticPosition(WithPattern):
+class RecordSyntacticPosition(Root):
     pattern = """\
 with state.record_syntactic_position(self):
-    pass
+    __0(Main)
 """
 
-class Parenthesize(WithPattern):
+class Parenthesize(Root):
     pattern = """\
 with self._parenthesize(state):
-    pass
+    __0(Main)
 """
 
+class Expr(Pattern):
+    pattern = """__1""" # TODO
 
-class Root:
-    pass
 
-
-def match_libcst_code_to_text_pattern(code, pattern):
-    """
-    code in form of libcst
-    pattern in form of text
-    """
-    code_1 = serialize_dc(code) if type(code) != dict else code
-    pattern_1 = serialize_dc(libcst.parse_module(pattern.strip()))["body"][0]
-    #print(code_for_node(unserialize_dc(pattern_1)))
-    return match_code(code_1, pattern_1)
-
-#print(load_codegen_impl('Del'))
 cmd = None
 try:
     cmd = sys.argv[1]
 except IndexError:
     pass
-
-
-def match_with(code):
-    """
-    Return first pattern matched
-    """
-    for p in all_subclasses(WithPattern):
-        r = match_libcst_code_to_text_pattern(code, p.pattern)
-        if r:
-            return (p, r)
-    return None
-
-
-def match_full(code):
-    """
-    Return first pattern matched
-    """
-    for p in all_subclasses(Pattern):
-        r = match_libcst_code_to_text_pattern(code, p.pattern)
-        if r:
-            return (p, r)
-    return None
 
 null = None # LOL yes
 
@@ -354,33 +380,14 @@ if cmd == "1":
             print('# ' + x.__name__)
             print('->')
             for line in impl.body.body:
-                # "with" case
-                if type(line) == libcst.With:
-                    line_s = serialize_dc(line)
-                    line_s["body"] = EMPTY_WITH_BLOCK
-                    r = match_with(line_s)
-                    if r:
-                        print(r)
-                    else:
-                        print('cannot match with:\n\n' + code_for_node(unserialize_dc(line_s)))
-                        sys.exit(1)
+                # "normal" case
+                line_s = serialize_dc(line)
+                r = match_code(line_s, Root)
+                if r:
                     print(r)
-                    for subline in line.body.body:
-                        # with's inner normal case
-                        r = match_full(subline)
-                        if r:
-                            print(f"\t{r}")
-                        else:
-                            print('cannot match:\n\n' + code_for_node(subline))
-                            sys.exit(1)
                 else:
-                    # "normal" case
-                    r = match_full(line)
-                    if r:
-                        print(r)
-                    else:
-                        print('cannot match:\n\n' + code_for_node(line))
-                        sys.exit(1)
+                    print('cannot match:\n\n' + code_for_node(line))
+                    sys.exit(1)
             print('<-')
 elif cmd == "2":
     result = defaultdict(list)
@@ -448,6 +455,8 @@ elif cmd == "4":
                 result[x.__name__].append(r.target.value)
     print(json.dumps(result, indent=4))
     # nodes params that ain't meaningful
+elif cmd == "5":
+    pass
 
 else:
     print("No command specified")
