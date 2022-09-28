@@ -138,6 +138,10 @@ def node_by_name(pattern, name):
             return node
 
 
+class SelfRef:
+    pattern = """__1(__2)"""
+
+
 def match_code(code, pattern):
     """
     If code matches pattern,
@@ -146,6 +150,7 @@ def match_code(code, pattern):
     otherwise None
     """
     acc = {}
+    orig_pattern = pattern
 
     def walk(code, pattern):
         if type(pattern) == dict:
@@ -159,7 +164,7 @@ def match_code(code, pattern):
             ):
                 acc_param = pattern["value"]["func"]["name"]
                 reference = pattern["value"]["args"][0]["value"]["value"]
-                ref_node = node_by_name(pattern, reference)
+                ref_node = node_by_name(orig_pattern, reference)
                 r = match_code(code, ref_node)
                 if r:
                     if acc_param in acc:
@@ -185,7 +190,7 @@ def match_code(code, pattern):
             node_params = nodes_params[pattern["type"]]
             for k in node_params:
                 if k not in ["body"]:
-                    if not walk(code[k], pattern[k]):
+                    if not walk(code[k], pattern[k]): # TODO compare nodes vs. values - derive from types?
                         #print(f"param mismatch: {k} expected to be {pattern[k]}, got {code[k]}")
                         return False
             # 3. body (dict/list)
@@ -193,6 +198,23 @@ def match_code(code, pattern):
                 if type(pattern["body"]) != type(code.get("body")):
                     return False
                 if type(pattern["body"]) == dict:
+                    if (
+                        "body" in pattern["body"]
+                        and len(pattern["body"]["body"]) > 0
+                    ):
+                        m = match_code(pattern["body"]["body"][0], SelfRef)
+                        if m and m[1]["__1"] == "__0":
+                            reference = m[1]["__2"]
+                            ref_node = node_by_name(orig_pattern, reference)
+                            if ref_node.__dict__.get("kind") != "PlusOr":
+                                raise Exception(f"Not a PlusOr node: {ref_node}")
+                            body_match = match_code(code["body"], ref_node) # code is IntendedBlock
+                            if body_match:
+                                acc["__body"] = body_match
+                                return True
+                            else:
+                                return False
+
                     return walk(code["body"], pattern["body"])
                 else: # must be list
                     if len(pattern["body"]) != len(code["body"]):
@@ -204,7 +226,7 @@ def match_code(code, pattern):
                     return True
             # for case 2, after body also checked
             return True
-        elif isinstance(pattern, Iterable) and not type(pattern) == str:
+        elif isinstance(pattern, Iterable) and type(pattern) != str:
             for c, p in zip(list(code), list(pattern)):
                 if not walk(c, p):
                     return False
@@ -233,13 +255,12 @@ def match_code(code, pattern):
             for s in pattern.__subclasses__():
                 r = match_code(code1, s)
                 if r:
-                    result.append((s, r))
+                    result.append(r)
                     break
             else:
                 return False
         return (pattern, result)
     elif kind == "Pattern":
-        orig_pattern = pattern
         if hasattr(orig_pattern, "_serialized"):
             pattern = orig_pattern._serialized
         else:
@@ -252,16 +273,34 @@ def match_code(code, pattern):
     else:
         raise Exception(f"Unknown node kind: {kind}")
 
+"""
+Pattern
+    Root[]
+        Main
+        With1(MainL)
+        With2(MainL)
+    Expr
+    ...
+    MainL[]
+        Main
+            VarSelfAssign
+            AddToken
+"""
+
 
 class Pattern:
     pass
 
 
 class Root(Pattern):
-    pass
+    kind = "PlusOr"
 
 
-class Main(Root):
+class MainL(Pattern):
+    kind = "PlusOr"
+
+
+class Main(Root, MainL):
     pass
 
 
@@ -305,13 +344,13 @@ if __1 is not None:
 class RecordSyntacticPosition(Root):
     pattern = """\
 with state.record_syntactic_position(self):
-    __0(Main)
+    __0(MainL)
 """
 
 class Parenthesize(Root):
     pattern = """\
 with self._parenthesize(state):
-    __0(Main)
+    __0(MainL)
 """
 
 class Expr(Pattern):
@@ -323,50 +362,6 @@ try:
     cmd = sys.argv[1]
 except IndexError:
     pass
-
-null = None # LOL yes
-
-EMPTY_WITH_BLOCK = {
-    "body": [
-        {
-            "body": [
-                {
-                    "semicolon": libcst.MaybeSentinel.DEFAULT,
-                    "type": "Pass"
-                }
-            ],
-            "leading_lines": (),
-            "trailing_whitespace": {
-                "whitespace": {
-                    "value": "",
-                    "type": "SimpleWhitespace"
-                },
-                "comment": null,
-                "newline": {
-                    "value": null,
-                    "type": "Newline"
-                },
-                "type": "TrailingWhitespace"
-            },
-            "type": "SimpleStatementLine"
-        }
-    ],
-    "header": {
-        "whitespace": {
-            "value": "",
-            "type": "SimpleWhitespace"
-        },
-        "comment": null,
-        "newline": {
-            "value": null,
-            "type": "Newline"
-        },
-        "type": "TrailingWhitespace"
-    },
-    "indent": null,
-    "footer": (),
-    "type": "IndentedBlock"
-}
 
 
 if cmd == "1":
@@ -382,7 +377,7 @@ if cmd == "1":
             for line in impl.body.body:
                 # "normal" case
                 line_s = serialize_dc(line)
-                r = match_code(line_s, Root)
+                r = match_code({"body": [line_s]}, Root) # emulate IntendedBlock
                 if r:
                     print(r)
                 else:
