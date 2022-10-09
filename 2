@@ -332,14 +332,8 @@ class ChildElement(Main):
 
 class MultipleChildElements(Main):
     pattern = """\
-for __2 in self.__1:
-    __2._codegen(state)
-    """
-
-class MultipleVarChildElements(Main):
-    pattern = """\
-for __2 in __1:
-    __2._codegen(state)
+for line in self.__1:
+    line._codegen(state)
     """
 
 class Indent(Main):
@@ -638,85 +632,6 @@ elif len(self.posonly_params) > 0:
         state.add_token("/, ")
     else:
         state.add_token("/")
-"""
-
-class Node32(Main):
-    pattern = """\
-more_values = (
-    starincluded or len(self.kwonly_params) > 0 or self.star_kwarg is not None
-)
-"""
-
-class Node33(Main):
-    pattern = """\
-for i, param in enumerate(self.params):
-    param._codegen(
-        state, default_star="", default_comma=(i < lastparam or more_values)
-    )
-"""
-
-
-class Node34(Main):
-    pattern = """\
-if isinstance(star_arg, MaybeSentinel):
-    if starincluded:
-        state.add_token("*, ")
-elif isinstance(star_arg, Param):
-    more_values = len(self.kwonly_params) > 0 or self.star_kwarg is not None
-    star_arg._codegen(state, default_star="*", default_comma=more_values)
-elif isinstance(star_arg, ParamStar):
-    star_arg._codegen(state)
-"""
-
-
-class Node35(Main):
-    pattern = """\
-more_values = self.star_kwarg is not None
-"""
-
-
-class Node36(Main):
-    pattern = """\
-for i, param in enumerate(self.kwonly_params):
-    param._codegen(
-        state, default_star="", default_comma=(i < lastparam or more_values)
-    )
-"""
-
-
-class Node37(Main):
-    pattern = """\
-if star_kwarg is not None:
-    star_kwarg._codegen(state, default_star="**", default_comma=False)
-"""
-
-class Node38(Main):
-    pattern = """\
-if equal is MaybeSentinel.DEFAULT and self.keyword is not None:
-    state.add_token(" = ")
-elif isinstance(equal, AssignEqual):
-    equal._codegen(state)
-"""
-
-
-class Node39(Main):
-    pattern = """\
-if isinstance(whitespace_before_from, BaseParenthesizableWhitespace):
-    whitespace_before_from._codegen(state)
-else:
-    state.add_token(default_space)
-"""
-
-
-class Node40(Main):
-    pattern = """\
-_BaseSimpleStatement._codegen_impl(self, state)
-"""
-
-
-class Node41(Main):
-    pattern = """\
-state.increase_indent(state.default_indent if indent is None else indent)
 """
 
 
