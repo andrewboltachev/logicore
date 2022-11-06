@@ -10,6 +10,7 @@ from main.parser.python import serialize_dc, unserialize_dc
 from libcst_to_react.nodes_params import nodes_params
 
 
+
 def clean_split(lines):
     return [x for x in [x.strip() for x in lines.split("\n")] if x]
 
@@ -128,6 +129,14 @@ def load_statements(klass):
         ):
             r.append(n.body[0])
     return r
+
+
+def load_whole_class(klass):
+    if type(klass) == str:
+        klass = locate_class(klass)
+    module = load_module(klass.__module__)
+    cdef = find_node(module, lambda x: is_a_class_of_name(x, klass.__name__))
+    return cdef
 
 
 MATCH_PATTERN = r"^__[\d]+$"
@@ -874,7 +883,30 @@ elif cmd == "4":
     print(json.dumps(result, indent=4))
     # nodes params that ain't meaningful
 elif cmd == "5":
-    pass
+    ignore_params = clean_split("""\
+    first_line
+    empty_lines
+    indent
+    newline
+    lpar
+    rpar
+    colon
+    header
+    footer
+    leading_lines
+    lines_after_decorators
+    """)
+    result = {}
+    seen = set([])
+    for x in all_cst_nodes:
+        if x.__name__ in seen:
+            continue
+        print(x.__name__, file=sys.stderr)
+        #print('# ' + x.__name__)
+        seen.add(x.__name__) # FIXME what's that?
+        result[x.__name__] = serialize_dc(load_whole_class(x))
+    print(json.dumps(result, indent=4, default=str))
+    # nodes params that ain't meaningful
 
 else:
     print("No command specified")
