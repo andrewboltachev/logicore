@@ -31,6 +31,7 @@ import {
   formValidators,
   fieldsLayouts,
   interceptors,
+  submitButtonWidgets,
 } from "./core";
 
 import {
@@ -168,7 +169,7 @@ const TextareaField = ({
         value={value || ""}
         onChange={(e) => {
           if (definition.readonly) return;
-          onChange(path, e.target.value);
+          onChange(e.target.value);
         }}
       />
       {error && <div className="invalid-feedback d-block">{error}</div>}
@@ -474,4 +475,5 @@ export {
   setByPath,
   modifyHelper,
   fieldsLayouts,
+  submitButtonWidgets,
 };

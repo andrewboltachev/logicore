@@ -60,6 +60,7 @@ import {
   FieldLabel,
   interceptors,
   fieldsLayouts,
+  submitButtonWidgets,
   getByPath,
   setByPath,
   modifyHelper,
@@ -219,6 +220,19 @@ CodeDisplay.validatorChecker = (definition, error, state, parentState, context) 
 
 Object.assign(formComponents, {
   CodeDisplay,
+});
+
+const CodeSearchSubmit = ({}) => {
+  return <div className="d-grid">
+    <button className="btn btn-primary" type="submit">
+      Save &amp; Run{" "}
+      <i className="fas fa-play-circle" />
+    </button>
+  </div>;
+};
+
+Object.assign(submitButtonWidgets, {
+  CodeSearchSubmit,
 });
 
 const CodeSearchLayout = (props) => {

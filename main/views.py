@@ -617,6 +617,7 @@ class CodeSearchApiView(MainView):
         now_date = now_dt.date()
         obj = self.get_obj()
         return {
+            "submitButtonWidget": "CodeSearchSubmit",
             **read_fields(self.get_fields(obj.kind), obj)
         }
 
