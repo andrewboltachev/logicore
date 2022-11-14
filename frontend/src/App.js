@@ -121,7 +121,8 @@ Object.assign(fieldsLayouts, {
   WithDeleteButton,
 });
 
-const ListView = ({title, create_form, items, onChange}) => {
+const ListView = ({title, create_form, items, onChange, baseUrl}) => {
+  const theBaseUrl = baseUrl || '/';
   return <div className="container">
     <div className="d-flex align-items-center justify-content-between">
       <h1>{title}</h1>
@@ -144,7 +145,7 @@ const ListView = ({title, create_form, items, onChange}) => {
       </thead>
       <tbody>
         {items?.map((item) => (<tr>
-          <td><Link to={`/${item.id}`}>{item.name}</Link></td>
+          <td><Link to={`${baseUrl}${item.id}`}>{item.name}</Link></td>
           <td>{item.kind}</td>
           <td>
             <button
@@ -203,93 +204,38 @@ const LanguageView = ({onChange}) => {
   </div>;
 };
 
+const CodeDisplay = (props) => {
+  const { renderedFields } = props;
+  return (<div>
+    {props?.value}
+  </div>);
+};
+CodeDisplay.validatorRunner = (definition, value, parentValue, context) => {
+  return null;
+};
+CodeDisplay.validatorChecker = (definition, error, state, parentState, context) => {
+  return false;
+};
+
+Object.assign(formComponents, {
+  CodeDisplay,
+});
 
 const CodeSearchLayout = (props) => {
-  const { value, onChange, definition, error, context, onReset, path } = props;
-  /* this is Fields, but renderedFields are thrown away */
-	const [show, setShow] = useState(false);
-	const [state, setState] = useState(value);
-	const [errors, setErrors] = useState(null);
-  useEffect(() => {
-    //console.log('reset to', value);
-    setState(value);
-    setErrors(null);
-  }, [show]);
-  const onReset1 = (path) => {
-    setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
-  };
-	const handleClose = _ => setShow(false);
-  const handleSubmit = (state) => {
-    const error = validateDefinition(definition, state, state, context); // TODO parent state?
-    setErrors(error);
-    if (!definitionIsInvalid(definition, error, state, state, context)) {
-      // ok
-      onChange(state);
-      onReset(path);
-      handleClose();
-    } else {
-      /*NotificationManager.error(
-        "Please fix the errors below",
-        "Error"
-      );
-      setTimeout(() => {
-        try {
-          document
-            .getElementsByClassName("invalid-feedback d-block")[0]
-            .parentNode.scrollIntoViewIfNeeded();
-        } catch (e) {
-          console.warn(e);
-        }
-      }, 50);*/
-    }
-  };
-  const { AddButton, hidePrimaryButton } = definition;
-  return (<div>
-    {AddButton ? <AddButton onClick={_ => {
-        setShow(true);
-      }} /> : <button
-      className="btn btn-primary"
-      type="button"
-      onClick={e => {
-        setShow(true);
-      }}>
-      <i className="fa fa-plus" />
-      {" "}
-      Add
-    </button>}
-		<Modal show={show} onHide={handleClose} animation={false} container={_ => document.getElementById('bootstrap-modals')} size={context?.modalSize || "lg"}>
-			<Modal.Header closeButton>
-				<Modal.Title>{definition.title || "Edit"}</Modal.Title>
-			</Modal.Header>
-			<Modal.Body>
-        <div>
-        <FormComponent
-          definition={{...definition, layout: void 0}}
-          value={state}
-          onChange={setState}
-          error={errors}
-          onReset={onReset1}
-          path={[]}
-          context={{
-            ...context,
-						forceLabelWidth: '100%',
-						labelPlacement: 'horizontalPlus',
-            handleSubmit
-					}}
-        />
-        </div>
-      </Modal.Body>
-			<Modal.Footer>
-				<Button variant="secondary" onClick={handleClose}>
-					Close
-				</Button>
-        {!hidePrimaryButton && <Button variant="primary" onClick={_ => handleSubmit(state)}>
-					OK
-				</Button>}
-			</Modal.Footer>
-    </Modal>
-    {error?.__own && <div className="invalid-feedback d-block">{error.__own + ''}</div>}
-  </div>);
+  const { renderedFields } = props;
+  return (<>
+    <div className="code-search" style={{
+      minHeight: "calc(max(100vh - 200px, 500px))",
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gridGap: 20,
+    }}>
+      <div className="">{renderedFields[0]}</div>
+      <div className="">{renderedFields[1]}</div>
+      <div className="">{renderedFields[2]}</div>
+      <div className="">{renderedFields[3]}</div>
+    </div>
+  </>);
 };
 Object.assign(fieldsLayouts, {
   CodeSearchLayout,

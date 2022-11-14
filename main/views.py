@@ -565,6 +565,7 @@ class CodeSearchsApiView(MainView):
         now_dt = now()
         now_date = now_dt.date()
         return {
+            "baseUrl": "/logicore-code/",
             'items': list(
                 models.CodeSearch.objects.values('id', 'name', 'kind', 'created_dt', 'modified_dt')
             ),
@@ -591,13 +592,23 @@ class CodeSearchApiView(MainView):
             "type": "Fields",
             "fields": [
                 {"from_field": "name"},
-                {"from_field": "name"},
+                {
+                    "type": "Fields",
+                    "fields": [
+                        {"from_field": "data"},
+                        {"k": "result", "type": "CodeDisplay"},
+                        {"from_field": "grammar"},
+                        {"k": "funnel", "type": "CodeDisplay"},
+                    ],
+                    "layout": "CodeSearchLayout",
+                },
             ],
             #"layout": "ModalLayout"
         }
 
     def get_obj(self):
         obj = models.CodeSearch.objects.get(pk=self.kwargs["id"])
+        obj.result = "result"
         obj.funnel = "funnel"
         return obj
 
