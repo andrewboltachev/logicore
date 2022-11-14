@@ -203,9 +203,146 @@ const LanguageView = ({onChange}) => {
   </div>;
 };
 
+
+const CodeSearchLayout = (props) => {
+  const { value, onChange, definition, error, context, onReset, path } = props;
+  /* this is Fields, but renderedFields are thrown away */
+	const [show, setShow] = useState(false);
+	const [state, setState] = useState(value);
+	const [errors, setErrors] = useState(null);
+  useEffect(() => {
+    //console.log('reset to', value);
+    setState(value);
+    setErrors(null);
+  }, [show]);
+  const onReset1 = (path) => {
+    setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
+  };
+	const handleClose = _ => setShow(false);
+  const handleSubmit = (state) => {
+    const error = validateDefinition(definition, state, state, context); // TODO parent state?
+    setErrors(error);
+    if (!definitionIsInvalid(definition, error, state, state, context)) {
+      // ok
+      onChange(state);
+      onReset(path);
+      handleClose();
+    } else {
+      /*NotificationManager.error(
+        "Please fix the errors below",
+        "Error"
+      );
+      setTimeout(() => {
+        try {
+          document
+            .getElementsByClassName("invalid-feedback d-block")[0]
+            .parentNode.scrollIntoViewIfNeeded();
+        } catch (e) {
+          console.warn(e);
+        }
+      }, 50);*/
+    }
+  };
+  const { AddButton, hidePrimaryButton } = definition;
+  return (<div>
+    {AddButton ? <AddButton onClick={_ => {
+        setShow(true);
+      }} /> : <button
+      className="btn btn-primary"
+      type="button"
+      onClick={e => {
+        setShow(true);
+      }}>
+      <i className="fa fa-plus" />
+      {" "}
+      Add
+    </button>}
+		<Modal show={show} onHide={handleClose} animation={false} container={_ => document.getElementById('bootstrap-modals')} size={context?.modalSize || "lg"}>
+			<Modal.Header closeButton>
+				<Modal.Title>{definition.title || "Edit"}</Modal.Title>
+			</Modal.Header>
+			<Modal.Body>
+        <div>
+        <FormComponent
+          definition={{...definition, layout: void 0}}
+          value={state}
+          onChange={setState}
+          error={errors}
+          onReset={onReset1}
+          path={[]}
+          context={{
+            ...context,
+						forceLabelWidth: '100%',
+						labelPlacement: 'horizontalPlus',
+            handleSubmit
+					}}
+        />
+        </div>
+      </Modal.Body>
+			<Modal.Footer>
+				<Button variant="secondary" onClick={handleClose}>
+					Close
+				</Button>
+        {!hidePrimaryButton && <Button variant="primary" onClick={_ => handleSubmit(state)}>
+					OK
+				</Button>}
+			</Modal.Footer>
+    </Modal>
+    {error?.__own && <div className="invalid-feedback d-block">{error.__own + ''}</div>}
+  </div>);
+};
+Object.assign(fieldsLayouts, {
+  CodeSearchLayout,
+});
+
+const GenericForm2 = (props) => {
+  return <div>
+      <nav className="navbar navbar-expand-lg navbar-light bg-light">
+        <div className="container-fluid">
+          <a className="navbar-brand" href="#">Logicore</a>
+          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span className="navbar-toggler-icon" />
+          </button>
+          <div className="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+              <li className="nav-item">
+                <Link className="nav-link active" aria-current="page" to="/logicore-code/">Go Back</Link>
+              </li>
+              {/*<li className="nav-item">
+                <a className="nav-link" href="#">Link</a>
+              </li>
+              <li className="nav-item dropdown">
+                <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Dropdown
+                </a>
+                <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li><a className="dropdown-item" href="#">Action</a></li>
+                  <li><a className="dropdown-item" href="#">Another action</a></li>
+                  <li><hr className="dropdown-divider" /></li>
+                  <li><a className="dropdown-item" href="#">Something else here</a></li>
+                </ul>
+              </li>
+              <li className="nav-item">
+                <a className="nav-link disabled">Disabled</a>
+              </li>*/}
+            </ul>
+            {/*<form className="d-flex">
+              <input className="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
+              <button className="btn btn-outline-success" type="submit">Search</button>
+            </form>*/}
+          </div>
+        </div>
+      </nav>
+			<div className="container-fluid">
+				<GenericForm {...props} />
+			</div>
+  </div>;
+};
+
 const mainComponents = {
   ListView,
   GenericForm,
+  GenericForm2,
   HomeView,
   LogicoreFormsDemoView,
   LanguageView,

@@ -548,7 +548,7 @@ class PythonView(MainView):
 class CodeSearchsApiView(MainView):
     in_menu = False
     url_path = "/logicore-code/"
-    title = "Code searches"
+    title = "Code search Examples"
     TEMPLATE = "ListView"
 
     def get_fields(self):
@@ -578,3 +578,39 @@ class CodeSearchsApiView(MainView):
             return JsonResponse({"redirect": f"/logicore-code/"})
         obj = write_fields(self.get_fields(), models.CodeSearch(), data)
         return JsonResponse({"redirect": f"/logicore-code/{obj.id}"})
+
+
+class CodeSearchApiView(MainView):
+    in_menu = False
+    url_path = "/logicore-code/<int:id>"
+    title = "Hello world"
+    TEMPLATE = "GenericForm2"
+
+    def get_fields(self, kind):
+        return {
+            "type": "Fields",
+            "fields": [
+                {"from_field": "name"},
+                {"from_field": "name"},
+            ],
+            #"layout": "ModalLayout"
+        }
+
+    def get_obj(self):
+        obj = models.CodeSearch.objects.get(pk=self.kwargs["id"])
+        obj.funnel = "funnel"
+        return obj
+
+    def get_data(self, request, *args, **kwargs):
+        now_dt = now()
+        now_date = now_dt.date()
+        obj = self.get_obj()
+        return {
+            **read_fields(self.get_fields(obj.kind), obj)
+        }
+
+    def post(self, request, *args, **kwargs):
+        obj = self.get_obj()
+        data = json.loads(request.body)['data']
+        obj = write_fields(self.get_fields(obj.kind), obj, data)
+        return JsonResponse({"navigate": f"/logicore-code/{obj.id}"})

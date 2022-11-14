@@ -55,8 +55,8 @@ class JSONCodeFormat(CodeFormat):
 class CodeSearch(models.Model):
     name = models.CharField(max_length=1024)
     kind = CodeFormat.get_field()
-    data = models.JSONField(default=dict)
-    grammar = models.JSONField(default=dict)
+    data = models.TextField(default="", blank=True)
+    grammar = models.TextField(default="", blank=True)
     created_dt = models.DateTimeField(auto_now_add=True)
     modified_dt = models.DateTimeField(auto_now=True)
 
