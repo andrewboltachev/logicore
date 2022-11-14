@@ -38,3 +38,31 @@ class Stratagem(models.Model):
 
     class Meta:
         ordering = ['-modified_dt']
+
+
+class CodeFormat(StatusOptions):
+    pass
+
+
+class PythonCodeFormat(CodeFormat):
+    name = "Python (LibCST)"
+
+
+class JSONCodeFormat(CodeFormat):
+    name = "WebDashboard1"
+
+
+class CodeSearch(models.Model):
+    name = models.CharField(max_length=1024)
+    kind = CodeFormat.get_field()
+    data = models.JSONField(default=dict)
+    grammar = models.JSONField(default=dict)
+    created_dt = models.DateTimeField(auto_now_add=True)
+    modified_dt = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+    class Meta:
+        ordering = ['-modified_dt']

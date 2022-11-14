@@ -543,3 +543,67 @@ class PythonView(MainView):
             #"navigate": f"/python"
             "result": result,
         })
+
+
+class StratagemsApiView(MainView):
+    in_menu = False
+    url_path = "/logicore-code/"
+    title = "Code searches"
+    TEMPLATE = "ListView"
+
+    def get_fields(self):
+        return {
+            "type": "Fields",
+            "fields": [
+                {"from_field": "name"},
+                {"from_field": "kind"},
+                {
+                    "type": "DefinedField",
+                    "master_field": "kind",
+                    "simple_defined_field": True,
+                    "k": "params",
+                    "definitions": {
+                        "PYTHONREFACTORING1": {
+                            "type": "Fields",
+                            "fields": [
+                                #{"from_field": "directory"},
+                                {
+                                    "k": "directory",
+                                    "type": "TextField",
+                                    "label": "Choose a directory",
+                                    "required": True,
+                                },
+                            ],
+                        },
+                        "WEBDASHBOARD1": {
+                            "type": "Fields",
+                            "fields": [
+                            ],
+                        },
+                    },
+                },
+            ],
+            "layout": "ModalLayout"
+        }
+
+    def get_data(self, request, *args, **kwargs):
+        now_dt = now()
+        now_date = now_dt.date()
+        return {
+            'items': list(
+                models.Stratagem.objects.values('id', 'name', 'kind', 'created_dt', 'modified_dt')
+            ),
+            'create_form': read_fields(self.get_fields(), models.Stratagem())
+        }
+
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)['data']
+        if data.get('action') == 'delete':
+            models.Stratagem.objects.filter(id=data['id']).delete()
+            return JsonResponse({"redirect": f"/stratagems/"})
+        if not data.get("params"):
+            data["params"] = {}
+        obj = write_fields(self.get_fields(), models.Stratagem(), data)
+        return JsonResponse({"redirect": f"/{obj.id}"})
+
+
