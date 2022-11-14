@@ -596,9 +596,9 @@ class CodeSearchApiView(MainView):
                     "type": "Fields",
                     "fields": [
                         {"from_field": "data"},
-                        {"k": "result", "type": "CodeDisplay"},
+                        {"k": "result", "type": "CodeDisplay", "label": "Result"},
                         {"from_field": "grammar"},
-                        {"k": "funnel", "type": "CodeDisplay"},
+                        {"k": "funnel", "type": "CodeDisplay", "label": "Funnel"},
                     ],
                     "layout": "CodeSearchLayout",
                 },

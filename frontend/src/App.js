@@ -207,8 +207,9 @@ const LanguageView = ({onChange}) => {
 
 const CodeDisplay = (props) => {
   const { renderedFields } = props;
-  return (<div>
-    {props?.value}
+  return (<div className="my-1">
+    <span style={{fontWeight: 'bold'}}>{props?.definition?.label}</span>
+    <textarea id="id_8c8c87ea-0942-4fbd-97a9-7af3fb3504a5" type="text" className="form-control" defaultValue={props?.value} readOnly />
   </div>);
 };
 CodeDisplay.validatorRunner = (definition, value, parentValue, context) => {
