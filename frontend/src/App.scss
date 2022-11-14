@@ -109,3 +109,22 @@
     white-space: nowrap;
   }
 }
+
+.code-search {
+  & > div {
+    display: flex; flex-direction: column;
+    .my-1 {
+      flex: 1;
+      display: flex; flex-direction: column;
+      textarea {
+        flex: 1;
+      }
+    
+    }
+  }
+  textarea.form-control {
+    font-family: var(--bs-font-monospace);
+    white-space: nowrap;
+    //position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  }
+}
