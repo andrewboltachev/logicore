@@ -121,10 +121,10 @@ Object.assign(fieldsLayouts, {
   WithDeleteButton,
 });
 
-const ListView = ({create_form, items, onChange}) => {
+const ListView = ({title, create_form, items, onChange}) => {
   return <div className="container">
     <div className="d-flex align-items-center justify-content-between">
-      <h1>Stratagems</h1>
+      <h1>{title}</h1>
       <FormComponent
         path={[]}
         definition={create_form.fields}
