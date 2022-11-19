@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, memo } from "react";
+import React, { useState, useEffect, useRef, useContext, memo } from "react";
 import logo from "./logo.svg";
 import "./App.scss";
 import classd from "classd";
@@ -239,7 +239,7 @@ Object.assign(submitButtonWidgets, {
 const CodeSearchLayout = (props) => {
   const { renderedFields } = props;
   return (<>
-    <div className="code-search" style={{
+    <div className={classd`code-search ${{"is-error": props.value.error}}`} style={{
       minHeight: "calc(max(100vh - 200px, 500px))",
       display: "grid",
       gridTemplateColumns: "1fr 1fr",

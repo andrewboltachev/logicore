@@ -111,6 +111,9 @@
 }
 
 .code-search {
+  &.is-error textarea.form-control {
+    color: var(--bs-danger);
+  }
   & > div {
     display: flex; flex-direction: column;
     .my-1 {

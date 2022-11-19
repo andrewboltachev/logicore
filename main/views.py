@@ -3,6 +3,7 @@ import glob
 import json
 import locale
 import uuid
+import requests
 from itertools import groupby
 from collections import defaultdict
 from decimal import Decimal
@@ -599,6 +600,7 @@ class CodeSearchApiView(MainView):
                         {"k": "result", "type": "CodeDisplay", "label": "Result"},
                         {"from_field": "grammar"},
                         {"k": "funnel", "type": "CodeDisplay", "label": "Funnel"},
+                        {"k": "error", "type": "HiddenField"},
                     ],
                     "layout": "CodeSearchLayout",
                 },
@@ -608,8 +610,19 @@ class CodeSearchApiView(MainView):
 
     def get_obj(self):
         obj = models.CodeSearch.objects.get(pk=self.kwargs["id"])
-        obj.result = "result"
-        obj.funnel = "funnel"
+        obj.error = False
+        obj.result = "<...>"
+        obj.funnel = "<...>"
+        try:
+            resp = requests.post("http://localhost:3002/json-matcher-1", json={
+                "kind": obj.kind,
+                "data": obj.data,
+                "grammar": obj.grammar,
+            })
+        except requests.exceptions.ConnectionError:
+            obj.error = True
+            obj.result = "Connection error"
+            obj.funnel = ""
         return obj
 
     def get_data(self, request, *args, **kwargs):
@@ -625,9 +638,4 @@ class CodeSearchApiView(MainView):
         obj = self.get_obj()
         data = json.loads(request.body)['data']
         obj = write_fields(self.get_fields(obj.kind), obj, data)
-        requests.post("http://localhost:3002/json-matcher-1", json={
-            "kind": obj.kind,
-            "data": obj.data,
-            "grammar": obj.grammar,
-        })
         return JsonResponse({"navigate": f"/logicore-code/{obj.id}"})
