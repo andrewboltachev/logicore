@@ -625,4 +625,9 @@ class CodeSearchApiView(MainView):
         obj = self.get_obj()
         data = json.loads(request.body)['data']
         obj = write_fields(self.get_fields(obj.kind), obj, data)
+        requests.post("http://localhost:3002/json-matcher-1", json={
+            "kind": obj.kind,
+            "data": obj.data,
+            "grammar": obj.grammar,
+        })
         return JsonResponse({"navigate": f"/logicore-code/{obj.id}"})
