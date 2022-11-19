@@ -623,6 +623,16 @@ class CodeSearchApiView(MainView):
             obj.error = True
             obj.result = "Connection error"
             obj.funnel = ""
+        if resp.status_code == 200:
+            pass
+        elif resp.status_code == 400:
+            obj.error = True
+            obj.result = resp.json()["error"]
+            obj.funnel = ""
+        else:
+            obj.error = True
+            obj.result = f"Unknown error: status ({resp.status_code})"
+            obj.funnel = ""
         return obj
 
     def get_data(self, request, *args, **kwargs):
