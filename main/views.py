@@ -609,22 +609,41 @@ class CodeSearchApiView(MainView):
         }
 
     def get_obj(self):
+        import libcst
+        from main.parser.python import serialize_dc
         obj = models.CodeSearch.objects.get(pk=self.kwargs["id"])
         obj.error = False
         obj.result = "<...>"
         obj.funnel = "<...>"
         try:
+            module = libcst.parse_module(obj.data)
+            code = serialize_dc(module)
+        except Exception as e:
+            obj.error = True
+            obj.result = f"Code parse error: {e}"
+            obj.funnel = ""
+            return obj
+        try:
+            module = libcst.parse_module(obj.grammar)
+            grammar = serialize_dc(module)
+        except Exception as e:
+            obj.error = True
+            obj.result = f"Grammar parse error: {e}"
+            obj.funnel = ""
+            return obj
+        try:
             resp = requests.post("http://localhost:3002/json-matcher-1", json={
                 "kind": obj.kind,
-                "data": obj.data,
-                "grammar": obj.grammar,
+                "data": code,
+                "grammar": grammar,
             })
         except requests.exceptions.ConnectionError:
             obj.error = True
             obj.result = "Connection error"
             obj.funnel = ""
         if resp.status_code == 200:
-            pass
+            obj.result = json.dumps(resp.json()["result"])
+            obj.funnel = json.dumps(resp.json()["funnel"])
         elif resp.status_code == 400:
             obj.error = True
             obj.result = resp.json()["error"]

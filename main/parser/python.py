@@ -3,6 +3,7 @@ from dataclasses import _is_dataclass_instance, fields
 
 dict_factory = lambda d: {f"{k}_param" if k == "type" else k: v for k, v in dict(d).items()}
 def serialize_dc(obj, *args):
+    from libcst import MaybeSentinel
     if _is_dataclass_instance(obj):
         result = []
         for f in fields(obj):
@@ -39,6 +40,8 @@ def serialize_dc(obj, *args):
         return type(obj)((serialize_dc(k, dict_factory),
                         serialize_dc(v, dict_factory))
                         for k, v in obj.items())
+    elif obj == MaybeSentinel.DEFAULT:
+        return "MaybeSentinel.DEFAULT"
     else:
         return copy.deepcopy(obj)
 
