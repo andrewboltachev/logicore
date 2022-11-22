@@ -601,6 +601,7 @@ class CodeSearchApiView(MainView):
                         {"from_field": "grammar"},
                         {"k": "funnel", "type": "CodeDisplay", "label": "Funnel"},
                         {"k": "error", "type": "HiddenField"},
+                        {"k": "result_grammar", "type": "HiddenField"},
                     ],
                     "layout": "CodeSearchLayout",
                 },
@@ -615,9 +616,11 @@ class CodeSearchApiView(MainView):
         obj.error = False
         obj.result = "<...>"
         obj.funnel = "<...>"
+        obj.result_grammar = ""
         try:
             module = libcst.parse_module(obj.data)
             code = serialize_dc(module)
+            code = code['body']
         except Exception as e:
             obj.error = True
             obj.result = f"Code parse error: {e}"
@@ -626,6 +629,7 @@ class CodeSearchApiView(MainView):
         try:
             module = libcst.parse_module(obj.grammar)
             grammar = serialize_dc(module)
+            grammar = grammar['body']
         except Exception as e:
             obj.error = True
             obj.result = f"Grammar parse error: {e}"
@@ -641,17 +645,26 @@ class CodeSearchApiView(MainView):
             obj.error = True
             obj.result = "Connection error"
             obj.funnel = ""
-        if resp.status_code == 200:
-            obj.result = json.dumps(resp.json()["result"])
-            obj.funnel = json.dumps(resp.json()["funnel"])
-        elif resp.status_code == 400:
-            obj.error = True
-            obj.result = resp.json()["error"]
-            obj.funnel = ""
         else:
-            obj.error = True
-            obj.result = f"Unknown error: status ({resp.status_code})"
-            obj.funnel = ""
+            resp_json = resp.json()
+            if resp.status_code == 200:
+                if resp_json.get("error"):
+                    obj.error = True
+                    obj.result = resp_json["error"]
+                    obj.funnel = json.dumps(resp_json["funnel"])
+                    obj.result_grammar = resp_json["grammar"]
+                else:
+                    obj.result = json.dumps(resp_json["result"])
+                    obj.funnel = json.dumps(resp_json["funnel"])
+                    obj.result_grammar = resp_json["grammar"]
+            elif resp.status_code == 400:
+                obj.error = True
+                obj.result = resp_json["error"]
+                obj.funnel = ""
+            else:
+                obj.error = True
+                obj.result = f"Unknown error: status ({resp.status_code})"
+                obj.funnel = ""
         return obj
 
     def get_data(self, request, *args, **kwargs):
