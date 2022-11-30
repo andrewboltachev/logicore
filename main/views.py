@@ -602,6 +602,9 @@ class CodeSearchApiView(MainView):
                         {"k": "funnel", "type": "CodeDisplay", "label": "Funnel"},
                         {"k": "error", "type": "HiddenField"},
                         {"k": "result_grammar", "type": "HiddenField"},
+                        {"k": "result_code", "type": "HiddenField"},
+                        {"k": "t1", "type": "HiddenField"},
+                        {"k": "t2", "type": "HiddenField"},
                     ],
                     "layout": "CodeSearchLayout",
                 },
@@ -610,17 +613,24 @@ class CodeSearchApiView(MainView):
         }
 
     def get_obj(self):
+        def select_keys(m, ks):
+            return {k: v for k, v in m.items() if k in ks}
+
         import libcst
         from main.parser.python import serialize_dc
         obj = models.CodeSearch.objects.get(pk=self.kwargs["id"])
         obj.error = False
         obj.result = "<...>"
         obj.funnel = "<...>"
+        # additional
         obj.result_grammar = ""
+        obj.result_code = ""
+        obj.t1 = None
+        obj.t2 = None
         try:
             module = libcst.parse_module(obj.data)
             code = serialize_dc(module)
-            code = code['body']
+            code = select_keys(code, ["body", "type"])
         except Exception as e:
             obj.error = True
             obj.result = f"Code parse error: {e}"
@@ -629,12 +639,13 @@ class CodeSearchApiView(MainView):
         try:
             module = libcst.parse_module(obj.grammar)
             grammar = serialize_dc(module)
-            grammar = grammar['body']
+            grammar = select_keys(grammar, ["body", "type"])
         except Exception as e:
             obj.error = True
             obj.result = f"Grammar parse error: {e}"
             obj.funnel = ""
             return obj
+        obj.result_code = grammar
         try:
             resp = requests.post("http://localhost:3002/json-matcher-1", json={
                 "kind": obj.kind,
@@ -648,6 +659,8 @@ class CodeSearchApiView(MainView):
         else:
             resp_json = resp.json()
             if resp.status_code == 200:
+                obj.t1 = resp_json.get("t1")
+                obj.t2 = resp_json.get("t2")
                 if resp_json.get("error"):
                     obj.error = True
                     obj.result = resp_json["error"]

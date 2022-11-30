@@ -143,3 +143,5 @@ CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 
 CONSTANCE_CONFIG = OrderedDict([
 ])
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800 # 50 MB
