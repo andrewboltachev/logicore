@@ -43,7 +43,8 @@ const HomeView = () => {
               <p>Modern ideas I believe in are functional and declarative programming, low-code systems and refactoring tools (to improve quality of existing code).</p>
               <p>During my career, I created few tools that help building systems more quickly and efficiently:<ul>
             <li><a target="_blank" href="https://github.com/andrewboltachev/mega-copy">Mega-copy</a>, a tool that helps edit and copy code in bulk (mainly in Python/Django/ReactJS projects)</li>
-            <li><Link to="/logicore-forms-demo">Logicore-forms</Link> — declarative form generator for ReactJS with extension for Django</li>
+            <li><Link to="/logicore-forms-demo">Logicore Forms</Link> — declarative form generator for ReactJS with extension for Django</li>
+            <li><Link to="/json-explorer/">Logicore JSON Explorer</Link> — a tool for better understanding of complex documents</li>
           </ul>
           </p>
             </dd>
