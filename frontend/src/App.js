@@ -341,6 +341,7 @@ const JSONExplorerGadget = (props) => {
       </nav>
 			<div className="container-fluid">
         <GenericForm
+          notifyOnError
           data={state}
           onChange={setState}
           fields={{type: "Fields", fields: [

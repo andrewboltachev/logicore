@@ -25,6 +25,7 @@ import {
   modifyHelper,
 } from "./utils";
 import _ from "lodash";
+import { NotificationManager } from "react-notifications";
 
 export let validateDefinition, definitionIsInvalid;
 
@@ -725,19 +726,21 @@ export const GenericForm = (props) => {
       // ok
       onChange(state, setErrors);
     } else {
-      /*NotificationManager.error(
-        "Please fix the errors below",
-        "Error"
-      );
-      setTimeout(() => {
-        try {
-          document
-            .getElementsByClassName("invalid-feedback d-block")[0]
-            .parentNode.scrollIntoViewIfNeeded();
-        } catch (e) {
-          console.warn(e);
-        }
-      }, 50);*/
+      if (props.notifyOnError) {
+        NotificationManager.error(
+          "Please fix the errors below",
+          "Error"
+        );
+        setTimeout(() => {
+          try {
+            document
+              .getElementsByClassName("invalid-feedback d-block")[0]
+              .parentNode.scrollIntoViewIfNeeded();
+          } catch (e) {
+            console.warn(e);
+          }
+        }, 50);
+      }
     }
   };
   let ControlsClass = _ => null;
