@@ -647,7 +647,7 @@ class CodeSearchApiView(MainView):
             return obj
         obj.result_code = grammar
         try:
-            resp = requests.post("http://localhost:3002/json-matcher-1", json={
+            resp = requests.post("http://localhost:3002/python-matcher-1", json={
                 "kind": obj.kind,
                 "data": code,
                 "grammar": grammar,
