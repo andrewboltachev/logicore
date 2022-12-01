@@ -321,9 +321,6 @@ const JSONMatchPatternFieldTypes = [
 ];
 
 const JSONMatchPatternFieldNode = ({value, path, onChange}) => {
-  if (value.type === "") {
-
-  } else if (!value.type) {
     return <div>
       <div className="d-flex" style={{gridGap: 5}}>
       {JSONMatchPatternFieldTypes.map(g => {
@@ -331,16 +328,18 @@ const JSONMatchPatternFieldNode = ({value, path, onChange}) => {
           <div style={{fontSize: "0.75rem"}}>{g.label}</div>
           <div className="btn-group">
             {g.children.map(t => {
-              return <button type="button" className={classd`btn btn-sm btn-outline-${g.color} fw-bold`}>{t.label}</button>;
+              const active = t.key === value.type;
+              return <button type="button" className={classd`btn btn-sm btn${!active ? "-outline" : ""}-${g.color} fw-bold`} onClick={_ => {
+                if (!active) {
+                  onChange({type: t.key});
+                }
+              }}>{t.label}</button>;
           })}
           </div>
         </div>
       })}
         </div>
       </div>;
-  } else {
-
-  };
 }
 
 const JSONMatchPatternField = (props) => {
