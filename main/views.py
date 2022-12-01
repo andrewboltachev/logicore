@@ -694,3 +694,15 @@ class CodeSearchApiView(MainView):
         data = json.loads(request.body)['data']
         obj = write_fields(self.get_fields(obj.kind), obj, data)
         return JsonResponse({"navigate": f"/logicore-code/{obj.id}"})
+
+
+class JSONExplorerApiView(MainView):
+    in_menu = False
+    url_path = "/json-explorer/"
+    title = "JSON explorer"
+    TEMPLATE = "JSONExplorerGadget"
+
+    def get_data(self, request, *args, **kwargs):
+        now_dt = now()
+        now_date = now_dt.date()
+        return {}
