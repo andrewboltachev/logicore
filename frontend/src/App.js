@@ -206,7 +206,6 @@ const LanguageView = ({onChange}) => {
 };
 
 const CodeDisplay = (props) => {
-  const { renderedFields } = props;
   return (<div className="my-1">
     <span style={{fontWeight: 'bold'}}>{props?.definition?.label}</span>
     <textarea id="id_8c8c87ea-0942-4fbd-97a9-7af3fb3504a5" type="text" className="form-control" defaultValue={props?.value} readOnly />
@@ -219,8 +218,139 @@ CodeDisplay.validatorChecker = (definition, error, state, parentState, context) 
   return false;
 };
 
+const JSONMatchPatternFieldTypes = [
+  {
+    key: "object",
+    label: "{ }",
+    title: "Object",
+    children: [
+      {
+        key: "MatchObject",
+        label: "{ ! }",
+        title: "All keys must match)",
+      },
+      {
+        key: "MatchObjectPartial",
+        label: "{ ? }",
+        title: "Only specified keys must match",
+      },
+    ],
+  },
+  {
+    key: "array",
+    label: "[ ]",
+    title: "Array",
+    children: [
+      {
+        key: "MatchArray",
+        label: "[ ! ]",
+        title: "All elements must match",
+      },
+      {
+        key: "MatchArraySome",
+        label: "[ ? ]",
+        title: "Some elements must match",
+      },
+      {
+        key: "MatchArrayExact",
+        label: "[ , ]",
+        title: "Literal elements match",
+      },
+      {
+        key: "MatchArrayContextFree",
+        label: "[ G ]",
+        title: "Match using context-free grammar",
+      },
+    ]
+  },
+  {
+    key: "or",
+    label: "a|b",
+    title: "OR",
+  },
+  {
+    key: "any",
+    label: "?",
+    title: "OR",
+  },
+  {
+    key: "funnel",
+    label: "V",
+    title: "OR",
+    children: [
+      {
+        key: "MatchFunnel",
+        label: "V(*)",
+        title: "Regular funnel",
+      },
+      {
+        key: "MatchArraySome",
+        label: "V(k)",
+        title: "Match keys to funnel",
+      },
+      {
+        key: "MatchArraySome",
+        label: "V(kU)",
+        title: "Match keys to funnel (unique)",
+      },
+    ]
+  },
+  {
+    key: "MatchArraySome",
+    label: "\"abc\"",
+    title: "Match String",
+  },
+  {
+    key: "MatchArraySome",
+    label: "123",
+    title: "Match Number",
+  },
+  {
+    key: "MatchBool",
+    label: "Y/N",
+    title: "Match Boolean",
+  },
+  {
+    key: "MatchNull",
+    label: "Null",
+    title: "Match Null",
+  },
+];
+
+const JSONMatchPatternFieldNode = ({value, path, onChange}) => {
+  if (value.type === "") {
+
+  } else if (!value.type) {
+    return <div className="btn-group">
+      {JSONMatchPatternFieldTypes.map(t => {
+        return <button type="button" className="btn btn-sm btn-warning fw-bold">{t.label}</button>;
+      })}
+    </div>;
+  } else {
+
+  };
+}
+
+const JSONMatchPatternField = (props) => {
+  const value = typeof props.value === "object" ? props.value : {};
+  return (<div className="my-1">
+    <span style={{fontWeight: 'bold'}}>{props?.definition?.label}</span>
+    {/*<textarea type="text" className="form-control" defaultValue={props?.value} readOnly />*/}
+    <div className="form-control">
+      <JSONMatchPatternFieldNode onChange={props.onChange} value={value} />
+    </div>
+  </div>);
+};
+JSONMatchPatternField.validatorRunner = (definition, value, parentValue, context) => {
+  return null;
+};
+JSONMatchPatternField.validatorChecker = (definition, error, state, parentState, context) => {
+  return false;
+};
+
 Object.assign(formComponents, {
   CodeDisplay,
+  JSONMatchPatternField,
 });
 
 const CodeSearchSubmit = ({}) => {
@@ -347,7 +477,7 @@ const JSONExplorerGadget = (props) => {
           fields={{type: "Fields", fields: [
             {"type": "TextareaField", "k": "source", "label": "Source JSON", "required": true},
             {"type": "HiddenField", "k": "result"},
-            {"type": "TextareaField", "k": "grammar", "label": "Grammar (structure)", "required": true},
+            {"type": "JSONMatchPatternField", "k": "grammar", "label": "Grammar (structure)", "required": true},
             {"type": "HiddenField", "k": "funnel"},
           ], layout: "CodeSearchLayout"}}
           submitButtonWidget="CodeSearchSubmit"
