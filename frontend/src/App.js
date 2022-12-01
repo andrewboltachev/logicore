@@ -260,12 +260,12 @@ const JSONMatchPatternFieldTypes = [
     "color": "success",
     children: [
       {
-        key: "MatchArraySome",
+        key: "MatchString",
         label: "\"abc\"",
         title: "Match String",
       },
       {
-        key: "MatchArraySome",
+        key: "MatchNumber",
         label: "123",
         title: "Match Number",
       },
@@ -286,12 +286,12 @@ const JSONMatchPatternFieldTypes = [
     "color": "warning",
     children: [
       {
-        key: "or",
+        key: "MatchSimpleOr",
         label: "a|b",
         title: "OR",
       },
       {
-        key: "any",
+        key: "MatchAny",
         label: "?",
         title: "OR",
       },
@@ -307,12 +307,12 @@ const JSONMatchPatternFieldTypes = [
         title: "Regular funnel",
       },
       {
-        key: "MatchArraySome",
+        key: "MatchFunnelKeys",
         label: "k",
         title: "Match keys to funnel",
       },
       {
-        key: "MatchArraySome",
+        key: "MatchFunnelKeysU",
         label: "k!",
         title: "Match keys to funnel (unique)",
       },
