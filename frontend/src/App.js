@@ -220,100 +220,118 @@ CodeDisplay.validatorChecker = (definition, error, state, parentState, context) 
 
 const JSONMatchPatternFieldTypes = [
   {
-    key: "object",
-    label: "{ }",
-    title: "Object",
+    "label": "Containers",
+    "color": "warning",
     children: [
       {
-        key: "MatchObject",
-        label: "{ ! }",
-        title: "All keys must match)",
+        key: "object",
+        label: "{ }",
+        title: "Object",
+        children: [
+          {
+            key: "MatchObject",
+            label: "{ ! }",
+            title: "All keys must match)",
+          },
+          {
+            key: "MatchObjectPartial",
+            label: "{ ? }",
+            title: "Only specified keys must match",
+          },
+        ],
       },
       {
-        key: "MatchObjectPartial",
-        label: "{ ? }",
-        title: "Only specified keys must match",
+        key: "array",
+        label: "[ ]",
+        title: "Array",
+        children: [
+          {
+            key: "MatchArray",
+            label: "[ ! ]",
+            title: "All elements must match",
+          },
+          {
+            key: "MatchArraySome",
+            label: "[ ? ]",
+            title: "Some elements must match",
+          },
+          {
+            key: "MatchArrayExact",
+            label: "[ , ]",
+            title: "Literal elements match",
+          },
+          {
+            key: "MatchArrayContextFree",
+            label: "[ G ]",
+            title: "Match using context-free grammar",
+          },
+        ]
       },
     ],
   },
   {
-    key: "array",
-    label: "[ ]",
-    title: "Array",
+    "label": "Literals",
+    "color": "success",
     children: [
       {
-        key: "MatchArray",
-        label: "[ ! ]",
-        title: "All elements must match",
+        key: "MatchArraySome",
+        label: "\"abc\"",
+        title: "Match String",
       },
       {
         key: "MatchArraySome",
-        label: "[ ? ]",
-        title: "Some elements must match",
+        label: "123",
+        title: "Match Number",
       },
       {
-        key: "MatchArrayExact",
-        label: "[ , ]",
-        title: "Literal elements match",
+        key: "MatchBool",
+        label: "Y/N",
+        title: "Match Boolean",
       },
       {
-        key: "MatchArrayContextFree",
-        label: "[ G ]",
-        title: "Match using context-free grammar",
+        key: "MatchNull",
+        label: "Null",
+        title: "Match Null",
       },
-    ]
+    ],
   },
   {
-    key: "or",
-    label: "a|b",
-    title: "OR",
-  },
-  {
-    key: "any",
-    label: "?",
-    title: "OR",
-  },
-  {
-    key: "funnel",
-    label: "V",
-    title: "OR",
+    "label": "Conditions",
+    "color": "primary",
     children: [
       {
-        key: "MatchFunnel",
-        label: "V(*)",
-        title: "Regular funnel",
+        key: "or",
+        label: "a|b",
+        title: "OR",
       },
       {
-        key: "MatchArraySome",
-        label: "V(k)",
-        title: "Match keys to funnel",
+        key: "any",
+        label: "?",
+        title: "OR",
       },
       {
-        key: "MatchArraySome",
-        label: "V(kU)",
-        title: "Match keys to funnel (unique)",
+        key: "funnel",
+        label: "V",
+        title: "OR",
+        children: [
+          {
+            key: "MatchFunnel",
+            label: "V(*)",
+            title: "Regular funnel",
+          },
+          {
+            key: "MatchArraySome",
+            label: "V(k)",
+            title: "Match keys to funnel",
+          },
+          {
+            key: "MatchArraySome",
+            label: "V(kU)",
+            title: "Match keys to funnel (unique)",
+          },
+        ]
       },
-    ]
-  },
-  {
-    key: "MatchArraySome",
-    label: "\"abc\"",
-    title: "Match String",
-  },
-  {
-    key: "MatchArraySome",
-    label: "123",
-    title: "Match Number",
-  },
-  {
-    key: "MatchBool",
-    label: "Y/N",
-    title: "Match Boolean",
-  },
-  {
-    key: "MatchNull",
-    label: "Null",
-    title: "Match Null",
+    ],
   },
 ];
 
@@ -321,11 +339,20 @@ const JSONMatchPatternFieldNode = ({value, path, onChange}) => {
   if (value.type === "") {
 
   } else if (!value.type) {
-    return <div className="btn-group">
-      {JSONMatchPatternFieldTypes.map(t => {
-        return <button type="button" className="btn btn-sm btn-warning fw-bold">{t.label}</button>;
+    return <div>
+      <div className="d-grid" style={{gridAutoFlow: "column", gridGap: 5}}>
+      {JSONMatchPatternFieldTypes.map(g => {
+        return <div>
+          <div style={{fontSize: "0.75rem"}}>{g.label}</div>
+          <div className="btn-group">
+            {g.children.map(t => {
+              return <button type="button" className={classd`btn btn-sm btn-outline-${g.color} fw-bold`}>{t.label}</button>;
+          })}
+          </div>
+        </div>
       })}
-    </div>;
+        </div>
+      </div>;
   } else {
 
   };
