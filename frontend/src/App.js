@@ -221,53 +221,39 @@ CodeDisplay.validatorChecker = (definition, error, state, parentState, context) 
 const JSONMatchPatternFieldTypes = [
   {
     "label": "Containers",
-    "color": "warning",
+    "color": "primary",
     children: [
-      {
-        key: "object",
-        label: "{ }",
-        title: "Object",
-        children: [
-          {
-            key: "MatchObject",
-            label: "{ ! }",
-            title: "All keys must match)",
-          },
-          {
-            key: "MatchObjectPartial",
-            label: "{ ? }",
-            title: "Only specified keys must match",
-          },
-        ],
-      },
-      {
-        key: "array",
-        label: "[ ]",
-        title: "Array",
-        children: [
-          {
-            key: "MatchArray",
-            label: "[ ! ]",
-            title: "All elements must match",
-          },
-          {
-            key: "MatchArraySome",
-            label: "[ ? ]",
-            title: "Some elements must match",
-          },
-          {
-            key: "MatchArrayExact",
-            label: "[ , ]",
-            title: "Literal elements match",
-          },
-          {
-            key: "MatchArrayContextFree",
-            label: "[ G ]",
-            title: "Match using context-free grammar",
-          },
-        ]
-      },
-    ],
+    {
+      key: "MatchObject",
+      label: "{ ! }",
+      title: "Object: All keys must match",
+    },
+    {
+      key: "MatchObjectPartial",
+      label: "{ ? }",
+      title: "Object: Only specified keys must match",
+    },
+    {
+      key: "MatchArray",
+      label: "[ ! ]",
+      title: "Array: All elements must match",
+    },
+    {
+      key: "MatchArraySome",
+      label: "[ ? ]",
+      title: "Array: Some of the elements must match",
+    },
+    {
+      key: "MatchArrayExact",
+      label: "[ , ]",
+      title: "Array: Literal (element-by-element) match",
+    },
+    {
+      key: "MatchArrayContextFree",
+      label: "[ * ]",
+      title: "Array: Match using context-free grammar",
+    },
+  ]
   },
   {
     "label": "Literals",
@@ -297,7 +283,7 @@ const JSONMatchPatternFieldTypes = [
   },
   {
     "label": "Conditions",
-    "color": "primary",
+    "color": "warning",
     children: [
       {
         key: "or",
@@ -309,29 +295,28 @@ const JSONMatchPatternFieldTypes = [
         label: "?",
         title: "OR",
       },
-      {
-        key: "funnel",
-        label: "V",
-        title: "OR",
-        children: [
-          {
-            key: "MatchFunnel",
-            label: "V(*)",
-            title: "Regular funnel",
-          },
-          {
-            key: "MatchArraySome",
-            label: "V(k)",
-            title: "Match keys to funnel",
-          },
-          {
-            key: "MatchArraySome",
-            label: "V(kU)",
-            title: "Match keys to funnel (unique)",
-          },
-        ]
-      },
     ],
+  },
+  {
+    label: "Funnel",
+    color: "dark",
+    children: [
+      {
+        key: "MatchFunnel",
+        label: "_",
+        title: "Regular funnel",
+      },
+      {
+        key: "MatchArraySome",
+        label: "k",
+        title: "Match keys to funnel",
+      },
+      {
+        key: "MatchArraySome",
+        label: "k!",
+        title: "Match keys to funnel (unique)",
+      },
+    ]
   },
 ];
 
@@ -340,7 +325,7 @@ const JSONMatchPatternFieldNode = ({value, path, onChange}) => {
 
   } else if (!value.type) {
     return <div>
-      <div className="d-grid" style={{gridAutoFlow: "column", gridGap: 5}}>
+      <div className="d-flex" style={{gridGap: 5}}>
       {JSONMatchPatternFieldTypes.map(g => {
         return <div>
           <div style={{fontSize: "0.75rem"}}>{g.label}</div>
