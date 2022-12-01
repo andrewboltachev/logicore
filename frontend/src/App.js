@@ -301,7 +301,7 @@ const GenericForm2 = (props) => {
 };
 
 const JSONExplorerGadget = (props) => {
-  const [state, setState] = useState({});
+  const [state, setState] = useLocalStorage('LOGICORE_JSON_EXPLORER_DATA', {});
   return <div>
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <div className="container-fluid">
@@ -340,6 +340,17 @@ const JSONExplorerGadget = (props) => {
         </div>
       </nav>
 			<div className="container-fluid">
+        <GenericForm
+          data={state}
+          onChange={setState}
+          fields={{type: "Fields", fields: [
+            {"type": "TextareaField", "k": "source", "label": "Source JSON", "required": true},
+            {"type": "HiddenField", "k": "result"},
+            {"type": "TextareaField", "k": "grammar", "label": "Grammar (structure)", "required": true},
+            {"type": "HiddenField", "k": "funnel"},
+          ], layout: "CodeSearchLayout"}}
+          submitButtonWidget="CodeSearchSubmit"
+        />
 			</div>
   </div>;
 };
