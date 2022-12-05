@@ -218,7 +218,7 @@ CodeDisplay.validatorChecker = (definition, error, state, parentState, context) 
   return false;
 };
 
-const JSONMatchPatternFieldTypes = [
+const JSONMatchPattern = [
   {
     "label": "Containers",
     "color": "primary",
@@ -227,32 +227,38 @@ const JSONMatchPatternFieldTypes = [
       key: "MatchObject",
       label: "{ ! }",
       title: "Object: All keys must match",
+      empty: [[["", null]]],
     },
     {
       key: "MatchObjectPartial",
       label: "{ ? }",
       title: "Object: Only specified keys must match",
+      empty: [[["", null]]],
     },
     {
       key: "MatchArray",
       label: "[ ! ]",
       title: "Array: All elements must match",
+      empty: [[null]],
     },
     {
       key: "MatchArraySome",
       label: "[ ? ]",
       title: "Array: Some of the elements must match",
+      empty: [[null]],
     },
     {
       key: "MatchArrayExact",
       label: "[ , ]",
       title: "Array: Literal (element-by-element) match",
+      empty: [[null]],
     },
-    {
+    /*{
       key: "MatchArrayContextFree",
       label: "[ * ]",
       title: "Array: Match using context-free grammar",
-    },
+      empty: [[null]],
+    },*/
   ]
   },
   {
@@ -263,16 +269,19 @@ const JSONMatchPatternFieldTypes = [
         key: "MatchString",
         label: "\"abc\"",
         title: "Match String",
+        empty: [""],
       },
       {
         key: "MatchNumber",
         label: "123",
         title: "Match Number",
+        empty: [0],
       },
       {
         key: "MatchBool",
         label: "Y/N",
         title: "Match Boolean",
+        empty: [false],
       },
       {
         key: "MatchNull",
@@ -289,6 +298,7 @@ const JSONMatchPatternFieldTypes = [
         key: "MatchSimpleOr",
         label: "a|b",
         title: "OR",
+        empty: [["option1", null]],
       },
       {
         key: "MatchAny",
@@ -313,14 +323,34 @@ const JSONMatchPatternFieldTypes = [
       },
       {
         key: "MatchFunnelKeysU",
-        label: "k!",
+        label: "kU",
         title: "Match keys to funnel (unique)",
       },
     ]
   },
 ];
 
-const JSONMatchPatternFieldNode = ({value, path, onChange}) => {
+/*
+{
+  "type_name": "MatchPattern",
+  "main_type":
+  [
+    {
+      "tag": "MatchIfThen",
+      "contents": ["MatchPattern", "MatchPattern", "String"],
+      "emptyValue": [null, null, ""],
+      //"validate": ...,
+      //"widget": ...,
+    },
+  ],
+  "other_types":
+  {
+    "String": {
+    },
+  }
+
+const ADTFieldNode = ({value, path, error, onChange, level}) => {
+  if (!value.type) {
     return <div>
       <div className="d-flex" style={{gridGap: 5}}>
       {JSONMatchPatternFieldTypes.map(g => {
@@ -331,24 +361,39 @@ const JSONMatchPatternFieldNode = ({value, path, onChange}) => {
               const active = t.key === value.type;
               return <button type="button" className={classd`btn btn-sm btn${!active ? "-outline" : ""}-${g.color} fw-bold`} onClick={_ => {
                 if (!active) {
-                  onChange({type: t.key});
+                  onChange({type: t.key}); // resets value. TODO: changes
                 }
               }}>{t.label}</button>;
           })}
           </div>
         </div>
       })}
-        </div>
-      </div>;
+      </div>
+    </div>;
+  } else {
+
+  }
 }
 
-const JSONMatchPatternField = (props) => {
-  const value = typeof props.value === "object" ? props.value : {};
+const ADTField = ({value, onChange, definition}) => {
+  const v = typeof value === "object" ? value : {};
+	const Widget = definition?.adtDefintion?.[v?.type].widget;
   return (<div className="my-1">
-    <span style={{fontWeight: 'bold'}}>{props?.definition?.label}</span>
-    {/*<textarea type="text" className="form-control" defaultValue={props?.value} readOnly />*/}
+    <span style={{fontWeight: 'bold'}}>{definition?.label}</span>
     <div className="form-control">
-      <JSONMatchPatternFieldNode onChange={props.onChange} value={value} />
+      <ADTFieldNode onChange={onChange} value={v} level={0} />
+    </div>
+  </div>);
+};
+
+const JSONMatchPatternField = (props) => {
+	const {onChange, definition} = props;
+  const value = typeof props.value === "object" ? props.value : {};
+  //const Widget = JSONMatchPatternFieldWidgets[value?.type];
+  return (<div className="my-1">
+    <span style={{fontWeight: 'bold'}}>{definition?.label}</span>
+    <div className="form-control">
+      <ADTFieldNode onChange={onChange} value={value} level={0} />
     </div>
   </div>);
 };
@@ -358,10 +403,11 @@ JSONMatchPatternField.validatorRunner = (definition, value, parentValue, context
 JSONMatchPatternField.validatorChecker = (definition, error, state, parentState, context) => {
   return false;
 };
+*/
 
 Object.assign(formComponents, {
   CodeDisplay,
-  JSONMatchPatternField,
+  //JSONMatchPatternField,
 });
 
 const CodeSearchSubmit = ({}) => {
@@ -488,7 +534,53 @@ const JSONExplorerGadget = (props) => {
           fields={{type: "Fields", fields: [
             {"type": "TextareaField", "k": "source", "label": "Source JSON", "required": true},
             {"type": "HiddenField", "k": "result"},
-            {"type": "JSONMatchPatternField", "k": "grammar", "label": "Grammar (structure)", "required": true},
+            //{"type": "JSONMatchPatternField", "k": "grammar", "label": "Grammar (structure)", "required": true},
+            {
+              "type": "Fields",
+              "fields": [
+                {
+                  "type": "Fields",
+                  "fields": [
+                    {
+                      "type": "SelectField",
+                      "k": "grammar_type",
+                      "label": "Grammar (structure)",
+                      "options": [
+                        {"value": "MatchArraySome", "label": "[ ? ]"},
+                        {"value": "MatchString", "label": "\"abc\""},
+                      ],
+                    },
+                    {
+                      "type": "DefinedField",
+                      "k": "grammar_data",
+                      "label": "Grammar (structure)",
+                      "master_field": "grammar_type",
+                      "definitions": {
+                        "MatchArraySome": {
+                          "type": "UUIDListField",
+                          "k": "arg0",
+                          "label": "Array",
+                          "fields": [{ 
+                            "k": "element",
+                            "type": "RecursiveField",
+                            "definition_id": "grammar",
+                          }],
+                        },
+                        "MatchString": {
+                          "type": "TextField",
+                          "k": "arg0",
+                          "label": "String",
+                        },
+                      },
+                    },
+                  ],
+                  "interceptor": "ADTNodeInterceptor",
+                  "adtDefintion": JSONMatchPattern,
+                  "id": "grammar",
+                },
+              ],
+              "interceptor": "recursiveFields"
+            },
             {"type": "HiddenField", "k": "funnel"},
           ], layout: "CodeSearchLayout"}}
           submitButtonWidget="CodeSearchSubmit"
@@ -665,8 +757,22 @@ const RefsInterceptor = {
   },
 };
 
+const ADTNodeInterceptor = {
+  processFields({ fields, definition, value }) {
+    return fields;
+  },
+  onChange(newValue, oldValue, definition, context) {
+    const v = {...newValue};
+    if (oldValue?.grammar_type?.value !== newValue?.grammar_type?.value) {
+      v.grammar_type = definition?.adtDefintion[newValue?.grammar_type?.value]
+    }
+    return v;
+  }
+};
+
 Object.assign(interceptors, {
   RefsInterceptor,
+  ADTNodeInterceptor,
 });
 
 function App() {

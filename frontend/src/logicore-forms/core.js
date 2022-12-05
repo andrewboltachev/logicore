@@ -330,7 +330,7 @@ const UUIDListField = ({
   const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null;
   const id = "id_" + uuidv4();
   const { label } = definition;
-  const vvalue = value || [];
+  const vvalue = Array.isArray(value) ? value : [];
   const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper;
   const newValue = definition?.new_value || {};
   let processList = _ => {};
@@ -731,6 +731,7 @@ export const GenericForm = (props) => {
           "Please fix the errors below",
           "Error"
         );
+        console.log('!!!', errors);
         setTimeout(() => {
           try {
             document
