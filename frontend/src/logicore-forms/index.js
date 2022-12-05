@@ -126,12 +126,13 @@ const TextField = ({
 }) => {
   const id = "id_" + uuidv4();
   const { label } = definition;
+  const formControlSm = context?.formControlSm ? "form-control-sm" : null;
   return (
     <FieldLabel definition={definition} id={id} context={context}>
     <input
         id={id}
         type={definition.subtype || "text"}
-        className={classd`form-control ${{ "is-invalid": error }}`}
+        className={classd`form-control ${{ "is-invalid": error }} ${formControlSm}`}
         value={value || ""}
         onChange={(e) => {
           onChange(e.target.value);
@@ -160,12 +161,13 @@ const TextareaField = ({
 }) => {
   const id = "id_" + uuidv4();
   const { label } = definition;
+  const formControlSm = context?.formControlSm ? "form-control-sm" : null;
   return (
     <FieldLabel definition={definition} id={id} context={context}>
       <textarea
         id={id}
         type="text"
-        className={classd`form-control ${{ "is-invalid": error }}`}
+        className={classd`form-control ${{ "is-invalid": error }} ${formControlSm}`}
         value={value || ""}
         onChange={(e) => {
           if (definition.readonly) return;
@@ -203,6 +205,7 @@ const NumberField = ({
     }
   }
   //const values = [7, 5, 11];
+  const formControlSm = context?.formControlSm ? "form-control-sm" : null;
   return (
     <FieldLabel definition={definition} id={id} context={context}>
       <div style={{display: "flex", alignItems: 'center'}} className="currency-input-wrapper">
@@ -210,7 +213,7 @@ const NumberField = ({
           {...extra}
           id={id}
           type="number"
-          className={classd`form-control ${{ "is-invalid": error }}`}
+          className={classd`form-control ${{ "is-invalid": error }} ${formControlSm}`}
           value={(value + "") || ""}
           onChange={(e) => {
             onChange(e.target.value);

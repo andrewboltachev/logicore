@@ -743,6 +743,7 @@ const JSONExplorerGadget = (props) => {
               ],
               "layout": "ADTNodeFieldsWrapper",
               "interceptor": "recursiveFields",
+              "context": { formControlSm: true },
             },
             {"type": "HiddenField", "k": "funnel"},
           ], layout: "CodeSearchLayout"}}
