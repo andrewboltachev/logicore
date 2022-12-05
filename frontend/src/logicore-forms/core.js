@@ -73,6 +73,7 @@ const Fields = (fieldsProps) => {
   let Layout = FieldsBasicLayout;
   if (definition.layout) {
     Layout = fieldsLayouts[definition.layout];
+    if (!Layout) throw new Error("Layout doesn't exist: " + definition.layout);
   }
   let ItemWrapper = React.Fragment;
   if (definition.itemWrapper) {

@@ -250,7 +250,7 @@ const MatchArrayDefinition = {
       "type": "RecursiveField",
       "definition_id": "grammar",
     },
-  ]
+  ],
 };
 
 const JSONMatchPattern = [
@@ -303,7 +303,7 @@ const JSONMatchPattern = [
               "type": "RecursiveField",
               "definition_id": "grammar",
             }],
-          }
+          },
         ]
       },
     },
@@ -460,18 +460,17 @@ const ADTSelectField = ({
   const { label } = definition;
   let inner = null;
   const [editing, setEditing] = useState(false);
-  return (<div>
-      <div className="mt-1">
+  return (<div style={{flexShrink: 0}}>
       {(!value || editing) ? (
         <div>
           <div className="d-flex" style={{gridGap: 5}}>
           {adtDefintion.map(g => {
-            return <div>
+            return <div style={{flexShrink: 0}}>
               <div style={{fontSize: "0.75rem"}}>{g.label}</div>
               <div className="btn-group">
                 {g.children.map(t => {
                   const active = t.key === value;
-                  return <button type="button" className={classd`btn btn-sm btn${!active ? "-outline" : ""}-${g.color} fw-bold`} onClick={_ => {
+                  return <button type="button" className={classd`btn btn-sm btn${!active ? "-outline" : ""}-${g.color} fw-bold`} style={{flexShrink: 0}} onClick={_ => {
                     if (!active) {
                       onChange(t.key);
                     }
@@ -483,10 +482,9 @@ const ADTSelectField = ({
           })}
           </div>
         </div>
-      ) : (<button className="btn btn-sm btn-outline-dark" type="button" onClick={_ => setEditing(true)}>
+      ) : (<button className="btn btn-sm btn-outline-dark" type="button" onClick={_ => setEditing(true)} style={{flexShrink: 0, whiteSpace: "nowrap"}}>
         {(adtDefintionItems.find(x => x.key === value) || {}).label}
       </button>)}
-      </div>
       {error && <div className="invalid-feedback d-block">{error}</div>}
     </div>
   );
@@ -532,10 +530,11 @@ const CodeSearchLayout = (props) => {
 const ADTNodeFields = (props) => {
   const { renderedFields } = props;
   return (<>
-    <div className={classd`d-flex align-items-start`} style={{
-      margin: "0 0 0 3rem",
-      gridGap: 5,
+    <div className={classd`d-grid align-items-start`} style={{
+      margin: "0 0 0 0",
       flexShrink: 0,
+      gridGap: 5,
+      gridAutoFlow: "column",
     }}>
       {renderedFields}
     </div>
@@ -545,26 +544,71 @@ const ADTNodeFields = (props) => {
 const ADTNodeFieldsWrapper = (props) => {
   const { renderedFields } = props;
   return (<>
-    <div className={classd``} style={{
-      margin: "0 0 0 -3rem",
-      flexShrink: 0,
+    <div className="form-control" style={{
+      position: "relative",
+      minHeight: "40vh",
+      overflow: "auto",
     }}>
-      {renderedFields}
+      <div className={classd``} style={{
+        margin: "0 0 0 0",
+        position: "absolute",
+      }}>
+        <div className="" style={{
+        }}>
+          {renderedFields}
+        </div>
+      </div>
     </div>
   </>);
 };
 
 const ADTKeyValue = (props) => {
-  const { renderedFields } = props;
-  return (<>
+  const { renderedFields, definition } = props;
+  return (<div className="d-flex">
+      <a
+          href="#"
+          className="text-danger"
+          style={{marginRight: 5, padding: "0 0.5rem"}}
+          onClick={(e) => {
+            e.preventDefault();
+                definition.onChangeParent(
+                  definition.parent.filter((x, i) => i != definition.index)
+                );
+          }}
+      >×</a>
     <div className={classd`d-flex`} style={{
       margin: "0 0 0 0",
       gridGap: 5,
-      flexShrink: 0,
+      gridAutoFlow: "column",
     }}>
-      {renderedFields}
+      {renderedFields.map(f => (<div style={{flexShrink: 0}}>{f}</div>))}
     </div>
-  </>);
+  </div>);
+};
+
+
+const ADTElement = (props) => {
+  const { renderedFields, definition } = props;
+  return (<div className="d-flex">
+      <a
+          href="#"
+          className="text-danger"
+          style={{marginRight: 5, padding: "0 0.5rem"}}
+          onClick={(e) => {
+            e.preventDefault();
+                definition.onChangeParent(
+                  definition.parent.filter((x, i) => i != definition.index)
+                );
+          }}
+      >×</a>
+    <div className={classd`d-flex`} style={{
+      margin: "0 0 0 0",
+      gridGap: 5,
+      gridAutoFlow: "column",
+    }}>
+      {renderedFields.map(f => (<div style={{flexShrink: 0}}>{f}</div>))}
+    </div>
+  </div>);
 };
 
 
@@ -572,6 +616,8 @@ Object.assign(fieldsLayouts, {
   CodeSearchLayout,
   ADTNodeFields,
   ADTKeyValue,
+  ADTElement,
+  ADTNodeFieldsWrapper,
 });
 
 const GenericForm2 = (props) => {
