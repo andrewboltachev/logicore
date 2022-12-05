@@ -303,6 +303,7 @@ const JSONMatchPattern = [
               "type": "RecursiveField",
               "definition_id": "grammar",
             }],
+            "layout": "ADTElement",
           },
         ]
       },
@@ -330,7 +331,6 @@ const JSONMatchPattern = [
             {
               "type": "TextField",
               "k": "arg0",
-              //"label": "String",
             }
           ]
         },
@@ -340,12 +340,30 @@ const JSONMatchPattern = [
         label: "123",
         title: "Match Number",
         empty: [0],
+        definition: {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "NumberField",
+              "k": "arg0",
+            }
+          ]
+        },
       },
       {
         key: "MatchBool",
         label: "Y/N",
         title: "Match Boolean",
         empty: [false],
+        definition: {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "BooleanField",
+              "k": "arg0",
+            }
+          ]
+        },
       },
       {
         key: "MatchNull",
@@ -514,9 +532,10 @@ const CodeSearchLayout = (props) => {
   const { renderedFields } = props;
   return (<>
     <div className={classd`code-search ${{"is-error": props.value.error}}`} style={{
-      minHeight: "calc(max(100vh - 200px, 500px))",
+      minHeight: "calc(max(100vh - 156px, 600px))",
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
+      gridAutoRows: "1fr",
       gridGap: 20,
     }}>
       <div className="">{renderedFields[0]}</div>
@@ -568,7 +587,7 @@ const ADTKeyValue = (props) => {
       <a
           href="#"
           className="text-danger"
-          style={{marginRight: 5, padding: "0 0.5rem"}}
+          style={{marginRight: 5, padding: "0.5rem"}}
           onClick={(e) => {
             e.preventDefault();
                 definition.onChangeParent(
@@ -593,7 +612,7 @@ const ADTElement = (props) => {
       <a
           href="#"
           className="text-danger"
-          style={{marginRight: 5, padding: "0 0.5rem"}}
+          style={{marginRight: 5, padding: "0.5rem"}}
           onClick={(e) => {
             e.preventDefault();
                 definition.onChangeParent(
@@ -666,7 +685,8 @@ const GenericForm2 = (props) => {
 
 const JSONExplorerGadget = (props) => {
   const [state, setState] = useLocalStorage('LOGICORE_JSON_EXPLORER_DATA', {});
-  return <div>
+  return <div style={{overflow: "auto", height: "100vh"}}>
+  <div style={{minWidth: 1200, minHeight: 800}}>
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <div className="container-fluid">
           <a className="navbar-brand" href="#">JSON Explorer</a>
@@ -749,6 +769,7 @@ const JSONExplorerGadget = (props) => {
           ], layout: "CodeSearchLayout"}}
           submitButtonWidget="CodeSearchSubmit"
         />
+			</div>
 			</div>
   </div>;
 };
