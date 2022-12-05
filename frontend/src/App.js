@@ -269,7 +269,7 @@ const JSONMatchPattern = [
         key: "MatchString",
         label: "\"abc\"",
         title: "Match String",
-        empty: [""],
+        empty: ["wow!"],
       },
       {
         key: "MatchNumber",
@@ -557,19 +557,29 @@ const JSONExplorerGadget = (props) => {
                       "master_field": "grammar_type",
                       "definitions": {
                         "MatchArraySome": {
-                          "type": "UUIDListField",
-                          "k": "arg0",
-                          "label": "Array",
-                          "fields": [{ 
-                            "k": "element",
-                            "type": "RecursiveField",
-                            "definition_id": "grammar",
-                          }],
+                          "type": "Fields",
+                          "fields": [
+                            {
+                              "type": "UUIDListField",
+                              "k": "arg0",
+                              "label": "Array",
+                              "fields": [{ 
+                                "k": "element",
+                                "type": "RecursiveField",
+                                "definition_id": "grammar",
+                              }],
+                            }
+                          ]
                         },
                         "MatchString": {
-                          "type": "TextField",
-                          "k": "arg0",
-                          "label": "String",
+                          "type": "Fields",
+                          "fields": [
+                            {
+                              "type": "TextField",
+                              "k": "arg0",
+                              "label": "String",
+                            }
+                          ]
                         },
                       },
                     },
@@ -763,8 +773,18 @@ const ADTNodeInterceptor = {
   },
   onChange(newValue, oldValue, definition, context) {
     const v = {...newValue};
+    console.log('!!!', v);
     if (oldValue?.grammar_type?.value !== newValue?.grammar_type?.value) {
-      v.grammar_type = definition?.adtDefintion[newValue?.grammar_type?.value]
+      const e = definition?.adtDefintion.map(x=>x.children).reduce(
+        (a, b) => a.concat(b)
+      ).find(
+        x => x.key === newValue?.grammar_type?.value
+      )?.empty || [];
+      console.log('search in', definition?.adtDefintion.map(x=>x.children));
+      v.grammar_data = Object.fromEntries(
+        e.map((a, i) => [`arg${i}`, a])
+      );
+      console.log(`selected empty for ${newValue?.grammar_type?.value}`, v.grammar_data);
     }
     return v;
   }
