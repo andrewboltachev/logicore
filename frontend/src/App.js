@@ -218,7 +218,6 @@ CodeDisplay.validatorChecker = (definition, error, state, parentState, context) 
   return false;
 };
 
-
 const MatchObjectDefinition = {
   "type": "Fields",
   "fields": [
@@ -230,7 +229,7 @@ const MatchObjectDefinition = {
         { 
           "k": "key",
           "type": "TextField",
-          "label": "Key",
+          //"label": "Key",
         },
         { 
           "k": "value",
@@ -238,6 +237,7 @@ const MatchObjectDefinition = {
           "definition_id": "grammar",
         }
       ],
+      "layout": "ADTKeyValue",
     }
   ]
 };
@@ -330,7 +330,7 @@ const JSONMatchPattern = [
             {
               "type": "TextField",
               "k": "arg0",
-              "label": "String",
+              //"label": "String",
             }
           ]
         },
@@ -460,8 +460,7 @@ const ADTSelectField = ({
   const { label } = definition;
   let inner = null;
   const [editing, setEditing] = useState(false);
-  return (
-    <FieldLabel definition={definition} id={id} context={context}>
+  return (<div>
       <div className="mt-1">
       {(!value || editing) ? (
         <div>
@@ -489,7 +488,7 @@ const ADTSelectField = ({
       </button>)}
       </div>
       {error && <div className="invalid-feedback d-block">{error}</div>}
-    </FieldLabel>
+    </div>
   );
 };
 ADTSelectField.isEmpty = (x) => !x;
@@ -533,8 +532,10 @@ const CodeSearchLayout = (props) => {
 const ADTNodeFields = (props) => {
   const { renderedFields } = props;
   return (<>
-    <div className={classd``} style={{
+    <div className={classd`d-flex align-items-start`} style={{
       margin: "0 0 0 3rem",
+      gridGap: 5,
+      flexShrink: 0,
     }}>
       {renderedFields}
     </div>
@@ -546,16 +547,31 @@ const ADTNodeFieldsWrapper = (props) => {
   return (<>
     <div className={classd``} style={{
       margin: "0 0 0 -3rem",
+      flexShrink: 0,
     }}>
       {renderedFields}
     </div>
   </>);
 };
 
+const ADTKeyValue = (props) => {
+  const { renderedFields } = props;
+  return (<>
+    <div className={classd`d-flex`} style={{
+      margin: "0 0 0 0",
+      gridGap: 5,
+      flexShrink: 0,
+    }}>
+      {renderedFields}
+    </div>
+  </>);
+};
+
+
 Object.assign(fieldsLayouts, {
   CodeSearchLayout,
   ADTNodeFields,
-  ADTNodeFieldsWrapper,
+  ADTKeyValue,
 });
 
 const GenericForm2 = (props) => {
@@ -665,6 +681,7 @@ const JSONExplorerGadget = (props) => {
                       "k": "grammar_data",
                       "label": "Grammar (structure)",
                       "master_field": "grammar_type",
+                      "master_field_getter": x => x,
                       "definitions": Object.fromEntries(
                         adtDefintionItems.map(
                           x => [x.key, x.definition || {type: "Fields", fields: []}]

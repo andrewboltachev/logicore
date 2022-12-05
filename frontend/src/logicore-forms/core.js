@@ -91,7 +91,8 @@ const Fields = (fieldsProps) => {
     if (child_k) {
       theFields.forEach(ff => {
         if (ff.type === 'DefinedField' && ff.master_field === child_k) {
-          if (value?.[child_k]?.value !== v?.value) {
+          const master_field_getter = ff.master_field_getter || (x => x?.value);
+          if (master_field_getter(value?.[child_k]) !== master_field_getter(v)) {
             newV[ff.k] = {};
           }
         }
@@ -106,11 +107,16 @@ const Fields = (fieldsProps) => {
     const vvalue = !!child.k ? value?.[child.k] : value;
     const additionalProps = {};
     let imposed_value = void 0; // TODO use undefined
+    const master_field_getter = child.master_field_getter || (x => x?.value);
     if (child.type === 'DefinedField' && child.master_field) {
       console.log('CURRENT FOR', (value?.[child?.master_field] || {}).value);
-      additionalProps.current =  child.definitions[(value?.[child?.master_field] || {}).value] || {type: 'Fields', fields: []}; // TODO assumption
+      additionalProps.current =  child.definitions[
+        master_field_getter((value?.[child?.master_field] || {}))
+      ] || {type: 'Fields', fields: []}; // TODO assumption
     } else if (child.impositions) {
-      imposed_value = child?.impositions?.[(value?.[child.master_field] || {}).value]; // TODO assumption
+      imposed_value = child?.impositions?.[
+        master_field_getter((value?.[child.master_field] || {}))
+      ]; // TODO assumption
     }
     return (
       <ItemWrapper key={i}>
