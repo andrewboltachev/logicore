@@ -218,6 +218,41 @@ CodeDisplay.validatorChecker = (definition, error, state, parentState, context) 
   return false;
 };
 
+
+const MatchObjectDefinition = {
+  "type": "Fields",
+  "fields": [
+    {
+      "type": "UUIDListField",
+      "k": "arg0",
+      "label": "Array",
+      "fields": [
+        { 
+          "k": "key",
+          "type": "TextField",
+          "label": "Key",
+        },
+        { 
+          "k": "value",
+          "type": "RecursiveField",
+          "definition_id": "grammar",
+        }
+      ],
+    }
+  ]
+};
+
+const MatchArrayDefinition = {
+  "type": "Fields",
+  "fields": [
+    { 
+      "k": "element",
+      "type": "RecursiveField",
+      "definition_id": "grammar",
+    },
+  ]
+};
+
 const JSONMatchPattern = [
   {
     "label": "Containers",
@@ -228,30 +263,49 @@ const JSONMatchPattern = [
       label: "{ ! }",
       title: "Object: All keys must match",
       empty: [[["", null]]],
+      definition: MatchObjectDefinition,
     },
     {
       key: "MatchObjectPartial",
       label: "{ ? }",
       title: "Object: Only specified keys must match",
       empty: [[["", null]]],
+      definition: MatchObjectDefinition,
     },
     {
       key: "MatchArray",
       label: "[ ! ]",
       title: "Array: All elements must match",
       empty: [[null]],
+      definition: MatchArrayDefinition,
     },
     {
       key: "MatchArraySome",
       label: "[ ? ]",
       title: "Array: Some of the elements must match",
       empty: [[null]],
+      definition: MatchArrayDefinition,
     },
     {
       key: "MatchArrayExact",
       label: "[ , ]",
       title: "Array: Literal (element-by-element) match",
       empty: [[null]],
+      definition: {
+        "type": "Fields",
+        "fields": [
+          {
+            "type": "UUIDListField",
+            "k": "arg0",
+            "label": "Array",
+            "fields": [{ 
+              "k": "element",
+              "type": "RecursiveField",
+              "definition_id": "grammar",
+            }],
+          }
+        ]
+      },
     },
     /*{
       key: "MatchArrayContextFree",
@@ -270,6 +324,16 @@ const JSONMatchPattern = [
         label: "\"abc\"",
         title: "Match String",
         empty: ["wow!"],
+        definition: {
+          "type": "Fields",
+          "fields": [
+            {
+              "type": "TextField",
+              "k": "arg0",
+              "label": "String",
+            }
+          ]
+        },
       },
       {
         key: "MatchNumber",
@@ -350,29 +414,6 @@ const JSONMatchPattern = [
   }
 
 const ADTFieldNode = ({value, path, error, onChange, level}) => {
-  if (!value.type) {
-    return <div>
-      <div className="d-flex" style={{gridGap: 5}}>
-      {JSONMatchPatternFieldTypes.map(g => {
-        return <div>
-          <div style={{fontSize: "0.75rem"}}>{g.label}</div>
-          <div className="btn-group">
-            {g.children.map(t => {
-              const active = t.key === value.type;
-              return <button type="button" className={classd`btn btn-sm btn${!active ? "-outline" : ""}-${g.color} fw-bold`} onClick={_ => {
-                if (!active) {
-                  onChange({type: t.key}); // resets value. TODO: changes
-                }
-              }}>{t.label}</button>;
-          })}
-          </div>
-        </div>
-      })}
-      </div>
-    </div>;
-  } else {
-
-  }
 }
 
 const ADTField = ({value, onChange, definition}) => {
@@ -405,9 +446,58 @@ JSONMatchPatternField.validatorChecker = (definition, error, state, parentState,
 };
 */
 
+const ADTSelectField = ({
+  value,
+  onChange,
+  error,
+  definition,
+  onReset,
+  path,
+  context,
+  disabled,
+}) => {
+  const id = "id_" + uuidv4();
+  const { label } = definition;
+  let inner = null;
+  const [editing, setEditing] = useState(false);
+  return (
+    <FieldLabel definition={definition} id={id} context={context}>
+      <div className="mt-1">
+      {(!value || editing) ? (
+        <div>
+          <div className="d-flex" style={{gridGap: 5}}>
+          {adtDefintion.map(g => {
+            return <div>
+              <div style={{fontSize: "0.75rem"}}>{g.label}</div>
+              <div className="btn-group">
+                {g.children.map(t => {
+                  const active = t.key === value;
+                  return <button type="button" className={classd`btn btn-sm btn${!active ? "-outline" : ""}-${g.color} fw-bold`} onClick={_ => {
+                    if (!active) {
+                      onChange(t.key);
+                    }
+                    setEditing(false);
+                  }}>{t.label}</button>;
+              })}
+              </div>
+            </div>
+          })}
+          </div>
+        </div>
+      ) : (<button className="btn btn-sm btn-outline-dark" type="button" onClick={_ => setEditing(true)}>
+        {(adtDefintionItems.find(x => x.key === value) || {}).label}
+      </button>)}
+      </div>
+      {error && <div className="invalid-feedback d-block">{error}</div>}
+    </FieldLabel>
+  );
+};
+ADTSelectField.isEmpty = (x) => !x;
+
 Object.assign(formComponents, {
   CodeDisplay,
   //JSONMatchPatternField,
+  ADTSelectField,
 });
 
 const CodeSearchSubmit = ({}) => {
@@ -439,8 +529,33 @@ const CodeSearchLayout = (props) => {
     </div>
   </>);
 };
+
+const ADTNodeFields = (props) => {
+  const { renderedFields } = props;
+  return (<>
+    <div className={classd``} style={{
+      margin: "0 0 0 3rem",
+    }}>
+      {renderedFields}
+    </div>
+  </>);
+};
+
+const ADTNodeFieldsWrapper = (props) => {
+  const { renderedFields } = props;
+  return (<>
+    <div className={classd``} style={{
+      margin: "0 0 0 -3rem",
+    }}>
+      {renderedFields}
+    </div>
+  </>);
+};
+
 Object.assign(fieldsLayouts, {
   CodeSearchLayout,
+  ADTNodeFields,
+  ADTNodeFieldsWrapper,
 });
 
 const GenericForm2 = (props) => {
@@ -534,7 +649,6 @@ const JSONExplorerGadget = (props) => {
           fields={{type: "Fields", fields: [
             {"type": "TextareaField", "k": "source", "label": "Source JSON", "required": true},
             {"type": "HiddenField", "k": "result"},
-            //{"type": "JSONMatchPatternField", "k": "grammar", "label": "Grammar (structure)", "required": true},
             {
               "type": "Fields",
               "fields": [
@@ -542,54 +656,30 @@ const JSONExplorerGadget = (props) => {
                   "type": "Fields",
                   "fields": [
                     {
-                      "type": "SelectField",
+                      "type": "ADTSelectField",
                       "k": "grammar_type",
-                      "label": "Grammar (structure)",
-                      "options": [
-                        {"value": "MatchArraySome", "label": "[ ? ]"},
-                        {"value": "MatchString", "label": "\"abc\""},
-                      ],
+                      "label": "Grammar",
                     },
                     {
                       "type": "DefinedField",
                       "k": "grammar_data",
                       "label": "Grammar (structure)",
                       "master_field": "grammar_type",
-                      "definitions": {
-                        "MatchArraySome": {
-                          "type": "Fields",
-                          "fields": [
-                            {
-                              "type": "UUIDListField",
-                              "k": "arg0",
-                              "label": "Array",
-                              "fields": [{ 
-                                "k": "element",
-                                "type": "RecursiveField",
-                                "definition_id": "grammar",
-                              }],
-                            }
-                          ]
-                        },
-                        "MatchString": {
-                          "type": "Fields",
-                          "fields": [
-                            {
-                              "type": "TextField",
-                              "k": "arg0",
-                              "label": "String",
-                            }
-                          ]
-                        },
-                      },
+                      "definitions": Object.fromEntries(
+                        adtDefintionItems.map(
+                          x => [x.key, x.definition || {type: "Fields", fields: []}]
+                        )
+                      ),
                     },
                   ],
                   "interceptor": "ADTNodeInterceptor",
                   "adtDefintion": JSONMatchPattern,
                   "id": "grammar",
+                  "layout": "ADTNodeFields",
                 },
               ],
-              "interceptor": "recursiveFields"
+              "layout": "ADTNodeFieldsWrapper",
+              "interceptor": "recursiveFields",
             },
             {"type": "HiddenField", "k": "funnel"},
           ], layout: "CodeSearchLayout"}}
@@ -767,24 +857,34 @@ const RefsInterceptor = {
   },
 };
 
+const adtDefintion = JSONMatchPattern;
+
+const adtDefintionItems = adtDefintion.map(x=>x.children).reduce(
+  (a, b) => a.concat(b)
+);
+
+console.log(
+  '!!!', Object.fromEntries(
+                        adtDefintionItems.map(
+                          x => [x.key, x.definition || {type: "Fields", fields: []}]
+                        )
+                      ));
+
 const ADTNodeInterceptor = {
   processFields({ fields, definition, value }) {
     return fields;
   },
   onChange(newValue, oldValue, definition, context) {
     const v = {...newValue};
-    console.log('!!!', v);
     if (oldValue?.grammar_type?.value !== newValue?.grammar_type?.value) {
-      const e = definition?.adtDefintion.map(x=>x.children).reduce(
-        (a, b) => a.concat(b)
-      ).find(
+      const e = adtDefintionItems.find(
         x => x.key === newValue?.grammar_type?.value
       )?.empty || [];
-      console.log('search in', definition?.adtDefintion.map(x=>x.children));
+      //console.log('search in', definition?.adtDefintion.map(x=>x.children));
       v.grammar_data = Object.fromEntries(
         e.map((a, i) => [`arg${i}`, a])
       );
-      console.log(`selected empty for ${newValue?.grammar_type?.value}`, v.grammar_data);
+      //console.log(`selected empty for ${newValue?.grammar_type?.value}`, v.grammar_data);
     }
     return v;
   }
