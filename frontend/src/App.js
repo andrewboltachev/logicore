@@ -729,6 +729,8 @@ const GenericForm2 = (props) => {
 
 const JSONExplorerGadget = (props) => {
   const [state, setState] = useLocalStorage('LOGICORE_JSON_EXPLORER_DATA', {});
+  const [result, setResult] = useState({});
+  const [i, setI] = useState(0);
   return <div style={{overflow: "auto", height: "100vh"}}>
   <div style={{minWidth: 1200, minHeight: 800}}>
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
@@ -769,21 +771,24 @@ const JSONExplorerGadget = (props) => {
       </nav>
 			<div className="container-fluid">
         <GenericForm
+          key={`s${i}`}
           notifyOnError
-          data={state}
+          data={{...state, ...result}}
           onChange={newState => {
             setState(newState);
+            setResult({});
             props.onChange(
               newState,
               null,
               resp => {
-                console.log('got resp', resp);
+                setResult(resp);
+                setI(i + 1);
               }
             );
           }}
           fields={{type: "Fields", fields: [
             {"type": "TextareaField", "k": "source", "label": "Source JSON"},
-            {"type": "HiddenField", "k": "result"},
+            {"k": "result", "type": "CodeDisplay", "label": "Result"},
             {
               "type": "Fields",
               "fields": [
@@ -818,7 +823,7 @@ const JSONExplorerGadget = (props) => {
               "interceptor": "recursiveFields",
               "context": { formControlSm: true },
             },
-            {"type": "HiddenField", "k": "funnel"},
+            {"k": "funnel", "type": "CodeDisplay", "label": "Funnel"},
           ], layout: "CodeSearchLayout"}}
           submitButtonWidget="CodeSearchSubmit"
         />

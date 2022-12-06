@@ -755,8 +755,8 @@ class JSONExplorerApiView(MainView):
         grammar = postwalk(f, data)
         print(json.dumps(code, indent=4))
         print(json.dumps(grammar, indent=4))
-        error = True
-        result = "Connection error"
+        error = False
+        result = ""
         funnel = ""
         try:
             resp = requests.post("http://localhost:3002/json-matcher-1", json={
