@@ -776,7 +776,7 @@ class JSONExplorerApiView(MainView):
                     funnel = ""
                 else:
                     result = json.dumps(resp_json["result"])
-                    funnel = json.dumps(resp_json["funnel"])
+                    funnel = "\n".join([json.dumps(x) for x in resp_json["funnel"]])
             elif resp.status_code == 400:
                 error = True
                 result = resp_json["error"]
@@ -788,5 +788,5 @@ class JSONExplorerApiView(MainView):
         return JsonResponse({
             "error": error,
             "result": result,
-            "error": error,
+            "funnel": funnel,
         })
