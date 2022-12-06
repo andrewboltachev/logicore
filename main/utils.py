@@ -1,4 +1,5 @@
 import locale
+from functools import partial
 
 
 def unique(a):
@@ -37,3 +38,35 @@ def validation_error_message(e):
     if hasattr(e, 'error_list'):
         return validation_error_message(e.error_list[0])
     raise NotImplemented
+
+
+def identity(e):
+    return e
+
+def walk(inner, outer, coll):
+    if isinstance(coll, list):
+        return outer([inner(e) for e in coll])
+    elif isinstance(coll, dict):
+        return outer(dict([inner(e) for e in coll.items()]))
+    elif isinstance(coll, tuple):
+        return outer([inner(e) for e in coll])
+    else:
+        return outer(coll)
+
+def prewalk(fn, coll):
+    return walk(partial(prewalk, fn), identity, fn(coll))
+
+def postwalk(fn, coll):
+    return walk(partial(postwalk, fn), fn, coll)
+
+def prewalk_demo(coll):
+    def prn(e):
+        #print "Walked:", e
+        return e
+    return prewalk(prn, coll)
+
+def postwalk_demo(coll):
+    def prn(e):
+        #print "Walked:", e
+        return e
+    return postwalk(prn, coll)

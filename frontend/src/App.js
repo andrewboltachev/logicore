@@ -229,6 +229,7 @@ const MatchObjectDefinition = {
         { 
           "k": "key",
           "type": "TextField",
+          //"required": true,
           //"label": "Key",
         },
         { 
@@ -380,12 +381,39 @@ const JSONMatchPattern = [
         key: "MatchSimpleOr",
         label: "a|b",
         title: "OR",
+        definition: MatchObjectDefinition,
         empty: [["option1", null]],
       },
       {
         key: "MatchAny",
         label: "?",
         title: "OR",
+      },
+      {
+        key: "MatchIfThen",
+        label: "If",
+        title: "«if-then» match",
+        definition: {
+          "type": "Fields",
+          "fields": [
+            {
+              "k": "arg0",
+              "type": "RecursiveField",
+              "definition_id": "grammar",
+            },
+            {
+              "k": "arg1",
+              "type": "RecursiveField",
+              "definition_id": "grammar",
+            },
+            {
+              "k": "arg2",
+              "type": "TextField",
+            },
+          ],
+          "layout": "ADTIfThen",
+        },
+        empty: [[null, null, ""]],
       },
     ],
   },
@@ -563,6 +591,7 @@ const ADTNodeFields = (props) => {
 const ADTNodeFieldsWrapper = (props) => {
   const { renderedFields } = props;
   return (<>
+    <strong>Grammar</strong>
     <div className="form-control" style={{
       position: "relative",
       minHeight: "40vh",
@@ -630,12 +659,27 @@ const ADTElement = (props) => {
   </div>);
 };
 
+const ADTIfThen = (props) => {
+  const { renderedFields, definition } = props;
+  return (<div>
+    <label className="fw-bold">Pre-condition:</label>
+    <div>{renderedFields[0]}</div>
+    <label className="fw-bold">Condition:</label>
+    <div>{renderedFields[1]}</div>
+    <div className="d-flex align-items-center">
+      <label className="fw-bold me-1">Error text:</label>
+      <div>{renderedFields[2]}</div>
+    </div>
+  </div>);
+};
+
 
 Object.assign(fieldsLayouts, {
   CodeSearchLayout,
   ADTNodeFields,
   ADTKeyValue,
   ADTElement,
+  ADTIfThen,
   ADTNodeFieldsWrapper,
 });
 
@@ -727,9 +771,18 @@ const JSONExplorerGadget = (props) => {
         <GenericForm
           notifyOnError
           data={state}
-          onChange={setState}
+          onChange={newState => {
+            setState(newState);
+            props.onChange(
+              newState,
+              null,
+              resp => {
+                console.log('got resp', resp);
+              }
+            );
+          }}
           fields={{type: "Fields", fields: [
-            {"type": "TextareaField", "k": "source", "label": "Source JSON", "required": true},
+            {"type": "TextareaField", "k": "source", "label": "Source JSON"},
             {"type": "HiddenField", "k": "result"},
             {
               "type": "Fields",
