@@ -33,4 +33,5 @@ traitlets==5.2.1.post0
 typing-inspect==0.7.1
 typing_extensions==4.2.0
 urllib3==1.26.9
+uuid==1.30
 wcwidth==0.2.5

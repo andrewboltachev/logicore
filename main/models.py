@@ -1,4 +1,5 @@
 import glob
+import uuid
 from django.db import models
 from .framework import StatusOptions
 
@@ -54,6 +55,23 @@ class JSONCodeFormat(CodeFormat):
 
 class CodeSearch(models.Model):
     name = models.CharField(max_length=1024)
+    kind = CodeFormat.get_field()
+    data = models.TextField(default="", blank=True)
+    grammar = models.TextField(default="", blank=True)
+    created_dt = models.DateTimeField(auto_now_add=True)
+    modified_dt = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+    class Meta:
+        ordering = ['-modified_dt']
+
+
+class MatcherFiddle(models.Model):
+    name = models.CharField(max_length=1024)
+    code = models.UUIDField(default)
     kind = CodeFormat.get_field()
     data = models.TextField(default="", blank=True)
     grammar = models.TextField(default="", blank=True)
