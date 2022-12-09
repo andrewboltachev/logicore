@@ -697,6 +697,168 @@ class CodeSearchApiView(MainView):
         return JsonResponse({"navigate": f"/logicore-code/{obj.id}"})
 
 
+class MatcherFiddlesApiView(MainView):
+    in_menu = False
+    url_path = "/structure-explorer/"
+    title = "Structure Explorer"
+    TEMPLATE = "FiddleListView"
+
+    def get_fields(self):
+        return {
+            "type": "Fields",
+            "fields": [
+                {"from_field": "name"},
+            ],
+            "layout": "ModalLayout"
+        }
+
+    def get_data(self, request, *args, **kwargs):
+        now_dt = now()
+        now_date = now_dt.date()
+        return {
+            "baseUrl": self.url_path,
+            'items': list(
+                models.MatcherFiddle.objects.values('id', 'name', 'created_dt', 'modified_dt')
+            ),
+            'create_form': read_fields(self.get_fields(), models.MatcherFiddle())
+        }
+
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)['data']
+        if data.get('action') == 'delete':
+            models.MatcherFiddle.objects.filter(id=data['id']).delete()
+            return JsonResponse({"redirect": f"/logicore-code/"})
+        obj = write_fields(self.get_fields(), models.MatcherFiddle(), data)
+        return JsonResponse({"redirect": f"/logicore-code/{obj.id}"})
+
+
+class MatcherFiddleNewApiView(MainView):
+    in_menu = False
+    url_path = "/structure-explorer/new"
+    title = "Hello world"
+    TEMPLATE = "GenericForm2"
+
+    def get_data(self, request, *args, **kwargs):
+        obj = models.MatcherFiddle.objects.create(
+            name="Hello world"
+        )
+        return {
+            "data": {},
+            "fields": {"type": "Fields", "fields": []},
+            'redirect': f"/structure-explorer/{obj.uuid}",
+        }
+
+class MatcherFiddleApiView(MainView):
+    in_menu = False
+    url_path = "/structure-explorer/<uuid:uuid>"
+    title = "Hello world"
+    TEMPLATE = "GenericForm2"
+
+    def get_fields(self):
+        return {
+            "type": "Fields",
+            "fields": [
+                {"from_field": "name"},
+                {
+                    "type": "Fields",
+                    "fields": [
+                        {"from_field": "data"},
+                        {"k": "result", "type": "CodeDisplay", "label": "Result"},
+                        {"from_field": "grammar"},
+                        {"k": "funnel", "type": "CodeDisplay", "label": "Funnel"},
+                        {"k": "error", "type": "HiddenField"},
+                    ],
+                    "layout": "CodeSearchLayout",
+                },
+            ],
+            #"layout": "ModalLayout"
+        }
+
+    def get_obj(self):
+        def select_keys(m, ks):
+            return {k: v for k, v in m.items() if k in ks}
+
+        import libcst
+        from main.parser.python import serialize_dc
+        obj = models.MatcherFiddle.objects.get(uuid=self.kwargs["uuid"])
+        obj.error = False
+        obj.result = "<...>"
+        obj.funnel = "<...>"
+        # additional
+        obj.result_grammar = ""
+        obj.result_code = ""
+        obj.t1 = None
+        obj.t2 = None
+        """
+        try:
+            module = libcst.parse_module(obj.data)
+            code = serialize_dc(module)
+            code = select_keys(code, ["body", "type"])
+        except Exception as e:
+            obj.error = True
+            obj.result = f"Code parse error: {e}"
+            obj.funnel = ""
+            return obj
+        try:
+            module = libcst.parse_module(obj.grammar)
+            grammar = serialize_dc(module)
+            grammar = select_keys(grammar, ["body", "type"])
+        except Exception as e:
+            obj.error = True
+            obj.result = f"Grammar parse error: {e}"
+            obj.funnel = ""
+            return obj
+        obj.result_code = grammar
+        try:
+            resp = requests.post("http://localhost:3002/python-matcher-1", json={
+                "data": code,
+                "grammar": grammar,
+            })
+        except requests.exceptions.ConnectionError:
+            obj.error = True
+            obj.result = "Connection error"
+            obj.funnel = ""
+        else:
+            resp_json = resp.json()
+            if resp.status_code == 200:
+                obj.t1 = resp_json.get("t1")
+                obj.t2 = resp_json.get("t2")
+                if resp_json.get("error"):
+                    obj.error = True
+                    obj.result = resp_json["error"]
+                    obj.funnel = json.dumps(resp_json["funnel"])
+                    obj.result_grammar = resp_json["grammar"]
+                else:
+                    obj.result = json.dumps(resp_json["result"])
+                    obj.funnel = json.dumps(resp_json["funnel"])
+                    obj.result_grammar = resp_json["grammar"]
+            elif resp.status_code == 400:
+                obj.error = True
+                obj.result = resp_json["error"]
+                obj.funnel = ""
+            else:
+                obj.error = True
+                obj.result = f"Unknown error: status ({resp.status_code})"
+                obj.funnel = ""
+        """
+        return obj
+
+    def get_data(self, request, *args, **kwargs):
+        now_dt = now()
+        now_date = now_dt.date()
+        obj = self.get_obj()
+        return {
+            "submitButtonWidget": "CodeSearchSubmit",
+            **read_fields(self.get_fields(), obj)
+        }
+
+    def post(self, request, *args, **kwargs):
+        obj = self.get_obj()
+        data = json.loads(request.body)['data']
+        obj = write_fields(self.get_fields(), obj, data)
+        return JsonResponse({"navigate": f"/structure-explorer/{obj.uuid}"})
+
+
 class JSONExplorerApiView(MainView):
     in_menu = False
     url_path = "/json-explorer/"
@@ -753,8 +915,6 @@ class JSONExplorerApiView(MainView):
 
         #print(json.dumps(data, indent=4))
         grammar = postwalk(f, data)
-        print(json.dumps(code, indent=4))
-        print(json.dumps(grammar, indent=4))
         error = False
         result = ""
         funnel = ""

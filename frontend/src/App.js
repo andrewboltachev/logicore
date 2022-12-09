@@ -166,6 +166,48 @@ const ListView = ({title, create_form, items, onChange, baseUrl}) => {
   </div>;
 }
 
+const FiddleListView = ({title, create_form, items, onChange, baseUrl}) => {
+  const theBaseUrl = baseUrl || '/';
+  return <div className="container mt-3">
+    <div className="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h3>{title}</h3>
+        <h5 className="text-muted">My explorations</h5>
+      </div>
+      <Link to={baseUrl + "new"} className="btn btn-lg btn-success">
+        <i className="fa fa-plus" />{" "}
+        New
+      </Link>
+    </div>
+    <table className="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items?.map((item) => (<tr>
+          <td><Link to={`${baseUrl}${item.id}`}>{item.name}</Link></td>
+          <td>{item.kind}</td>
+          <td>
+            <button
+              className="btn btn-sm btn-outline-danger"
+              type="button"
+              onClick={_ => confirm('Do you really want to delete this graph?').then(value => value && onChange({'action': 'delete', 'id': item.id}))}
+            >
+              <i className="fa fa-times" />
+            </button>
+          </td>
+        </tr>))}
+        {!items?.length && <tr>
+          <td colSpan="2"><em>None yet</em></td>
+        </tr>}
+      </tbody>
+    </table>
+  </div>;
+}
+
 const LanguageView = ({onChange}) => {
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
@@ -834,6 +876,7 @@ const JSONExplorerGadget = (props) => {
 
 const mainComponents = {
   ListView,
+  FiddleListView,
   GenericForm,
   GenericForm2,
   JSONExplorerGadget,
