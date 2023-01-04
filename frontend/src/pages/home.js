@@ -30,7 +30,7 @@ const HomeView = () => {
         <div className="my-5">
           <dl>
             <dt>Technologies</dt>
-            <dd>Python/Django <span className="text-muted">(~11 years)</span>, ReactJS <span className="text-muted">(~6 years)</span>, Clojure/ClojureScript <span className="text-muted">(~6 years)</span>, Linux/Git/Vim/Emacs etc <span className="text-muted">(~11 years)</span></dd>
+            <dd>Python/Django <span className="text-muted">(~11 years)</span>, ReactJS <span className="text-muted">(~6 years)</span>, Clojure/ClojureScript <span className="text-muted">(~6 years)</span>, Haskell <span className="text-muted">(&lt;1 year)</span>, Linux/Git/Vim/Emacs etc <span className="text-muted">(~11 years)</span></dd>
             <dt>Links</dt>
             <dd><a target="_blank" href="https://github.com/andrewboltachev">GitHub</a>, <a target="_blank" href="https://www.linkedin.com/in/andrewboltachev/">LinkedIn</a></dd>
             <dt>Experience</dt>
@@ -42,9 +42,9 @@ const HomeView = () => {
             <dd>
               <p>Modern ideas I believe in are functional and declarative programming, low-code systems and refactoring tools (to improve quality of existing code).</p>
               <p>During my career, I created few tools that help building systems more quickly and efficiently:<ul>
-            <li><a target="_blank" href="https://github.com/andrewboltachev/mega-copy">Mega-copy</a>, a tool that helps edit and copy code in bulk (mainly in Python/Django/ReactJS projects)</li>
-            <li><Link to="/logicore-forms-demo">Logicore Forms</Link> — declarative form generator for ReactJS with extension for Django</li>
-            <li><Link to="/json-explorer/">Logicore JSON Explorer</Link> — a tool for better understanding of complex documents</li>
+            <li><a target="_blank" href="https://github.com/andrewboltachev/mega-copy">Mega-copy</a>, a tool that helps edit and copy code in bulk (mainly in Python/Django/ReactJS projects)</li> [Python]
+            <li><Link to="/logicore-forms-demo">Logicore Forms</Link> — declarative form generator for ReactJS with extension for Django</li> [JavaScript]
+            <li><Link to="/json-explorer/">Logicore JSON Explorer</Link> — a tool for better understanding of complex documents</li> [Haskell, Python/Django, JavaScript/React]
           </ul>
           </p>
             </dd>
