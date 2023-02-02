@@ -41,6 +41,7 @@ from django.contrib.auth.password_validation import validate_password
 from proxy.views import proxy_view
 from typing import Generator
 from django.http import JsonResponse as JsonResponseOriginal
+from .fiddles import FiddleType
 
 from . import models
 from .framework import (
@@ -950,3 +951,116 @@ class JSONExplorerApiView(MainView):
             "result": result,
             "funnel": funnel,
         })
+
+
+# Fiddle
+class FiddleItemListApiView(MainView):
+    url_path = "/fiddle/<fiddle_type>/"
+    url_name = "fiddle-api-view"
+    title = "..."
+    TEMPLATE = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.c = None
+        for c in FiddleType.__subclasses__():
+            if c.as_part_of_url() == self.kwargs["fiddle_type"]:
+                self.c = c
+                break
+        return super().dispatch(self, request, *args, **kwargs)
+
+
+    def get_data(self, request, *args, **kwargs):
+        now_dt = now()
+        now_date = now_dt.date()
+        if not self.c:
+            return {
+                "TEMPLATE": "FiddleNotFound",
+            }
+        return {
+            "TEMPLATE": self.c.TEMPLATE,
+        }
+
+    def post(self, request):
+        data = json.loads(request.body)["data"]
+        code = data["source"]
+        del data["source"]
+
+        try:
+            code = json.loads(code)
+        except Exception as e:
+            return JsonResponse({
+                "funnel": "",
+                "result": "Source JSON decode error",
+                "error": True,
+            })
+
+        def f(node):
+            if (
+                (type(node) == list)
+                and len(node)
+                and type(node[0]) == dict
+                and all([k in node[0] for k in ["uuid", "key", "value"]])
+            ):
+                print(node)
+                node = {
+                    element["key"]: element["value"]
+                    for element in node
+                }
+            if (type(node) == dict) and ("uuid" in node) and ("key" not in node):
+                node = node["value"]
+            if (type(node) == dict) and ("grammar_data" in node):
+                args = []
+                for k, v in sorted(node["grammar_data"].items(), key=lambda x: x[0]):
+                    args.append(v)
+                node = {
+                    "tag": node["grammar_type"],
+                }
+                if len(args) == 0:
+                    pass
+                elif len(args) == 1:
+                    node["contents"] = args[0]
+                else:
+                    node["contents"] = args
+            return node
+
+        #print(json.dumps(data, indent=4))
+        grammar = postwalk(f, data)
+        error = False
+        result = ""
+        funnel = ""
+        try:
+            resp = requests.post("http://localhost:3002/json-matcher-1", json={
+                "data": code,
+                "grammar": grammar,
+            })
+        except requests.exceptions.ConnectionError:
+            error = True
+            result = "Connection error"
+            funnel = ""
+        else:
+            resp_json = resp.json()
+            if resp.status_code == 200:
+                if "error" in resp_json:
+                    error = True
+                    result = resp_json["error"]
+                    funnel = ""
+                else:
+                    result = json.dumps(resp_json["result"])
+                    funnel = "\n".join([json.dumps(x) for x in resp_json["funnel"]])
+            elif resp.status_code == 400:
+                error = True
+                result = resp_json["error"]
+                funnel = ""
+            else:
+                error = True
+                result = f"Unknown error: status ({resp.status_code})"
+                funnel = ""
+        return JsonResponse({
+            "error": error,
+            "result": result,
+            "funnel": funnel,
+        })
+
+
+class FiddleItemApiView(MainView):
+    pass

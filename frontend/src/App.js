@@ -874,6 +874,16 @@ const JSONExplorerGadget = (props) => {
   </div>;
 };
 
+const PageNotFound = () => {
+  return <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center"}}>
+    <div>Page not found. <Link to="/">Visit Home</Link></div>
+  </div>;
+}
+
+const JSONMatcherFiddle = () => {
+  return <div>JSON matcher fiddle</div>;
+}
+
 const mainComponents = {
   ListView,
   FiddleListView,
@@ -883,6 +893,10 @@ const mainComponents = {
   HomeView,
   LogicoreFormsDemoView,
   LanguageView,
+  PageNotFound,
+  // Fiddle begin
+  JSONMatcherFiddle,
+  // Fiddle end
 };
 
 const MainWrapper = ({ result, onChange }) => {

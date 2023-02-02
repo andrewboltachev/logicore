@@ -1,5 +1,7 @@
 import locale
+import re
 from functools import partial
+from django.db import models
 
 
 def unique(a):
@@ -70,3 +72,76 @@ def postwalk_demo(coll):
         #print "Walked:", e
         return e
     return postwalk(prn, coll)
+
+
+class ClassHierarchy:
+    @classmethod
+    def as_snake_case(cls):
+        """
+        in_progress, work_order
+        """
+        return "_".join(cls._as_split_name()).lower()
+
+    @classmethod
+    def as_unseparated_name(cls):
+        """
+        E.g. for fieldname: inprogress, workorder
+        """
+        return "".join(cls._as_split_name()).lower()
+
+    @classmethod
+    def as_choice_key(cls):
+        """
+        Class name for use as a key for choices: IN_PROGRESS, WORK_ORDER
+        """
+        return "_".join(cls._as_split_name()).upper()
+
+    @classmethod
+    def as_part_of_url(cls):
+        """
+        Class name for use in URLs: in-progress, work-order
+        """
+        return "-".join(cls._as_split_name()).lower()
+
+    @classmethod
+    def as_title(cls):
+        """
+        Class name as human-readable name: In Progress, Work Order
+        """
+        return " ".join(cls._as_split_name())
+
+    @classmethod
+    def _as_own_name(cls):
+        try:
+            # if a class has at lease one parent
+            return cls.__name__.replace(cls.mro()[1].__name__, "")
+        except:
+            return cls.__name__
+
+    @classmethod
+    def _as_split_name(cls):
+        return list(re.findall("[A-Z][^A-Z]*", cls._as_own_name()))
+
+    @classmethod
+    def as_choices(cls, **options):
+        """
+        Convert class hierarchy to choices field
+        """
+        names = []
+        default = None
+        for c in cls.__subclasses__():
+            k = c.as_choice_key()
+            names.append((k, c.as_title()))
+            if getattr(c, "default", False):
+                default = k
+        return models.CharField(
+            max_length=64,
+            choices=[
+                (k, v)
+                for k, v in names
+                if k not in [c.as_choice_key() for c in options.get("exclude", [])]
+            ],
+            default=default,
+            *options.get("extra_args", []),
+            **options.get("extra_kwargs", {}),
+        )

@@ -2,6 +2,7 @@ import glob
 import uuid
 from django.db import models
 from django.conf import settings
+from .fiddles import FiddleType
 from .framework import StatusOptions
 
 
@@ -75,6 +76,31 @@ class MatcherFiddle(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4)
     data = models.TextField(default="", blank=True)
     grammar = models.TextField(default="", blank=True)
+    created_dt = models.DateTimeField(auto_now_add=True)
+    modified_dt = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE
+    )
+    session_id = models.CharField(max_length=128, null=True, blank=True, default=None)
+
+    def __str__(self):
+        return self.name
+
+
+    class Meta:
+        ordering = ['-modified_dt']
+
+# Fiddle
+
+
+class Fiddle(models.Model):
+    kind = FiddleType.as_choices()
+    name = models.CharField(max_length=1024, blank=True, default="")
+    uuid = models.UUIDField(default=uuid.uuid4)
+    data = models.JSONField(default=dict, blank=False, null=False)
     created_dt = models.DateTimeField(auto_now_add=True)
     modified_dt = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(
