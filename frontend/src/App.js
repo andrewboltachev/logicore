@@ -884,9 +884,27 @@ const JSONMatcherFiddle = () => {
   return <div>JSON matcher fiddle</div>;
 }
 
+const FiddleNotFound = () => {
+  return <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center"}}>
+    <div>Fiddle type not found. <Link to="/fiddle/">View all fiddles</Link></div>
+  </div>;
+}
+
+const FiddleTypes = ({items}) => {
+  return <div className="container">
+    <h3 className="my-3">Fiddle types</h3>
+    <ul>
+      {items?.map((item) => {
+        return (
+          <li><Link to={`/fiddle/${item.url}/`}>{item.title}</Link></li>
+        );
+      })}
+    </ul>
+  </div>;
+}
+
 const mainComponents = {
   ListView,
-  FiddleListView,
   GenericForm,
   GenericForm2,
   JSONExplorerGadget,
@@ -894,7 +912,10 @@ const mainComponents = {
   LogicoreFormsDemoView,
   LanguageView,
   PageNotFound,
+  FiddleListView,
   // Fiddle begin
+  FiddleTypes,
+  FiddleNotFound,
   JSONMatcherFiddle,
   // Fiddle end
 };

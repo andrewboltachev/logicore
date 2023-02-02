@@ -104,6 +104,13 @@ class ClassHierarchy:
         return "-".join(cls._as_split_name()).lower()
 
     @classmethod
+    def as_regular(cls):
+        """
+        Class name to use as variable name etc: InProgress, WorkOrder
+        """
+        return "".join(cls._as_split_name())
+
+    @classmethod
     def as_title(cls):
         """
         Class name as human-readable name: In Progress, Work Order
