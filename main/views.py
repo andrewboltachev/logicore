@@ -40,7 +40,7 @@ from django.views.generic.base import TemplateView
 from django.contrib.auth.password_validation import validate_password
 from proxy.views import proxy_view
 from typing import Generator
-from django.http import JsonResponse as JsonResponseOriginal
+from django.http import JsonResponse as JsonResponseOriginal, HttpResponseRedirect
 from .fiddles import FiddleType
 
 from . import models
@@ -93,6 +93,11 @@ def default_json(x):
 def JsonResponse(*args, **kwargs):
     kwargs["json_dumps_params"] = {"default": default_json}
     return JsonResponseOriginal(*args, **kwargs)
+
+
+class HomeRedirectView(View):
+    def get(self, *args, **kwargs):
+        return HttpResponseRedirect("https://andrewboltachev.site")
 
 
 class HomeView(TemplateView):
