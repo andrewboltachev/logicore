@@ -8,3 +8,4 @@ main/static/react/**
 /static/**
 /media/**
 .idea
+.venv
