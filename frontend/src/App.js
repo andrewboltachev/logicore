@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext, memo } from "react";
+import React, { useState, useEffect, useRef, useContext, useCallback, memo } from "react";
 import logo from "./logo.svg";
 import "./App.scss";
 import classd from "classd";
@@ -19,6 +19,8 @@ import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import NavDropdown from 'react-bootstrap/NavDropdown';
+
+import { debounce } from "lodash";
 
 import {
   BrowserRouter as Router,
@@ -892,15 +894,57 @@ const PageNotFound = () => {
   </div>;
 }
 
-const JSONMatcherFiddle = () => {
+const JSONMatcherFiddle = (props) => {
+  console.log('props', props);
   const save = () => {
   };
   const run = () => {
   };
+  const [val, setVal] = useState("");
+  const [localChecked, setLocalChecked] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    setLocalChecked(false);
+  }, [props.uuid]);
+
+  useEffect(() => {
+    if (localChecked) {
+      saveToLocal(val);
+    } else {
+      (async () => {
+        const v = window.localStorage.getItem('draft[' + props.uuid + ']');
+        if (v) {
+          window.localStorage.removeItem('draft[' + props.uuid + ']');
+          if (await confirm(t('Unsaved changes exist. Apply?'), {okText: t('Apply'), cancelText: t('Discard')})) {
+            setVal(v);
+          }
+        }
+      setLocalChecked(true);
+      })();
+    }
+  }, [val, localChecked]);
+
+  const saveToLocal = useCallback(
+    debounce(val => {
+      window.localStorage.setItem('draft[' + props.uuid + ']', val);
+    }, 200),
+    []
+  );
+
+  const editVal = (v) => {
+    if (v !== val) {
+      if (!dirty) setDirty(true);
+      setVal(v);
+    }
+  }
+
   return <div className="container-fluid my-3 flex-grow-1 d-flex flex-column">
     <div className="row align-items-stretch flex-grow-1">
       <div className="col d-flex flex-column">
-        <textarea className="form-control flex-grow-1"></textarea>
+        <textarea className="form-control flex-grow-1" value={val} onChange={e => editVal(e.target.value)} />
         <div className="d-grid">
           <button className="btn btn-primary mt-2" type="button" onClick={save}>
             <i className="fas fa-save" />{" "}
@@ -989,7 +1033,7 @@ const FiddleWrapper = ({ result, onChange }) => {
               <Link className="nav-link" to={addLang("/toolbox/")}><Trans>All tools</Trans></Link>
             </Nav>
             <Nav className="ml-auto">
-              <NavDropdown title={<><i className="fas fa-language"></i>{" "}{ window.CURRENT_LANGUAGE_NAME }</>} id="basic-nav-dropdown">
+              <NavDropdown title={<><i className="fas fa-language"></i>{" "}{ window.CURRENT_LANGUAGE_NAME }</>} id="basic-nav-dropdown" align="end">
                 {window.LANGUAGES.map(([code, name]) => {
                   return <NavDropdown.Item href={getUrl(code)}>{name}</NavDropdown.Item>;
                 })}

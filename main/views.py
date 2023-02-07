@@ -1008,15 +1008,20 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
     TEMPLATE = None
     WRAPPER = "FiddleWrapper"
 
+    def fetch_object(self):
+        self.uuid = ""
+
     def get_data(self, request, *args, **kwargs):
         now_dt = now()
         now_date = now_dt.date()
+        self.fetch_object()
         if not self.c:
             return {
                 "template": "FiddleNotFound",
             }
         return {
             "template": self.c.get_template(),
+            "uuid": str(self.uuid),
             **self.c.get_data(self),
         }
 
