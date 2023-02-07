@@ -985,19 +985,19 @@ class FiddleTypeMixin:
     def dispatch(self, request, *args, **kwargs):
         self.c = None
         for c in FiddleType.__subclasses__():
-            if c.as_part_of_url() == self.kwargs["fiddle_type"]:
+            if c.as_part_of_url() == self.kwargs["kind"]:
                 self.c = c
                 break
         return super().dispatch(request, *args, **kwargs)
 
 
-class FiddleItemsApiView(FiddleTypeMixin, MainView):
-    pass
+#class FiddleItemsApiView(FiddleTypeMixin, MainView):
+#    pass
 
 
-class FiddleItemApiView(FiddleTypeMixin, MainView):
-    url_path = "/fiddle/<fiddle_type>/"
-    url_name = "fiddle-items"
+class NewFiddleItemApiView(FiddleTypeMixin, MainView):
+    url_path = "/fiddle/<kind>/"
+    url_name = "new-fiddle-item"
     title = "..."
     TEMPLATE = None
 
@@ -1020,3 +1020,13 @@ class FiddleItemApiView(FiddleTypeMixin, MainView):
 
         result, status = self.c.post(self)
         return JsonResponse(result, status=status)
+
+
+class ExistingFiddleItemApiView(NewFiddleItemApiView):
+    url_path = "/fiddle/<kind>/<uuid>/"
+    url_name = "existing-fiddle-item"
+
+
+class RevisionFiddleItemApiView(ExistingFiddleItemApiView):
+    url_path = "/fiddle/<kind>/<uuid>/<rev>/"
+    url_name = "revision-fiddle-item"

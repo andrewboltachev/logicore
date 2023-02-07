@@ -97,12 +97,19 @@ class MatcherFiddle(models.Model):
 
 
 class Fiddle(models.Model):
+    # Definition
     kind = FiddleType.as_choices()
-    name = models.CharField(max_length=1024, blank=True, default="")
+    version = models.CharField(default='000', max_length=3)
+    # Revision
     uuid = models.UUIDField(default=uuid.uuid4)
+    revision = models.PositiveBigIntegerField(default=1)
+    # Data
+    name = models.CharField(max_length=1024, blank=True, default="")
     data = models.JSONField(default=dict, blank=False, null=False)
+    # Timestamp
     created_dt = models.DateTimeField(auto_now_add=True)
     modified_dt = models.DateTimeField(auto_now=True)
+    # Ownership
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
