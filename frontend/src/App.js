@@ -893,7 +893,32 @@ const PageNotFound = () => {
 }
 
 const JSONMatcherFiddle = () => {
-  return <div>wow</div>;
+  const save = () => {
+  };
+  const run = () => {
+  };
+  return <div className="container-fluid my-3 flex-grow-1 d-flex flex-column">
+    <div className="row align-items-stretch flex-grow-1">
+      <div className="col d-flex flex-column">
+        <textarea className="form-control flex-grow-1"></textarea>
+        <div className="d-grid">
+          <button className="btn btn-primary mt-2" type="button" onClick={save}>
+            <i className="fas fa-save" />{" "}
+            Save
+          </button>
+        </div>
+      </div>
+      <div className="col d-flex flex-column">
+        <textarea className="form-control flex-grow-1"></textarea>
+        <div className="d-grid">
+          <button className="btn btn-success mt-2" type="button" onClick={save}>
+            <i className="fa fa-play-circle" />{" "}
+            Run
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>;
 }
 
 
@@ -950,7 +975,7 @@ const FiddleWrapper = ({ result, onChange }) => {
   }
 	const { t } = useTranslation();
   return (
-    <>
+    <div className="d-flex flex-column" style={{height: "calc(max(100vh, 700px))"}}>
       <Navbar bg="light" expand="lg">
         <div className="container-fluid">
           {/*<Navbar.Brand href="#home"><Trans>Tools</Trans></Navbar.Brand>*/}
@@ -974,7 +999,7 @@ const FiddleWrapper = ({ result, onChange }) => {
         </div>
       </Navbar>
       {Component && result && <Component {...{ ...result, onChange }} />}
-    </>
+    </div>
   );
 };
 
