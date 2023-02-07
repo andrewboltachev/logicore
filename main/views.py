@@ -314,7 +314,7 @@ class HomeApiView(MainView):
         now_dt = now()
         now_date = now_dt.date()
         return {
-            "redirect": "http://andrewboltachev.site/",
+            "redirect": "https://andrewboltachev.site/",
         }
 
 
