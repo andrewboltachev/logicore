@@ -904,7 +904,7 @@ const JSONMatcherFiddle = () => {
         <div className="d-grid">
           <button className="btn btn-primary mt-2" type="button" onClick={save}>
             <i className="fas fa-save" />{" "}
-            Save
+            <Trans>Save</Trans>
           </button>
         </div>
       </div>
@@ -913,7 +913,7 @@ const JSONMatcherFiddle = () => {
         <div className="d-grid">
           <button className="btn btn-success mt-2" type="button" onClick={save}>
             <i className="fa fa-play-circle" />{" "}
-            Run
+            <Trans>Run</Trans>
           </button>
         </div>
       </div>
