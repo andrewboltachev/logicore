@@ -970,7 +970,7 @@ class JSONExplorerApiView(MainView):
 # List
 # Fiddle itself
 class FiddleTypesApiView(MainView):
-    url_path = "/fiddle/"
+    url_path = "/toolbox/"
     url_name = "fiddle-types"
     title = "..."
     TEMPLATE = "FiddleTypes"
@@ -1002,7 +1002,7 @@ class FiddleTypeMixin:
 
 
 class NewFiddleItemApiView(FiddleTypeMixin, MainView):
-    url_path = "/fiddle/<kind>/"
+    url_path = "/toolbox/<kind>/"
     url_name = "new-fiddle-item"
     title = "..."
     TEMPLATE = None
@@ -1030,10 +1030,10 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
 
 
 class ExistingFiddleItemApiView(NewFiddleItemApiView):
-    url_path = "/fiddle/<kind>/<uuid>/"
+    url_path = "/toolbox/<kind>/<uuid>/"
     url_name = "existing-fiddle-item"
 
 
 class RevisionFiddleItemApiView(ExistingFiddleItemApiView):
-    url_path = "/fiddle/<kind>/<uuid>/<rev>/"
+    url_path = "/toolbox/<kind>/<uuid>/<rev>/"
     url_name = "revision-fiddle-item"

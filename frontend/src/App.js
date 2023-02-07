@@ -899,17 +899,17 @@ const JSONMatcherFiddle = () => {
 
 const FiddleNotFound = () => {
   return <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center"}}>
-    <div><Trans>Fiddle type not found.</Trans> <Link to={addLang("/fiddle/")}><Trans>View all fiddles</Trans></Link></div>
+    <div><Trans>Tool not found.</Trans> <Link to={addLang("/toolbox/")}><Trans>View available</Trans></Link></div>
   </div>;
 }
 
 const FiddleTypes = ({items}) => {
   return <div className="container">
-    <h3 className="my-3"><Trans>Fiddle types</Trans></h3>
+    <h3 className="my-3"><Trans>Tool types</Trans></h3>
     <ul>
       {items?.map((item) => {
         return (
-          <li><Link to={addLang(`/fiddle/${item.url}/`)}>{item.title}</Link></li>
+          <li><Link to={addLang(`/toolbox/${item.url}/`)}>{item.title}</Link></li>
         );
       })}
     </ul>
@@ -953,7 +953,7 @@ const FiddleWrapper = ({ result, onChange }) => {
     <>
       <Navbar bg="light" expand="lg">
         <div className="container-fluid">
-          <Navbar.Brand href="#home">Fiddle</Navbar.Brand>
+          {/*<Navbar.Brand href="#home"><Trans>Tools</Trans></Navbar.Brand>*/}
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
@@ -961,7 +961,7 @@ const FiddleWrapper = ({ result, onChange }) => {
                 <i className="fas fa-arrow-circle-left"></i>{" "}
                 <Trans>Back to main website</Trans>
               </Link>
-              <Link className="nav-link" to={addLang("/fiddle/")}><Trans>All Fiddles</Trans></Link>
+              <Link className="nav-link" to={addLang("/toolbox/")}><Trans>All tools</Trans></Link>
             </Nav>
             <Nav className="ml-auto">
               <NavDropdown title={<><i className="fas fa-language"></i>{" "}{ window.CURRENT_LANGUAGE_NAME }</>} id="basic-nav-dropdown">

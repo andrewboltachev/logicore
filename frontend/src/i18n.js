@@ -24,10 +24,11 @@ i18n
       ru: {
         translation: {
           'Back to main website': 'Назад на основной сайт',
-          'All Fiddles': 'Все Fiddle',
-          'Fiddle types': 'Типы Fiddle',
-          'View all fiddles': 'Посмотреть все Fiddle',
-          'Fiddle type not found.': 'Такой тип Fiddle не найден.',
+          'All tools': 'Все инструменты',
+          'Tools': 'Инструменты',
+          'Tool types': 'Все инструменты',
+          'View available': 'Посмотреть доступные',
+          'Tool not found.': 'Инструмент не найден.',
         }
       }
     }
