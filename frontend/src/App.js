@@ -892,9 +892,13 @@ const JSONMatcherFiddle = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link href="#home">Home</Nav.Link>
+            <Link className="nav-link" to="/">
+              <i className="fas fa-arrow-circle-left"></i>{" "}
+              Back to main website
+            </Link>
+            <Link className="nav-link" to="/fiddle/">Fiddle types</Link>
             <Nav.Link href="#link">Link</Nav.Link>
-            <NavDropdown title="Dropdown" id="basic-nav-dropdown">
+            <NavDropdown title={<><i className="fas fa-language"></i>{" "}Dropdown</>} id="basic-nav-dropdown">
               <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
               <NavDropdown.Item href="#action/3.2">
                 Another action
