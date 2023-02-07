@@ -72,6 +72,12 @@ import {
   modifyHelper,
 } from "./logicore-forms";
 
+import { useTranslation, Trans } from 'react-i18next';
+import './i18n';
+
+
+const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url);
+
 const FolderField = ({
   value,
   onChange,
@@ -887,50 +893,23 @@ const PageNotFound = () => {
 }
 
 const JSONMatcherFiddle = () => {
-  const loc = useLocation();
-  const getUrl = (lang) => {
-    const theUrl = loc.pathname + loc.search;
-    return addLangToPathName(lang, removeLangFromPathName(window.CURRENT_LANGUAGE, theUrl));
-  }
-  return (
-    <Navbar bg="light" expand="lg">
-      <div className="container-fluid">
-        <Navbar.Brand href="#home">Fiddle</Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">
-            <Link className="nav-link" to="/">
-              <i className="fas fa-arrow-circle-left"></i>{" "}
-              Back to main website
-            </Link>
-            <Link className="nav-link" to="/fiddle/">Fiddle types</Link>
-            <Nav.Link href="#link">Link</Nav.Link>
-            <NavDropdown title={<><i className="fas fa-language"></i>{" "}{ window.CURRENT_LANGUAGE_NAME }</>} id="basic-nav-dropdown">
-              {window.LANGUAGES.map(([code, name]) => {
-                return <NavDropdown.Item href={getUrl(code)}>{name}</NavDropdown.Item>;
-              })}
-            </NavDropdown>
-          </Nav>
-        </Navbar.Collapse>
-      </div>
-    </Navbar>
-  );
+  return <div>wow</div>;
 }
 
 
 const FiddleNotFound = () => {
   return <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center"}}>
-    <div>Fiddle type not found. <Link to="/fiddle/">View all fiddles</Link></div>
+    <div><Trans>Fiddle type not found.</Trans> <Link to={addLang("/fiddle/")}><Trans>View all fiddles</Trans></Link></div>
   </div>;
 }
 
 const FiddleTypes = ({items}) => {
   return <div className="container">
-    <h3 className="my-3">Fiddle types</h3>
+    <h3 className="my-3"><Trans>Fiddle types</Trans></h3>
     <ul>
       {items?.map((item) => {
         return (
-          <li><Link to={`/fiddle/${item.url}/`}>{item.title}</Link></li>
+          <li><Link to={addLang(`/fiddle/${item.url}/`)}>{item.title}</Link></li>
         );
       })}
     </ul>
@@ -962,8 +941,46 @@ const MainWrapper = ({ result, onChange }) => {
   );
 };
 
+const FiddleWrapper = ({ result, onChange }) => {
+  const Component = mainComponents[result?.template];
+  const loc = useLocation();
+  const getUrl = (lang) => {
+    const theUrl = loc.pathname + loc.search;
+    return addLangToPathName(lang, removeLangFromPathName(window.CURRENT_LANGUAGE, theUrl));
+  }
+	const { t } = useTranslation();
+  return (
+    <>
+      <Navbar bg="light" expand="lg">
+        <div className="container-fluid">
+          <Navbar.Brand href="#home">Fiddle</Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="me-auto">
+              <Link className="nav-link" to={addLang("/")}>
+                <i className="fas fa-arrow-circle-left"></i>{" "}
+                <Trans>Back to main website</Trans>
+              </Link>
+              <Link className="nav-link" to={addLang("/fiddle/")}><Trans>All Fiddles</Trans></Link>
+            </Nav>
+            <Nav className="ml-auto">
+              <NavDropdown title={<><i className="fas fa-language"></i>{" "}{ window.CURRENT_LANGUAGE_NAME }</>} id="basic-nav-dropdown">
+                {window.LANGUAGES.map(([code, name]) => {
+                  return <NavDropdown.Item href={getUrl(code)}>{name}</NavDropdown.Item>;
+                })}
+              </NavDropdown>
+            </Nav>
+          </Navbar.Collapse>
+        </div>
+      </Navbar>
+      {Component && result && <Component {...{ ...result, onChange }} />}
+    </>
+  );
+};
+
 const wrapperComponents = {
   MainWrapper,
+  FiddleWrapper,
 };
 
 const result_worth_processing = ({ result, loc, navigate }) => {
@@ -996,6 +1013,10 @@ const BaseLayout = () => {
   const loc = useLocation();
   const navigate = useNavigate();
   const lang = window.CURRENT_LANGUAGE;
+  const { t, i18n } = useTranslation();
+	useEffect(() => {
+		i18n.changeLanguage(lang);
+  }, [i18n.resolvedLanguage === lang]);
   let apiUrl = addLangToPathName(lang, "/api" + removeLangFromPathName(lang, loc.pathname + loc.search));
   //
   const [result, loading, _] = useApi(apiUrl, loc.key);

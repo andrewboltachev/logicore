@@ -967,13 +967,13 @@ class FiddleTypesApiView(MainView):
     url_path = "/fiddle/"
     url_name = "fiddle-types"
     title = "..."
-    TEMPLATE = None
+    TEMPLATE = "FiddleTypes"
+    WRAPPER = "FiddleWrapper"
 
     def get_data(self, request, *args, **kwargs):
         now_dt = now()
         now_date = now_dt.date()
         return {
-            "template": "FiddleTypes",
             "items": [
                 {"url": c.as_part_of_url(), "title": c.as_title()}
                 for c in FiddleType.__subclasses__()
@@ -1000,6 +1000,7 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
     url_name = "new-fiddle-item"
     title = "..."
     TEMPLATE = None
+    WRAPPER = "FiddleWrapper"
 
     def get_data(self, request, *args, **kwargs):
         now_dt = now()
