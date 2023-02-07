@@ -1018,7 +1018,7 @@ const BaseLayout = () => {
 
   const Wrapper = wrapperComponents[result?.wrapper];
 
-  if (result?.navigate || !Wrapper) return <div />;
+  if (result?.navigate || result?.redirect || !Wrapper) return <div />;
 
   return <>
     <Wrapper {...{ loc, navigate, result, apiUrl, onChange }} />
