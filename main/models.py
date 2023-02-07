@@ -102,7 +102,8 @@ class Fiddle(models.Model):
     version = models.CharField(default='000', max_length=3)
     # Revision
     uuid = models.UUIDField(default=uuid.uuid4)
-    revision = models.PositiveBigIntegerField(default=1)
+    rev = models.PositiveBigIntegerField(default=1)
+    parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
     # Data
     name = models.CharField(max_length=1024, blank=True, default="")
     data = models.JSONField(default=dict, blank=False, null=False)

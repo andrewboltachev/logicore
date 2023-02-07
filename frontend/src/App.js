@@ -895,16 +895,17 @@ const PageNotFound = () => {
 }
 
 const JSONMatcherFiddle = (props) => {
-  console.log('props', props);
-  const save = () => {
-  };
-  const run = () => {
-  };
-  const [val, setVal] = useState("");
+  console.log('aaa', props);
+  const [val, setVal] = useState(props.val);
   const [localChecked, setLocalChecked] = useState(false);
   const [dirty, setDirty] = useState(false);
 
   const { t } = useTranslation();
+  const save = () => {
+    props.onChange({val});
+  };
+  const run = () => {
+  };
 
   useEffect(() => {
     setLocalChecked(false);
@@ -916,10 +917,12 @@ const JSONMatcherFiddle = (props) => {
     } else {
       (async () => {
         const v = window.localStorage.getItem('draft[' + props.uuid + ']');
+        console.log('got v', props.uuid, v);
         if (v) {
           window.localStorage.removeItem('draft[' + props.uuid + ']');
           if (await confirm(t('Unsaved changes exist. Apply?'), {okText: t('Apply'), cancelText: t('Discard')})) {
             setVal(v);
+            setDirty(true);
           }
         }
       setLocalChecked(true);

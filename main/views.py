@@ -94,6 +94,7 @@ def JsonResponse(*args, **kwargs):
     kwargs["json_dumps_params"] = {"default": default_json}
     return JsonResponseOriginal(*args, **kwargs)
 
+
 def get_home_redirect(request):
     suffix = ""
     if request.LANGUAGE_CODE != "en":
@@ -177,7 +178,7 @@ class ApiView(View):
                 "pushState": self.request.GET.get("next", "/"),
                 "notification": {
                     "type": "info",
-                    "text": "You\'re already logged in",
+                    "text": "You're already logged in",
                 },
             }
 
@@ -212,8 +213,7 @@ class LoginApiView(MainView):
                 "required": True,
             },
         ],
-        "context": {
-        },
+        "context": {},
     }
 
     def get_data(self, request, *args, **kwargs):
@@ -303,8 +303,7 @@ class LogicoreFormsDemoApiView(MainView):
     def get_data(self, request, *args, **kwargs):
         now_dt = now()
         now_date = now_dt.date()
-        return {
-        }
+        return {}
 
 
 class HomeApiView(MainView):
@@ -345,7 +344,7 @@ class StratagemsApiView(MainView):
                         "PYTHONREFACTORING1": {
                             "type": "Fields",
                             "fields": [
-                                #{"from_field": "directory"},
+                                # {"from_field": "directory"},
                                 {
                                     "k": "directory",
                                     "type": "TextField",
@@ -356,29 +355,30 @@ class StratagemsApiView(MainView):
                         },
                         "WEBDASHBOARD1": {
                             "type": "Fields",
-                            "fields": [
-                            ],
+                            "fields": [],
                         },
                     },
                 },
             ],
-            "layout": "ModalLayout"
+            "layout": "ModalLayout",
         }
 
     def get_data(self, request, *args, **kwargs):
         now_dt = now()
         now_date = now_dt.date()
         return {
-            'items': list(
-                models.Stratagem.objects.values('id', 'name', 'kind', 'created_dt', 'modified_dt')
+            "items": list(
+                models.Stratagem.objects.values(
+                    "id", "name", "kind", "created_dt", "modified_dt"
+                )
             ),
-            'create_form': read_fields(self.get_fields(), models.Stratagem())
+            "create_form": read_fields(self.get_fields(), models.Stratagem()),
         }
 
     def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)['data']
-        if data.get('action') == 'delete':
-            models.Stratagem.objects.filter(id=data['id']).delete()
+        data = json.loads(request.body)["data"]
+        if data.get("action") == "delete":
+            models.Stratagem.objects.filter(id=data["id"]).delete()
             return JsonResponse({"redirect": f"/stratagems/"})
         if not data.get("params"):
             data["params"] = {}
@@ -394,16 +394,16 @@ class StratagemApiView(MainView):
 
     def get_fields(self, kind):
         fields = {
-            'CLOJUREGRAPH1': [
+            "CLOJUREGRAPH1": [
                 {"k": "data", "type": "ClojureGraph1Field"},
             ],
-            'PYTHONREFACTORING1': [
+            "PYTHONREFACTORING1": [
                 {"k": "data", "type": "PythonRefactoring1Field"},
             ],
-            'WEBDASHBOARD1': [
+            "WEBDASHBOARD1": [
                 {"k": "data", "type": "WebDashboard1Field"},
             ],
-            'ZENDOCUMENT1': [
+            "ZENDOCUMENT1": [
                 {"k": "data", "type": "ZenDocument1Field"},
             ],
         }
@@ -414,7 +414,7 @@ class StratagemApiView(MainView):
                 {"k": "params", "type": "HiddenField"},
                 *fields[kind],
             ],
-            #"layout": "ModalLayout"
+            # "layout": "ModalLayout"
         }
 
     def get_obj(self):
@@ -424,13 +424,11 @@ class StratagemApiView(MainView):
         now_dt = now()
         now_date = now_dt.date()
         obj = self.get_obj()
-        return {
-            **read_fields(self.get_fields(obj.kind), obj)
-        }
+        return {**read_fields(self.get_fields(obj.kind), obj)}
 
     def post(self, request, *args, **kwargs):
         obj = self.get_obj()
-        data = json.loads(request.body)['data']
+        data = json.loads(request.body)["data"]
         obj = write_fields(self.get_fields(obj.kind), obj, data)
         return JsonResponse({"navigate": f"/{obj.id}"})
 
@@ -444,47 +442,57 @@ class GraphLayoutView(APIView):
         for item in data["edges"]:
             g.add_edge(item["source"], item["target"])
         pos = nx.nx_pydot.pydot_layout(g)
-        #pos = nx.spectral_layout(g, scale=200)
-        return Response({
-            'nodes': [{
-                **node,
-                "position": {
-                    'x': pos[node["id"]][0],
-                    'y': pos[node["id"]][1],
-                },
-                #'width': 230, 'height': '50'
-                } for node in data["nodes"]],
-            'edges': data['edges']
-        })
+        # pos = nx.spectral_layout(g, scale=200)
+        return Response(
+            {
+                "nodes": [
+                    {
+                        **node,
+                        "position": {
+                            "x": pos[node["id"]][0],
+                            "y": pos[node["id"]][1],
+                        },
+                        #'width': 230, 'height': '50'
+                    }
+                    for node in data["nodes"]
+                ],
+                "edges": data["edges"],
+            }
+        )
 
 
 class GetFileView(APIView):
     def get(self, request, *args, **kwargs):
-        path = request.GET.get('path')
-        basePath = request.GET.get('basePath')
+        path = request.GET.get("path")
+        basePath = request.GET.get("basePath")
         if not basePath:
-            basePath = ''
+            basePath = ""
         else:
-            basePath = basePath.rstrip('/')
+            basePath = basePath.rstrip("/")
         if basePath and path:
-            basePath += '/'
-        fullPath = os.path.abspath(basePath + path) + '/'
-        print('fullPath', fullPath)
-        files = [{
-            'filename': filename.replace(fullPath, ''),
-            'dir': os.path.isdir(filename),
-        } for filename in glob.glob(f'{fullPath}**')]
+            basePath += "/"
+        fullPath = os.path.abspath(basePath + path) + "/"
+        print("fullPath", fullPath)
+        files = [
+            {
+                "filename": filename.replace(fullPath, ""),
+                "dir": os.path.isdir(filename),
+            }
+            for filename in glob.glob(f"{fullPath}**")
+        ]
         if path:
-            files.insert(0, {'filename': '..', 'dir': True})
-        return Response({
-            'path': fullPath.replace(basePath, ''),
-            'files': files,
-            'selected': files[0]['filename'],
-        })
+            files.insert(0, {"filename": "..", "dir": True})
+        return Response(
+            {
+                "path": fullPath.replace(basePath, ""),
+                "files": files,
+                "selected": files[0]["filename"],
+            }
+        )
 
 
 def read_file(filename):
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         return f.read()
 
 
@@ -511,22 +519,21 @@ def JsonResponse(*args, **kwargs):
 
 class GetFileNodesView(View):
     def get(self, request, *args, **kwargs):
-        filePath = request.GET.get('path')
-        basePath = request.GET.get('basePath')
+        filePath = request.GET.get("path")
+        basePath = request.GET.get("basePath")
         if not basePath:
-            basePath = ''
+            basePath = ""
         else:
-            basePath = basePath.rstrip('/')
+            basePath = basePath.rstrip("/")
         if basePath and filePath:
-            basePath += '/'
-        path = f'{basePath}{filePath}'
+            basePath += "/"
+        path = f"{basePath}{filePath}"
         import libcst
         from main.parser.python import serialize_dc
+
         module = libcst.parse_module(read_file(path))
         serialized = serialize_dc(module)
-        return JsonResponse({
-            'code': serialized
-        })
+        return JsonResponse({"code": serialized})
 
 
 class PythonView(MainView):
@@ -544,20 +551,25 @@ class PythonView(MainView):
     def post(self, request, *args, **kwargs):
         from main.parser.python import serialize_dc
         import libcst
-        data = json.loads(request.body)['data']
+
+        data = json.loads(request.body)["data"]
         try:
-            result = serialize_dc(libcst.parse_module(data['value']))
+            result = serialize_dc(libcst.parse_module(data["value"]))
         except Exception as e:
             result = str(e)
         else:
             try:
-                result = result['body'][0] if len(result['body']) == 1 else result['body']
+                result = (
+                    result["body"][0] if len(result["body"]) == 1 else result["body"]
+                )
             except Exception as e:
                 result = str(e)
-        return JsonResponse({
-            #"navigate": f"/python"
-            "result": result,
-        })
+        return JsonResponse(
+            {
+                # "navigate": f"/python"
+                "result": result,
+            }
+        )
 
 
 class CodeSearchsApiView(MainView):
@@ -573,7 +585,7 @@ class CodeSearchsApiView(MainView):
                 {"from_field": "name"},
                 {"from_field": "kind"},
             ],
-            "layout": "ModalLayout"
+            "layout": "ModalLayout",
         }
 
     def get_data(self, request, *args, **kwargs):
@@ -581,16 +593,18 @@ class CodeSearchsApiView(MainView):
         now_date = now_dt.date()
         return {
             "baseUrl": "/logicore-code/",
-            'items': list(
-                models.CodeSearch.objects.values('id', 'name', 'kind', 'created_dt', 'modified_dt')
+            "items": list(
+                models.CodeSearch.objects.values(
+                    "id", "name", "kind", "created_dt", "modified_dt"
+                )
             ),
-            'create_form': read_fields(self.get_fields(), models.CodeSearch())
+            "create_form": read_fields(self.get_fields(), models.CodeSearch()),
         }
 
     def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)['data']
-        if data.get('action') == 'delete':
-            models.CodeSearch.objects.filter(id=data['id']).delete()
+        data = json.loads(request.body)["data"]
+        if data.get("action") == "delete":
+            models.CodeSearch.objects.filter(id=data["id"]).delete()
             return JsonResponse({"redirect": f"/logicore-code/"})
         obj = write_fields(self.get_fields(), models.CodeSearch(), data)
         return JsonResponse({"redirect": f"/logicore-code/{obj.id}"})
@@ -623,7 +637,7 @@ class CodeSearchApiView(MainView):
                     "layout": "CodeSearchLayout",
                 },
             ],
-            #"layout": "ModalLayout"
+            # "layout": "ModalLayout"
         }
 
     def get_obj(self):
@@ -632,6 +646,7 @@ class CodeSearchApiView(MainView):
 
         import libcst
         from main.parser.python import serialize_dc
+
         obj = models.CodeSearch.objects.get(pk=self.kwargs["id"])
         obj.error = False
         obj.result = "<...>"
@@ -661,11 +676,14 @@ class CodeSearchApiView(MainView):
             return obj
         obj.result_code = grammar
         try:
-            resp = requests.post("http://localhost:3002/python-matcher-1", json={
-                "kind": obj.kind,
-                "data": code,
-                "grammar": grammar,
-            })
+            resp = requests.post(
+                "http://localhost:3002/python-matcher-1",
+                json={
+                    "kind": obj.kind,
+                    "data": code,
+                    "grammar": grammar,
+                },
+            )
         except requests.exceptions.ConnectionError:
             obj.error = True
             obj.result = "Connection error"
@@ -700,12 +718,12 @@ class CodeSearchApiView(MainView):
         obj = self.get_obj()
         return {
             "submitButtonWidget": "CodeSearchSubmit",
-            **read_fields(self.get_fields(obj.kind), obj)
+            **read_fields(self.get_fields(obj.kind), obj),
         }
 
     def post(self, request, *args, **kwargs):
         obj = self.get_obj()
-        data = json.loads(request.body)['data']
+        data = json.loads(request.body)["data"]
         obj = write_fields(self.get_fields(obj.kind), obj, data)
         return JsonResponse({"navigate": f"/logicore-code/{obj.id}"})
 
@@ -722,7 +740,7 @@ class MatcherFiddlesApiView(MainView):
             "fields": [
                 {"from_field": "name"},
             ],
-            "layout": "ModalLayout"
+            "layout": "ModalLayout",
         }
 
     def get_data(self, request, *args, **kwargs):
@@ -730,16 +748,18 @@ class MatcherFiddlesApiView(MainView):
         now_date = now_dt.date()
         return {
             "baseUrl": self.url_path,
-            'items': list(
-                models.MatcherFiddle.objects.values('id', 'name', 'created_dt', 'modified_dt')
+            "items": list(
+                models.MatcherFiddle.objects.values(
+                    "id", "name", "created_dt", "modified_dt"
+                )
             ),
-            'create_form': read_fields(self.get_fields(), models.MatcherFiddle())
+            "create_form": read_fields(self.get_fields(), models.MatcherFiddle()),
         }
 
     def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)['data']
-        if data.get('action') == 'delete':
-            models.MatcherFiddle.objects.filter(id=data['id']).delete()
+        data = json.loads(request.body)["data"]
+        if data.get("action") == "delete":
+            models.MatcherFiddle.objects.filter(id=data["id"]).delete()
             return JsonResponse({"redirect": f"/logicore-code/"})
         obj = write_fields(self.get_fields(), models.MatcherFiddle(), data)
         return JsonResponse({"redirect": f"/logicore-code/{obj.id}"})
@@ -752,14 +772,13 @@ class MatcherFiddleNewApiView(MainView):
     TEMPLATE = "GenericForm2"
 
     def get_data(self, request, *args, **kwargs):
-        obj = models.MatcherFiddle.objects.create(
-            name="Hello world"
-        )
+        obj = models.MatcherFiddle.objects.create(name="Hello world")
         return {
             "data": {},
             "fields": {"type": "Fields", "fields": []},
-            'redirect': f"/structure-explorer/{obj.uuid}",
+            "redirect": f"/structure-explorer/{obj.uuid}",
         }
+
 
 class MatcherFiddleApiView(MainView):
     in_menu = False
@@ -784,7 +803,7 @@ class MatcherFiddleApiView(MainView):
                     "layout": "CodeSearchLayout",
                 },
             ],
-            #"layout": "ModalLayout"
+            # "layout": "ModalLayout"
         }
 
     def get_obj(self):
@@ -793,6 +812,7 @@ class MatcherFiddleApiView(MainView):
 
         import libcst
         from main.parser.python import serialize_dc
+
         obj = models.MatcherFiddle.objects.get(uuid=self.kwargs["uuid"])
         obj.error = False
         obj.result = "<...>"
@@ -862,12 +882,12 @@ class MatcherFiddleApiView(MainView):
         obj = self.get_obj()
         return {
             "submitButtonWidget": "CodeSearchSubmit",
-            **read_fields(self.get_fields(), obj)
+            **read_fields(self.get_fields(), obj),
         }
 
     def post(self, request, *args, **kwargs):
         obj = self.get_obj()
-        data = json.loads(request.body)['data']
+        data = json.loads(request.body)["data"]
         obj = write_fields(self.get_fields(), obj, data)
         return JsonResponse({"navigate": f"/structure-explorer/{obj.uuid}"})
 
@@ -891,11 +911,13 @@ class JSONExplorerApiView(MainView):
         try:
             code = json.loads(code)
         except Exception as e:
-            return JsonResponse({
-                "funnel": "",
-                "result": "Source JSON decode error",
-                "error": True,
-            })
+            return JsonResponse(
+                {
+                    "funnel": "",
+                    "result": "Source JSON decode error",
+                    "error": True,
+                }
+            )
 
         def f(node):
             if (
@@ -905,10 +927,7 @@ class JSONExplorerApiView(MainView):
                 and all([k in node[0] for k in ["uuid", "key", "value"]])
             ):
                 print(node)
-                node = {
-                    element["key"]: element["value"]
-                    for element in node
-                }
+                node = {element["key"]: element["value"] for element in node}
             if (type(node) == dict) and ("uuid" in node) and ("key" not in node):
                 node = node["value"]
             if (type(node) == dict) and ("grammar_data" in node):
@@ -926,16 +945,19 @@ class JSONExplorerApiView(MainView):
                     node["contents"] = args
             return node
 
-        #print(json.dumps(data, indent=4))
+        # print(json.dumps(data, indent=4))
         grammar = postwalk(f, data)
         error = False
         result = ""
         funnel = ""
         try:
-            resp = requests.post("http://localhost:3002/json-matcher-1", json={
-                "data": code,
-                "grammar": grammar,
-            })
+            resp = requests.post(
+                "http://localhost:3002/json-matcher-1",
+                json={
+                    "data": code,
+                    "grammar": grammar,
+                },
+            )
         except requests.exceptions.ConnectionError:
             error = True
             result = "Connection error"
@@ -958,11 +980,13 @@ class JSONExplorerApiView(MainView):
                 error = True
                 result = f"Unknown error: status ({resp.status_code})"
                 funnel = ""
-        return JsonResponse({
-            "error": error,
-            "result": result,
-            "funnel": funnel,
-        })
+        return JsonResponse(
+            {
+                "error": error,
+                "result": result,
+                "funnel": funnel,
+            }
+        )
 
 
 # Fiddle
@@ -997,7 +1021,7 @@ class FiddleTypeMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
-#class FiddleItemsApiView(FiddleTypeMixin, MainView):
+# class FiddleItemsApiView(FiddleTypeMixin, MainView):
 #    pass
 
 
@@ -1008,30 +1032,67 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
     TEMPLATE = None
     WRAPPER = "FiddleWrapper"
 
-    def fetch_object(self):
-        self.uuid = ""
-
     def get_data(self, request, *args, **kwargs):
         now_dt = now()
         now_date = now_dt.date()
-        self.fetch_object()
         if not self.c:
             return {
                 "template": "FiddleNotFound",
             }
+        uid = str(self.kwargs.get("uuid", ""))
+        rev = int(self.kwargs.get("rev", 1))
+        obj = None
+        if uid:
+            try:
+                obj = models.Fiddle.objects.get(uuid=uid, rev=rev)
+            except models.Fiddle.DoesNotExist:
+                pass
         return {
             "template": self.c.get_template(),
-            "uuid": str(self.uuid),
+            "uuid": uid,
+            "val": str(obj.data) if obj else "",
             **self.c.get_data(self),
         }
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
+        if not request.session.session_key:
+            request.session.save()
+        session_id = request.session.session_key
         data = json.loads(request.body)["data"]
         if not self.c:
             return JsonResponse({"error": "FiddleType not found"}, status=400)
 
-        result, status = self.c.post(self)
-        return JsonResponse(result, status=status)
+        uid = str(self.kwargs.get("uuid", ""))
+        rev = int(self.kwargs.get("rev", 1))
+        first_obj = None
+        last_obj = None
+        continue_last = False
+        if uid:
+            existing = models.Fiddle.objects.get(uuid=uid, rev__gte=rev).order_by("rev")
+            first_obj = existing.first()
+            last_obj = existing.last()
+            if (first_obj.user == request.user) or (first_obj.session_id == session_id):
+                continue_last = True
+        new_rev = 1
+        if first_obj:
+            new_rev = models.Fiddle.objects.get(uuid=uid).order_by("rev").last().rev + 1
+        else:
+            uid = str(uuid.uuid4())
+        new_obj = models.Fiddle.objects.create(
+            kind=self.c.as_choice_key(),
+            session_id=session_id if request.user.is_anonymous else None,
+            user=request.user if not request.user.is_anonymous else None,
+            parent=last_obj if not continue_last else None,
+            data=data["val"],
+            uuid=uid,
+        )
+        url = ""
+        if request.LANGUAGE_CODE != "en":
+            url = url + "/" + request.LANGUAGE_CODE
+        url += "/toolbox/" + self.c.as_part_of_url() + "/" + uid + "/"
+        if new_rev > 1:
+            url += str(new_rev) + "/"
+        return JsonResponse({"redirect": url}, status=200)
 
 
 class ExistingFiddleItemApiView(NewFiddleItemApiView):
