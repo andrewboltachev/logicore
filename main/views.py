@@ -94,10 +94,16 @@ def JsonResponse(*args, **kwargs):
     kwargs["json_dumps_params"] = {"default": default_json}
     return JsonResponseOriginal(*args, **kwargs)
 
+def get_home_redirect(request):
+    suffix = ""
+    if request.LANGUAGE_CODE != "en":
+        suffix = f"{request.LANGUAGE_CODE}/"
+    return "https://andrewboltachev.site/" + suffix
+
 
 class HomeRedirectView(View):
-    def get(self, *args, **kwargs):
-        return HttpResponseRedirect("https://andrewboltachev.site")
+    def get(self, request, *args, **kwargs):
+        return HttpResponseRedirect(get_home_redirect(request))
 
 
 class HomeView(TemplateView):
@@ -314,7 +320,7 @@ class HomeApiView(MainView):
         now_dt = now()
         now_date = now_dt.date()
         return {
-            "redirect": "https://andrewboltachev.site/",
+            "redirect": get_home_redirect(request),
         }
 
 
