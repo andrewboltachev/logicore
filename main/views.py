@@ -304,8 +304,8 @@ class LogicoreFormsDemoApiView(MainView):
 class HomeApiView(MainView):
     in_menu = False
     url_path = "/"
-    title = "andrewboltachev.club"
-    TEMPLATE = "HomeView"
+    title = "andrewboltachev.site"
+    TEMPLATE = "GenericForm"
 
     def get_fields(self):
         return {}
@@ -314,6 +314,7 @@ class HomeApiView(MainView):
         now_dt = now()
         now_date = now_dt.date()
         return {
+            "redirect": "http://andrewboltachev.site/",
         }
 
 

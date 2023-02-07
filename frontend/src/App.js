@@ -44,7 +44,6 @@ import PythonRefactoring1Field from "./flow/PythonRefactoring1";
 import ZenDocument1Field from "./flow/ZenDocument1";
 import WebDashboard1Field from "./flow/WebDashboard1";
 
-import HomeView from "./pages/home";
 import LogicoreFormsDemoView from "./pages/logicore-forms-demo";
 
 import { ComponentType, ReactNode } from "react";
@@ -908,7 +907,6 @@ const mainComponents = {
   GenericForm,
   GenericForm2,
   JSONExplorerGadget,
-  HomeView,
   LogicoreFormsDemoView,
   LanguageView,
   PageNotFound,
