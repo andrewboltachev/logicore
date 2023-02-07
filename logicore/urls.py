@@ -55,7 +55,7 @@ urlpatterns = [
     path('rest-api/', include(router.urls)),
     path('media-upload/', main_views.media_upload), # TODO protect?
     path('admin/', admin.site.urls),
-    path('/', main_views.HomeRedirectView.as_view()),
+    path('', main_views.HomeRedirectView.as_view()),
     *api_views_patterns,
     re_path(r"api/.*", main_views.Error404ApiView.as_view()),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + [
