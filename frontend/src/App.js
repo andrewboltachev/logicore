@@ -42,6 +42,8 @@ import {
   useWindowSize,
   useDebounce,
   changeURLParameter,
+  removeLangFromPathName,
+  addLangToPathName,
 } from "./utils";
 
 import ClojureGraph1Field from "./flow/ClojureGraph1";
@@ -885,10 +887,15 @@ const PageNotFound = () => {
 }
 
 const JSONMatcherFiddle = () => {
+  const loc = useLocation();
+  const getUrl = (lang) => {
+    const theUrl = loc.pathname + loc.search;
+    return addLangToPathName(lang, removeLangFromPathName(window.CURRENT_LANGUAGE, theUrl));
+  }
   return (
     <Navbar bg="light" expand="lg">
       <div className="container-fluid">
-        <Navbar.Brand href="#home">React-Bootstrap</Navbar.Brand>
+        <Navbar.Brand href="#home">Fiddle</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
@@ -898,16 +905,10 @@ const JSONMatcherFiddle = () => {
             </Link>
             <Link className="nav-link" to="/fiddle/">Fiddle types</Link>
             <Nav.Link href="#link">Link</Nav.Link>
-            <NavDropdown title={<><i className="fas fa-language"></i>{" "}Dropdown</>} id="basic-nav-dropdown">
-              <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.2">
-                Another action
-              </NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
-              <NavDropdown.Divider />
-              <NavDropdown.Item href="#action/3.4">
-                Separated link
-              </NavDropdown.Item>
+            <NavDropdown title={<><i className="fas fa-language"></i>{" "}{ window.CURRENT_LANGUAGE_NAME }</>} id="basic-nav-dropdown">
+              {window.LANGUAGES.map(([code, name]) => {
+                return <NavDropdown.Item href={getUrl(code)}>{name}</NavDropdown.Item>;
+              })}
             </NavDropdown>
           </Nav>
         </Navbar.Collapse>
@@ -994,7 +995,9 @@ const gatherFileUids = (data) => {
 const BaseLayout = () => {
   const loc = useLocation();
   const navigate = useNavigate();
-  const apiUrl = "/api" + loc.pathname + loc.search;
+  const lang = window.CURRENT_LANGUAGE;
+  let apiUrl = addLangToPathName(lang, "/api" + removeLangFromPathName(lang, loc.pathname + loc.search));
+  //
   const [result, loading, _] = useApi(apiUrl, loc.key);
   const [show, setShow] = useState(false);
 

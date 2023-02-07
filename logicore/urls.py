@@ -21,6 +21,8 @@ from django.conf.urls.static import static
 from main import views as main_views
 from main import models
 import pprint
+from django.conf.urls.i18n import i18n_patterns
+
 
 from rest_framework import routers, serializers, viewsets
 
@@ -44,6 +46,15 @@ router = routers.DefaultRouter()
 router.register(r'stratagem', StratagemViewSet)
 
 
+base_urls = [
+    path('admin/', admin.site.urls),
+    path('', main_views.HomeRedirectView.as_view()),
+    *api_views_patterns,
+    re_path(r"api/.*", main_views.Error404ApiView.as_view()),
+]
+
+main_urls = i18n_patterns(*base_urls, prefix_default_language=False)
+
 urlpatterns = [
     path(
         "robots.txt",
@@ -54,16 +65,11 @@ urlpatterns = [
     path('graph-layout/', main_views.GraphLayoutView.as_view()), # TODO protect?
     path('rest-api/', include(router.urls)),
     path('media-upload/', main_views.media_upload), # TODO protect?
-    path('admin/', admin.site.urls),
-    path('', main_views.HomeRedirectView.as_view()),
-    *api_views_patterns,
-    re_path(r"api/.*", main_views.Error404ApiView.as_view()),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + [
+] + main_urls + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + [
     re_path(r'^(?P<path>.*)$', main_views.HomeView.as_view()),
 ]
 
-pprint.pprint(router.get_urls())
-
+pprint.pprint(urlpatterns)
 
 
 if settings.FRONTEND_DEV_MODE:

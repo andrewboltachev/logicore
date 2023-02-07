@@ -1,8 +1,7 @@
-{% load static react_tags %}
+{% load i18n static react_tags %}
 <!doctype html>
 <html lang="en">
   <head>
-
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,6 +12,23 @@
 		{% if not FRONTEND_DEV_MODE %}
 			{% include "react/bundle_css.html" %}
 		{% endif %}
+    <script>
+        {% get_current_language as LANGUAGE_CODE %}
+        {% get_available_languages as LANGUAGES %}
+        {% get_language_info_list for LANGUAGES as languages %}
+        var LANGUAGES = [];
+        {% for language in languages %}
+          LANGUAGES.push(['{{ language.code }}', '{{ language.name_local }}']);
+          {% if language.code == LANGUAGE_CODE %}
+            var CURRENT_LANGUAGE = '{{ language.code }}';
+            var CURRENT_LANGUAGE_NAME = '{{ language.name_local }}';
+          {% endif %}
+        {% endfor %}
+      {% if not LANGUAGE_CODE %}
+        var CURRENT_LANGUAGE = 'en';
+        var CURRENT_LANGUAGE_NAME = 'English';
+      {% endif %}
+    </script>
   </head>
   <body>
     {% csrf_token %}

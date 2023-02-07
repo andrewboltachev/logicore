@@ -210,3 +210,17 @@ export function changeURLParameter (
   return new URLSearchParams(result).toString();
 };
 
+
+export function removeLangFromPathName(lang, pathname) {
+  if (lang === 'en') return pathname;
+  const prefix = '/' + lang;
+  if (pathname.startsWith(prefix)) {
+    return pathname.substr(prefix.length);
+  }
+  return pathname;
+}
+
+export function addLangToPathName(lang, pathname) {
+  if (lang === 'en') return pathname;
+  return '/' + lang + pathname;
+}
