@@ -946,7 +946,7 @@ const JSONMatcherFiddle = (props) => {
       <div className="col d-flex flex-column">
         <textarea className="form-control flex-grow-1" value={val} onChange={e => editVal(e.target.value)} />
         <div className="d-grid">
-          <button className="btn btn-primary mt-2" type="button" onClick={save}>
+          <button className="btn btn-primary mt-2" type="button" onClick={save} disabled={!dirty}>
             <i className="fas fa-save" />{" "}
             <Trans>Save</Trans>
           </button>
