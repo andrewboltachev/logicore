@@ -900,20 +900,34 @@ const JSONMatcherFiddle = (props) => {
   const [localChecked, setLocalChecked] = useState(false);
   const [dirty, setDirty] = useState(false);
 
+  const draftPrefix = props.uuid ? `${props.uuid}/` : '';
+  const draftId = `draft[${draftPrefix}${props.rev}]`;
+
   const { t } = useTranslation();
-  const save = () => {
-    props.onChange({val});
+  const save = async () => {
+    const currentSaved = window.localStorage.getItem(draftId);
+    const currentDirty = dirty;
+
+    // try the best
+    window.localStorage.removeItem(draftId);
+    setDirty(false);
+    const res = await props.onChange({val});
+
+    if (res.error) {
+      console.log('error!!!!!!!!!!!!!!!!!!!!', res.error);
+      if (currentSaved) window.localStorage.setItem(draftId, currentSaved);
+      setDirty(currentDirty);
+    }
   };
   const run = () => {
     alert("ohhh");
   };
 
-  const draftPrefix = props.uuid ? `${props.uuid}/` : '';
-  const draftId = `draft[${draftPrefix}${props.rev}]`;
-
   useEffect(() => {
     setLocalChecked(false);
   }, [props.uuid]);
+
+  const langChangeHookId = draftId + '.langChangeHook';
 
   useEffect(() => {
     if (localChecked) {
@@ -924,7 +938,8 @@ const JSONMatcherFiddle = (props) => {
         if (v) {
           window.localStorage.removeItem(draftId);
           if (v !== val) {
-            if (await confirm(t('Unsaved changes exist. Apply?'), {okText: t('Apply'), cancelText: t('Discard')})) {
+            if (window.localStorage.getItem(langChangeHookId) || await confirm(t('Unsaved changes exist. Apply?'), {okText: t('Apply'), cancelText: t('Discard')})) {
+              window.localStorage.removeItem(langChangeHookId);
               setVal(v);
               setDirty(true);
             }
@@ -1122,16 +1137,24 @@ const BaseLayout = () => {
         formData.append(k, v);
       }
       formData.append('data', JSON.stringify(data));
-      resp = await axios.post(apiUrl, formData);
-      /*
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }
-       */
+      try {
+        /*
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }
+        */
+        resp = await axios.post(apiUrl, formData);
+      } catch (e) {
+        return {error: e};
+      }
     } else {
-      resp = await axios.post(apiUrl, {
-        data,
-      });
+      try {
+        resp = await axios.post(apiUrl, {
+          data,
+        });
+      } catch (e) {
+        return {error: e};
+      }
     }
     const result = resp.data;
     console.log("POST API returned", resp);
