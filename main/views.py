@@ -1019,8 +1019,8 @@ class FiddleTypeMixin:
                 self.c = c
                 break
         # migrate from session to user
-        if request.user.is_anonymous:
-            owned = [int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",")]
+        if request.user.is_authenticated:
+            owned = [int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",") if x]
             fiddles = models.Fiddle.objects.filter(pk__in=owned)
             fiddles.update(user=self.request.user)
             request.session.set("FIDDLES_OWNED", "")
@@ -1066,7 +1066,7 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
     def post(self, request, *args, **kwargs):
         owned = []
         if request.user.is_anonymous:
-            owned = [int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",")]
+            owned = [int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",") if x]
         data = json.loads(request.body)["data"]
         if not self.c:
             return JsonResponse({"error": "FiddleType not found"}, status=400)
@@ -1114,7 +1114,7 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
 
         if request.user.is_anonymous:
             owned.append(new_obj.pk)
-            request.session.set("FIDDLES_OWNED", ",".join(owned))
+            request.session["FIDDLES_OWNED"] = ",".join(map(str, owned))
         return JsonResponse({"redirect": url}, status=200)
 
 
