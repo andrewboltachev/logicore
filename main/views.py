@@ -1046,10 +1046,13 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
             try:
                 obj = models.Fiddle.objects.get(uuid=uid, rev=rev)
             except models.Fiddle.DoesNotExist:
-                pass
+                return {
+                    "template": "FiddleNotFound",
+                }
         return {
             "template": self.c.get_template(),
             "uuid": uid,
+            "rev": rev,
             "val": str(obj.data) if obj else "",
             **self.c.get_data(self),
         }
@@ -1068,23 +1071,35 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
         last_obj = None
         continue_last = False
         if uid:
-            existing = models.Fiddle.objects.get(uuid=uid, rev__gte=rev).order_by("rev")
+            # first of existing - "base" object. it's session_id or user is author
+            # last of existing - is "parent" of the one being created
+            existing = models.Fiddle.objects.filter(uuid=uid, rev__lte=rev).order_by("rev")
             first_obj = existing.first()
             last_obj = existing.last()
-            if (first_obj.user == request.user) or (first_obj.session_id == session_id):
-                continue_last = True
+            if existing:
+                if (first_obj.user == request.user) or (first_obj.session_id == session_id):
+                    continue_last = True
         new_rev = 1
         if first_obj:
-            new_rev = models.Fiddle.objects.get(uuid=uid).order_by("rev").last().rev + 1
+            # Get the max available rev
+            max_rev = models.Fiddle.objects.filter(uuid=uid).aggregate(Max("rev"))["rev__max"] or 0
+            new_rev = max_rev + 1
+            print("max_rev", max_rev, new_rev)
         else:
             uid = str(uuid.uuid4())
         new_obj = models.Fiddle.objects.create(
+            # Definition
             kind=self.c.as_choice_key(),
+            version="000", # TODO
+            # Revision
+            uuid=uid,
+            rev=new_rev,
+            parent=last_obj if not continue_last else None,
+            # Data
+            data=data["val"],
+            # Ownership
             session_id=session_id if request.user.is_anonymous else None,
             user=request.user if not request.user.is_anonymous else None,
-            parent=last_obj if not continue_last else None,
-            data=data["val"],
-            uuid=uid,
         )
         url = ""
         if request.LANGUAGE_CODE != "en":

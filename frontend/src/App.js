@@ -905,7 +905,11 @@ const JSONMatcherFiddle = (props) => {
     props.onChange({val});
   };
   const run = () => {
+    alert("ohhh");
   };
+
+  const draftPrefix = props.uuid ? `${props.uuid}/` : '';
+  const draftId = `draft[${draftPrefix}${props.rev}]`;
 
   useEffect(() => {
     setLocalChecked(false);
@@ -916,13 +920,14 @@ const JSONMatcherFiddle = (props) => {
       saveToLocal(val);
     } else {
       (async () => {
-        const v = window.localStorage.getItem('draft[' + props.uuid + ']');
-        console.log('got v', props.uuid, v);
+        const v = window.localStorage.getItem(draftId);
         if (v) {
-          window.localStorage.removeItem('draft[' + props.uuid + ']');
-          if (await confirm(t('Unsaved changes exist. Apply?'), {okText: t('Apply'), cancelText: t('Discard')})) {
-            setVal(v);
-            setDirty(true);
+          window.localStorage.removeItem(draftId);
+          if (v !== val) {
+            if (await confirm(t('Unsaved changes exist. Apply?'), {okText: t('Apply'), cancelText: t('Discard')})) {
+              setVal(v);
+              setDirty(true);
+            }
           }
         }
       setLocalChecked(true);
@@ -932,7 +937,7 @@ const JSONMatcherFiddle = (props) => {
 
   const saveToLocal = useCallback(
     debounce(val => {
-      window.localStorage.setItem('draft[' + props.uuid + ']', val);
+      window.localStorage.setItem(draftId, val);
     }, 200),
     []
   );
@@ -958,7 +963,7 @@ const JSONMatcherFiddle = (props) => {
       <div className="col d-flex flex-column">
         <textarea className="form-control flex-grow-1"></textarea>
         <div className="d-grid">
-          <button className="btn btn-success mt-2" type="button" onClick={save}>
+          <button className="btn btn-success mt-2" type="button" onClick={run}>
             <i className="fa fa-play-circle" />{" "}
             <Trans>Run</Trans>
           </button>
@@ -1038,7 +1043,7 @@ const FiddleWrapper = ({ result, onChange }) => {
             <Nav className="ml-auto">
               <NavDropdown title={<><i className="fas fa-language"></i>{" "}{ window.CURRENT_LANGUAGE_NAME }</>} id="basic-nav-dropdown" align="end">
                 {window.LANGUAGES.map(([code, name]) => {
-                  return <NavDropdown.Item href={getUrl(code)}>{name}</NavDropdown.Item>;
+                  return <NavDropdown.Item key={code} href={getUrl(code)}>{name}</NavDropdown.Item>;
                 })}
               </NavDropdown>
             </Nav>
