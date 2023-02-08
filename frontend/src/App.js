@@ -911,10 +911,10 @@ const JSONMatcherFiddle = (props) => {
     // try the best
     window.localStorage.removeItem(draftId);
     setDirty(false);
-    const res = await props.onChange({val});
-
-    if (res.error) {
-      console.log('error!!!!!!!!!!!!!!!!!!!!', res.error);
+    try {
+      await props.onChange({val});
+    } catch (e) {
+      console.log('error!!!!!!!!!!!!!!!!!!!!', e);
       if (currentSaved) window.localStorage.setItem(draftId, currentSaved);
       setDirty(currentDirty);
     }
@@ -1137,24 +1137,16 @@ const BaseLayout = () => {
         formData.append(k, v);
       }
       formData.append('data', JSON.stringify(data));
-      try {
-        /*
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          }
-        */
+      /*
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      */
         resp = await axios.post(apiUrl, formData);
-      } catch (e) {
-        return {error: e};
-      }
     } else {
-      try {
-        resp = await axios.post(apiUrl, {
-          data,
-        });
-      } catch (e) {
-        return {error: e};
-      }
+      resp = await axios.post(apiUrl, {
+        data,
+      });
     }
     const result = resp.data;
     console.log("POST API returned", resp);

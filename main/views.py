@@ -1080,11 +1080,10 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
                 if (first_obj.user == request.user) or (first_obj.session_id == session_id):
                     continue_last = True
         new_rev = 1
-        if first_obj:
+        if first_obj and continue_last:
             # Get the max available rev
             max_rev = models.Fiddle.objects.filter(uuid=uid).aggregate(Max("rev"))["rev__max"] or 0
             new_rev = max_rev + 1
-            print("max_rev", max_rev, new_rev)
         else:
             uid = str(uuid.uuid4())
         new_obj = models.Fiddle.objects.create(
