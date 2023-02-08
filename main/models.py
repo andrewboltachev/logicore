@@ -117,7 +117,6 @@ class Fiddle(models.Model):
         blank=True,
         on_delete=models.CASCADE
     )
-    session_id = models.CharField(max_length=128, null=True, blank=True, default=None)
 
     def __str__(self):
         return self.name

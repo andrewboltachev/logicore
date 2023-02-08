@@ -1018,6 +1018,12 @@ class FiddleTypeMixin:
             if c.as_part_of_url() == self.kwargs["kind"]:
                 self.c = c
                 break
+        # migrate from session to user
+        if request.user.is_anonymous:
+            owned = [int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",")]
+            fiddles = models.Fiddle.objects.filter(pk__in=owned)
+            fiddles.update(user=self.request.user)
+            request.session.set("FIDDLES_OWNED", "")
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -1058,9 +1064,9 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
         }
 
     def post(self, request, *args, **kwargs):
-        if not request.session.session_key:
-            request.session.save()
-        session_id = request.session.session_key
+        owned = []
+        if request.user.is_anonymous:
+            owned = [int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",")]
         data = json.loads(request.body)["data"]
         if not self.c:
             return JsonResponse({"error": "FiddleType not found"}, status=400)
@@ -1071,13 +1077,13 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
         last_obj = None
         continue_last = False
         if uid:
-            # first of existing - "base" object. it's session_id or user is author
+            # first of existing - "base" object. it's id is in session or user is author
             # last of existing - is "parent" of the one being created
             existing = models.Fiddle.objects.filter(uuid=uid, rev__lte=rev).order_by("rev")
             first_obj = existing.first()
             last_obj = existing.last()
             if existing:
-                if (first_obj.user == request.user) or (first_obj.session_id == session_id):
+                if (first_obj.user == request.user) or (first_obj.pk in owned):
                     continue_last = True
         new_rev = 1
         if first_obj and continue_last:
@@ -1097,7 +1103,6 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
             # Data
             data=data["val"],
             # Ownership
-            session_id=session_id if request.user.is_anonymous else None,
             user=request.user if not request.user.is_anonymous else None,
         )
         url = ""
@@ -1106,6 +1111,10 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
         url += "/toolbox/" + self.c.as_part_of_url() + "/" + uid + "/"
         if new_rev > 1:
             url += str(new_rev) + "/"
+
+        if request.user.is_anonymous:
+            owned.append(new_obj.pk)
+            request.session.set("FIDDLES_OWNED", ",".join(owned))
         return JsonResponse({"redirect": url}, status=200)
 
 
