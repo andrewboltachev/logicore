@@ -1008,6 +1008,23 @@ const FiddleTypes = ({items}) => {
   </div>;
 }
 
+const MyFiddleList = ({items}) => {
+  return <div className="container">
+    <h3 className="my-3"><Trans>My copies</Trans></h3>
+    <ul>
+      {items?.map((item) => {
+        let url = `/toolbox/${item.url_key}/${item.uuid}/`;
+        if (item.rev > 1) {
+          url += `${item.rev}/`;
+        }
+        return (
+          <li><Link to={addLang(url)}>{item.title}</Link></li>
+        );
+      })}
+    </ul>
+  </div>;
+}
+
 const mainComponents = {
   ListView,
   GenericForm,
@@ -1019,6 +1036,7 @@ const mainComponents = {
   FiddleListView,
   // Fiddle begin
   FiddleTypes,
+  MyFiddleList,
   FiddleNotFound,
   JSONMatcherFiddle,
   // Fiddle end
@@ -1054,6 +1072,7 @@ const FiddleWrapper = ({ result, onChange }) => {
                 <Trans>Back to main website</Trans>
               </Link>
               <Link className="nav-link" to={addLang("/toolbox/")}><Trans>All tools</Trans></Link>
+              <Link className="nav-link" to={addLang("/toolbox/mine/")}><Trans>Mine</Trans></Link>
             </Nav>
             <Nav className="ml-auto">
               <NavDropdown title={<><i className="fas fa-language"></i>{" "}{ window.CURRENT_LANGUAGE_NAME }</>} id="basic-nav-dropdown" align="end">

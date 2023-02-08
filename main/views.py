@@ -1014,13 +1014,16 @@ class FiddleTypesApiView(MainView):
 class FiddleTypeMixin:
     def dispatch(self, request, *args, **kwargs):
         self.c = None
-        for c in FiddleType.__subclasses__():
-            if c.as_part_of_url() == self.kwargs["kind"]:
-                self.c = c
-                break
+        if "kind" in self.kwargs:
+            for c in FiddleType.__subclasses__():
+                if c.as_part_of_url() == self.kwargs["kind"]:
+                    self.c = c
+                    break
         # migrate from session to user
         if request.user.is_authenticated:
-            owned = [int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",") if x]
+            owned = [
+                int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",") if x
+            ]
             fiddles = models.Fiddle.objects.filter(pk__in=owned)
             fiddles.update(user=self.request.user)
             request.session.set("FIDDLES_OWNED", "")
@@ -1029,6 +1032,45 @@ class FiddleTypeMixin:
 
 # class FiddleItemsApiView(FiddleTypeMixin, MainView):
 #    pass
+
+
+class MyFiddleListApiView(FiddleTypeMixin, MainView):
+    url_path = "/toolbox/mine/"
+    url_name = "my-fiddle-list"
+    title = "..."
+    TEMPLATE = "MyFiddleList"
+    WRAPPER = "FiddleWrapper"
+
+    def get_data(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            owned = [
+                int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",") if x
+            ]
+            qs = models.Fiddle.objects.filter(pk__in=owned)
+        else:
+            qs = models.Fiddle.objects.filter()
+        items = list(
+            qs.values("kind", "created_dt", "uuid", "rev")
+            .annotate(
+                title=Concat(
+                    F("kind"),
+                    Value(": "),
+                    F("uuid"),
+                    Value(" / "),
+                    F("rev"),
+                    Value(" - "),
+                    F("created_dt"),
+                    output_field=CharField(),
+                )
+            )
+            .order_by("-created_dt")
+        )
+        for item in items:
+            for c in models.FiddleType.__subclasses__():
+                if c.as_choice_key() == item["kind"]:
+                    item["url_key"] = c.as_part_of_url()
+            item["url"] = 1
+        return {"items": items}
 
 
 class NewFiddleItemApiView(FiddleTypeMixin, MainView):
@@ -1066,7 +1108,9 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
     def post(self, request, *args, **kwargs):
         owned = []
         if request.user.is_anonymous:
-            owned = [int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",") if x]
+            owned = [
+                int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",") if x
+            ]
         data = json.loads(request.body)["data"]
         if not self.c:
             return JsonResponse({"error": "FiddleType not found"}, status=400)
@@ -1079,7 +1123,9 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
         if uid:
             # first of existing - "base" object. it's id is in session or user is author
             # last of existing - is "parent" of the one being created
-            existing = models.Fiddle.objects.filter(uuid=uid, rev__lte=rev).order_by("rev")
+            existing = models.Fiddle.objects.filter(uuid=uid, rev__lte=rev).order_by(
+                "rev"
+            )
             first_obj = existing.first()
             last_obj = existing.last()
             if existing:
@@ -1088,14 +1134,17 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
         new_rev = 1
         if first_obj and continue_last:
             # Get the max available rev
-            max_rev = models.Fiddle.objects.filter(uuid=uid).aggregate(Max("rev"))["rev__max"] or 0
+            max_rev = (
+                models.Fiddle.objects.filter(uuid=uid).aggregate(Max("rev"))["rev__max"]
+                or 0
+            )
             new_rev = max_rev + 1
         else:
             uid = str(uuid.uuid4())
         new_obj = models.Fiddle.objects.create(
             # Definition
             kind=self.c.as_choice_key(),
-            version="000", # TODO
+            version="000",  # TODO
             # Revision
             uuid=uid,
             rev=new_rev,
