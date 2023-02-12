@@ -6,17 +6,18 @@ import "./jsonmatcher.scss"
 const Node = ({value, onChange}) => {
   if (value.tag === "MatchObjectFull") {
     return <span>
-      {"{}"}<br />
+      <a className="text-secondary" href="#" onClick={e => e.preventDefault()}>{"\u25BC"}</a> {"{!}"}<br />
       {Object.entries(value.contents).map(([k, v]) => {
         return <span>
-          <a href="#" onClick={e => e.preventDefault()}>×</a>
-          <input className="form-control bg-light" value={k} />
-          <Node value={v.contents} />
+          <a className="text-danger" href="#" onClick={e => e.preventDefault()}>×</a>
+          {" "}<input className="form-control bg-light" value={k} /><br />
+          {"\t"}<Node value={v.contents} /><br />
         </span>;
       })}
+      <a className="text-success" href="#" onClick={e => e.preventDefault()}>+</a>
     </span>;
   } else {
-    return <span>unknown node: {value?.tag}</span>;
+    return <span className="text-warning">unknown node: {value?.tag}</span>;
   }
 };
 
