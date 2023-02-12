@@ -77,6 +77,9 @@ import {
 import { useTranslation, Trans } from 'react-i18next';
 import './i18n';
 
+// Editors - the main part of the system
+import JSON_MATCHER from "./editors/jsonmatcher";
+
 
 const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url);
 
@@ -889,13 +892,16 @@ const JSONExplorerGadget = (props) => {
 };
 
 const PageNotFound = () => {
-  return <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center"}}>
-    <div>Page not found. <Link to="/">Visit Home</Link></div>
+  return <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center", zIndex: -1}}>
+    <div><Trans>Page not found</Trans>. <Link to="/"><Trans>Visit Home</Trans></Link></div>
   </div>;
 }
 
-const JSONMatcherFiddle = (props) => {
-  console.log('aaa', props);
+const fiddleTypes = {
+  JSON_MATCHER,
+};
+
+const Fiddle = (props) => {
   const [val, setVal] = useState(props.val);
   const [localChecked, setLocalChecked] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -919,10 +925,6 @@ const JSONMatcherFiddle = (props) => {
       setDirty(currentDirty);
     }
   };
-  const run = () => {
-    alert("ohhh");
-  };
-
   useEffect(() => {
     setLocalChecked(false);
   }, [props.uuid]);
@@ -964,27 +966,19 @@ const JSONMatcherFiddle = (props) => {
     }
   }
 
+  const { Editor } = fiddleTypes[props.kind];
+
+  if (!Editor) return `Not implemented: ${props.kind}`;
+
+  const saveButton = (
+    <button className="btn btn-primary mt-2" type="button" onClick={save} disabled={!dirty}>
+      <i className="fas fa-save" />{" "}
+      <Trans>Save</Trans>
+    </button>
+  );
+
   return <div className="container-fluid my-3 flex-grow-1 d-flex flex-column">
-    <div className="row align-items-stretch flex-grow-1">
-      <div className="col d-flex flex-column">
-        <textarea className="form-control flex-grow-1" value={val} onChange={e => editVal(e.target.value)} />
-        <div className="d-grid">
-          <button className="btn btn-primary mt-2" type="button" onClick={save} disabled={!dirty}>
-            <i className="fas fa-save" />{" "}
-            <Trans>Save</Trans>
-          </button>
-        </div>
-      </div>
-      <div className="col d-flex flex-column">
-        <textarea className="form-control flex-grow-1"></textarea>
-        <div className="d-grid">
-          <button className="btn btn-success mt-2" type="button" onClick={run}>
-            <i className="fa fa-play-circle" />{" "}
-            <Trans>Run</Trans>
-          </button>
-        </div>
-      </div>
-    </div>
+    <Editor value={val} onChange={editVal} saveButton={saveButton} />
   </div>;
 }
 
@@ -1038,7 +1032,7 @@ const mainComponents = {
   FiddleTypes,
   MyFiddleList,
   FiddleNotFound,
-  JSONMatcherFiddle,
+  Fiddle,
   // Fiddle end
 };
 
@@ -1052,7 +1046,8 @@ const MainWrapper = ({ result, onChange }) => {
 };
 
 const FiddleWrapper = ({ result, onChange }) => {
-  const Component = mainComponents[result?.template];
+  let Component = mainComponents[result?.template];
+  console.log('Component', Component);
   const loc = useLocation();
   const getUrl = (lang) => {
     const theUrl = loc.pathname + loc.search;

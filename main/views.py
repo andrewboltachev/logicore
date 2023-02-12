@@ -1077,7 +1077,7 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
     url_path = "/toolbox/<kind>/"
     url_name = "new-fiddle-item"
     title = "..."
-    TEMPLATE = None
+    TEMPLATE = "Fiddle"
     WRAPPER = "FiddleWrapper"
 
     def get_data(self, request, *args, **kwargs):
@@ -1098,7 +1098,7 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
                     "template": "FiddleNotFound",
                 }
         return {
-            "template": self.c.get_template(),
+            "kind": self.c.as_choice_key(),
             "uuid": uid,
             "rev": rev,
             "val": str(obj.data) if obj else "",
