@@ -1,23 +1,36 @@
 import { useState } from "react";
 import exampleData from "./jsonmatcher_example";
+import { update } from "../utils";
 
 import "./jsonmatcher.scss"
 
+// MatchPattern, MatchResult, Value
+// KeyMap, ContextFreeGrammar, Text (String, Key) Scientific Bool
+// ObjectKeyMatch, List
+
 const Node = ({value, onChange}) => {
-  if (value.tag === "MatchObjectFull") {
-    return <span>
-      <a className="text-secondary" href="#" onClick={e => e.preventDefault()}>{"\u25BC"}</a> {"{!}"}<br />
+  console.log('v', value);
+  if (value.tag === "MatchObjectFull" || value.tag === "MatchObjectPartial") {
+    const smbl = {"MatchObjectFull": "!", "MatchObjectPartial": "?"}[value.tag];
+    return <div className="d-inline-block">
+      <a className="text-secondary" href="#" onClick={e => { e.preventDefault(); onChange({...value, collapse: !value.collapse}); }}>{value.collapse ? "\u25BA" : "\u25BC"}</a> {`{${smbl}}`}<br />
+      {!value.collapse ? <>
       {Object.entries(value.contents).map(([k, v]) => {
         return <span>
           <a className="text-danger" href="#" onClick={e => e.preventDefault()}>×</a>
-          {" "}<input className="form-control bg-light" value={k} /><br />
-          {"\t"}<Node value={v.contents} /><br />
+          {" "}<input className="form-control bg-light" value={k} onChange={e => e.target.value} /><br />
+          {"    "}<Node value={v.contents} />
         </span>;
       })}
-      <a className="text-success" href="#" onClick={e => e.preventDefault()}>+</a>
-    </span>;
+          <a className="text-success" href="#" onClick={e => e.preventDefault()}>+</a>
+      </> : null}
+    </div>;
+  } else if (value.tag === "MatchStringExact") {
+    return <>
+      "" <input className="form-control bg-light" value={value.contents} onChange={e => e.target.value} /><br />
+    </>;
   } else {
-    return <span className="text-warning">unknown node: {value?.tag}</span>;
+    return <><span className="text-warning">unknown node: {value?.tag}</span><br /></>;
   }
 };
 
@@ -30,7 +43,7 @@ const JSONMatcherEditor = ({value1, onChange1, saveButton}) => {
     <div className="row align-items-stretch flex-grow-1">
       <div className="col d-flex flex-column">
         <div className="form-control flex-grow-1 jsonmatcher-editor">
-          <Node value={value} />
+          <Node value={value} onChange={onChange} />
         </div>
         <div className="d-grid">
           {saveButton}
