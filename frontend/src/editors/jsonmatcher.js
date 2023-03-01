@@ -9,7 +9,6 @@ import "./jsonmatcher.scss"
 // ObjectKeyMatch, List
 
 const Node = ({value, onChange}) => {
-  console.log('v', value);
   if (value.tag === "MatchObjectFull" || value.tag === "MatchObjectPartial") {
     const smbl = {"MatchObjectFull": "!", "MatchObjectPartial": "?"}[value.tag];
     return <div className="d-inline-block">
