@@ -39,7 +39,7 @@ const Node = ({value, onChange, level, noFirstIndent}) => {
   if (typeof value === "string") {
     return <>{firstIndent}{'"'}<span className="text-danger">{value}</span>{'"'}</>;
   } else if (typeof value === "number") {
-    return <>{firstIndent}<span>{value}</span></>;
+    return <>{firstIndent}<span className="text-primary">{value}</span></>;
   } else if (typeof value === "boolean") {
     return <>{firstIndent}<span className="text-primary">{value ? "true" : "false"}</span></>;
   } else if (typeof value === null) {
