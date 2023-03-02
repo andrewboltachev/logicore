@@ -8,8 +8,11 @@ import "./jsonmatcher.scss"
 // KeyMap, ContextFreeGrammar, Text (String, Key) Scientific Bool
 // ObjectKeyMatch, List
 
-const Node = ({value, onChange}) => {
-  if (value.tag === "MatchObjectFull" || value.tag === "MatchObjectPartial") {
+const Node = ({value, onChange, level, noFirstIndent}) => {
+  const lvl = (level || 0) + 1;
+  const indent = new Array(lvl).join("  ");
+  const firstIndent = noFirstIndent ? "" : indent;
+  /*if (value.tag === "MatchObjectFull" || value.tag === "MatchObjectPartial") {
     const smbl = {"MatchObjectFull": "!", "MatchObjectPartial": "?"}[value.tag];
     return <div className="d-inline-block">
       <a className="text-secondary" href="#" onClick={e => { e.preventDefault(); onChange({...value, collapse: !value.collapse}); }}>{value.collapse ? "\u25BA" : "\u25BC"}</a> {`{${smbl}}`}<br />
@@ -30,6 +33,37 @@ const Node = ({value, onChange}) => {
     </>;
   } else {
     return <><span className="text-warning">unknown node: {value?.tag}</span><br /></>;
+  }*/
+  /*
+*/
+  if (typeof value === "string") {
+    return <>{firstIndent}{'"'}<span>{value}</span>{'"'}</>;
+  } else if (typeof value === "number") {
+    return <>{firstIndent}<span>{value}</span></>;
+  } else if (typeof value === "boolean") {
+    return <>{firstIndent}<span>{value ? "true" : "false"}</span></>;
+  } else if (typeof value === null) {
+    return <>{firstIndent}<span>null</span></>;
+  } else if (Array.isArray(value)) {
+    return <>
+      <span>
+        {firstIndent + "["}<br />
+          {value.map((v) => {
+            return <><Node value={v} level={lvl} />,<br /></>;
+          })}
+        {indent + "]"}
+      </span></>;
+  } else if (typeof value === "object") {
+    return <><span>
+      {firstIndent + "{"}<br />
+      {Object.entries(value).map(([k, v]) => {
+        return <>{indent + "  "}{'"'}{k}{'": '}<Node value={v} level={lvl} noFirstIndent />,<br /></>;
+      })}
+      {indent + "}"}
+    </span></>;
+  } else {
+    // error
+    return <div className="text-danger">{value + ''}</div>;
   }
 };
 
