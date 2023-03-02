@@ -37,13 +37,13 @@ const Node = ({value, onChange, level, noFirstIndent}) => {
   /*
 */
   if (typeof value === "string") {
-    return <>{firstIndent}{'"'}<span>{value}</span>{'"'}</>;
+    return <>{firstIndent}{'"'}<span className="text-danger">{value}</span>{'"'}</>;
   } else if (typeof value === "number") {
     return <>{firstIndent}<span>{value}</span></>;
   } else if (typeof value === "boolean") {
-    return <>{firstIndent}<span>{value ? "true" : "false"}</span></>;
+    return <>{firstIndent}<span className="text-primary">{value ? "true" : "false"}</span></>;
   } else if (typeof value === null) {
-    return <>{firstIndent}<span>null</span></>;
+    return <>{firstIndent}<span className="text-primary">null</span></>;
   } else if (Array.isArray(value)) {
     return <>
       <span>
@@ -57,7 +57,7 @@ const Node = ({value, onChange, level, noFirstIndent}) => {
     return <><span>
       {firstIndent + "{"}<br />
       {Object.entries(value).map(([k, v]) => {
-        return <>{indent + "  "}{'"'}{k}{'": '}<Node value={v} level={lvl} noFirstIndent />,<br /></>;
+        return <>{indent + "  "}{'"'}<span className="text-secondary">{k}</span>{'": '}<Node value={v} level={lvl} noFirstIndent />,<br /></>;
       })}
       {indent + "}"}
     </span></>;
