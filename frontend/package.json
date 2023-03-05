@@ -155,6 +155,8 @@
     ]
   },
   "devDependencies": {
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "mkdirp": "^1.0.4",
     "rimraf": "^3.0.2"
   }

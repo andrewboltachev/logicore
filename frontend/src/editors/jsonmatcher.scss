@@ -20,3 +20,17 @@ $s: 0.75rem;
     text-decoration: none;
   }
 }
+.adt-editor {
+  &-card {
+    box-shadow: 0 0 3px 3px #ccc; 
+    display: inline-block;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    &-title {
+      font-weight: 700;
+      margin-bottom: 0.125rem;
+      padding-bottom: 0.125rem;
+      border-bottom: 1px solid gray;
+    }
+  }
+}
