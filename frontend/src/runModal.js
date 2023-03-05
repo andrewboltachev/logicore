@@ -21,14 +21,16 @@ import {
 
 import { Button, Modal } from "react-bootstrap";
 
-export default function runModal(props) {
-  const { value, onChange, definition, error, context, onReset, path } = props;
-  /* this is Fields, but renderedFields are thrown away */
+const ModalContext = createContext(null);
+
+const ModalProvider = () => {
+  const [value, onChange] = useState(null);
   const [show, setShow] = useState(false);
-  const [state, setState] = useState(value);
+  const [state, setState] = useState(null);
   const [errors, setErrors] = useState(null);
+  const [definition, setDefinition] = useState({});
+  const context = {};
   useEffect(() => {
-    //console.log('reset to', value);
     setState(value);
     setErrors(null);
   }, [show]);
@@ -61,59 +63,11 @@ export default function runModal(props) {
       }, 50);*/
     }
   };
-  return {
-    state,
-    setShow,
-    element: (
-      <Modal
-        show={show}
-        onHide={handleClose}
-        animation={false}
-        container={(_) => document.getElementById("bootstrap-modals")}
-        size={context?.modalSize || "lg"}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>{definition.title || "Edit"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div>
-            <div>{JSON.stringify(state)}</div>
-            <FormComponent
-              definition={{ ...definition, layout: void 0 }}
-              value={state}
-              onChange={setState}
-              error={errors}
-              onReset={onReset1}
-              path={[]}
-              context={{
-                ...context,
-                forceLabelWidth: "100%",
-                labelPlacement: "horizontalPlus",
-                handleSubmit,
-              }}
-            />
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            OK
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    ),
-  };
-}
-
-const ModalContext = createContext(null);
-
-const ModalProvider = () => {
+  const runModal = async () => {};
   return (
-    <>
+    <ModalContext.Provider runModal={runModal}>
       <Modal
-        show={show}
+        show={!!definition?.fields}
         onHide={handleClose}
         animation={false}
         container={(_) => document.getElementById("bootstrap-modals")}
@@ -149,8 +103,8 @@ const ModalProvider = () => {
           </Button>
         </Modal.Footer>
       </Modal>
-    </>
+    </ModalContext.Provider>
   );
 };
 
-export { ModalProvider };
+export { ModalProvider, ModalContext };
