@@ -36,7 +36,7 @@ const ADTEditorNode = ({
   type,
   selectedPath,
 }) => {
-  const runModal = useContext(ModalContext);
+  const { runModal } = useContext(ModalContext);
   const isSelected =
     /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
       selectedPath.length && path.every((e, i) => e == selectedPath[i]);
@@ -48,14 +48,16 @@ const ADTEditorNode = ({
             href="#"
             onClick={(e) => {
               e.preventDefault();
-              console.log(runModal);
               runModal({
-                definition: {
-                  title: "Hello world",
+                title: "Hello world",
+                fields: {
+                  type: "Fields",
                   fields: [
                     {
-                      type: "Fields",
-                      fields: [{ type: "TextField", k: "name", label: "Name" }],
+                      type: "TextField",
+                      k: "name",
+                      label: "Name",
+                      required: true,
                     },
                   ],
                 },

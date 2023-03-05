@@ -23,11 +23,11 @@ import { Button, Modal } from "react-bootstrap";
 
 const ModalContext = createContext(null);
 
-const ModalProvider = () => {
+const ModalProvider = ({ children }) => {
   const [value, onChange] = useState(null);
   const [show, setShow] = useState(false);
   const [errors, setErrors] = useState(null);
-  const [definition, setDefinition] = useState({});
+  const [config, setConfig] = useState({});
   const [cb, setCallback] = useState({});
   const context = {};
   /*useEffect(() => {
@@ -39,9 +39,9 @@ const ModalProvider = () => {
   };
   const handleClose = (_) => setShow(false);
   const handleSubmit = () => {
-    const error = validateDefinition(definition, value);
+    const error = validateDefinition(config?.fields, value);
     setErrors(error);
-    if (!definitionIsInvalid(definition, error, value)) {
+    if (!definitionIsInvalid(config?.fields, error, value)) {
       // ok
       cb && cb(value);
       //onReset(path);
@@ -62,28 +62,28 @@ const ModalProvider = () => {
       }, 50);*/
     }
   };
-  const runModal = (definition, value, cb) => {
-    setDefinition(definition);
+  const runModal = (config, value, cb) => {
+    setConfig(config);
     onChange(value);
     setCallback(cb);
     setShow(true);
   };
+  //container={(_) => document.getElementById("bootstrap-modals")}
   return (
-    <ModalContext.Provider runModal={runModal}>
+    <ModalContext.Provider value={{ runModal }}>
       <Modal
-        show={!!definition?.fields}
+        show={show}
         onHide={handleClose}
         animation={false}
-        container={(_) => document.getElementById("bootstrap-modals")}
         size={context?.modalSize || "lg"}
       >
         <Modal.Header closeButton>
-          <Modal.Title>{definition.title || "Edit"}</Modal.Title>
+          <Modal.Title>{config.title || "Edit"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div>
             <FormComponent
-              definition={{ ...definition, layout: void 0 }}
+              definition={{ ...config?.fields, layout: void 0 }}
               value={value}
               onChange={onChange}
               error={errors}
@@ -107,6 +107,7 @@ const ModalProvider = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      {children}
     </ModalContext.Provider>
   );
 };
