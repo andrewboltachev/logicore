@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import exampleData from "./jsonmatcher_example";
 import { update } from "../utils";
 import schema from "./jsonmatcher_schema";
+import { ModalProvider, ModalContext } from "../runModal";
 
 import "./jsonmatcher.scss";
 
@@ -35,6 +36,7 @@ const ADTEditorNode = ({
   type,
   selectedPath,
 }) => {
+  const runModal = useContext(ModalContext);
   const isSelected =
     /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
       selectedPath.length && path.every((e, i) => e == selectedPath[i]);
@@ -46,6 +48,18 @@ const ADTEditorNode = ({
             href="#"
             onClick={(e) => {
               e.preventDefault();
+              console.log(runModal);
+              runModal({
+                definition: {
+                  title: "Hello world",
+                  fields: [
+                    {
+                      type: "Fields",
+                      fields: [{ type: "TextField", k: "name", label: "Name" }],
+                    },
+                  ],
+                },
+              });
             }}
           >
             [not selected]

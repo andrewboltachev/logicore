@@ -22,6 +22,8 @@ import moment from "moment";
 import SelectFileField from "./selectFileField"; // register
 import PickFilePositionsField from "./pickFilePositionsField"; // register
 
+import { ModalProvider, ModalContext } from "./runModal";
+
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
