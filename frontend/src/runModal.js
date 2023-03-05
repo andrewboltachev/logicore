@@ -29,7 +29,7 @@ const ModalProvider = ({ children }) => {
   const [errors, setErrors] = useState(null);
   const [config, setConfig] = useState({});
   const [cb, setCallback] = useState({});
-  const context = {};
+  const context = config?.context || {};
   /*useEffect(() => {
     setState(value);
     setErrors(null);
@@ -75,7 +75,7 @@ const ModalProvider = ({ children }) => {
         show={show}
         onHide={handleClose}
         animation={false}
-        size={context?.modalSize || "lg"}
+        size={config?.modalSize || "lg"}
       >
         <Modal.Header closeButton>
           <Modal.Title>{config.title || "Edit"}</Modal.Title>
