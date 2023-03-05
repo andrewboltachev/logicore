@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useRef, useContext, useCallback, memo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useContext,
+  useCallback,
+  memo,
+} from "react";
 import logo from "./logo.svg";
 import "./App.scss";
 import classd from "classd";
@@ -15,10 +22,10 @@ import moment from "moment";
 import SelectFileField from "./selectFileField"; // register
 import PickFilePositionsField from "./pickFilePositionsField"; // register
 
-import Container from 'react-bootstrap/Container';
-import Nav from 'react-bootstrap/Nav';
-import Navbar from 'react-bootstrap/Navbar';
-import NavDropdown from 'react-bootstrap/NavDropdown';
+import Container from "react-bootstrap/Container";
+import Nav from "react-bootstrap/Nav";
+import Navbar from "react-bootstrap/Navbar";
+import NavDropdown from "react-bootstrap/NavDropdown";
 
 import { debounce } from "lodash";
 
@@ -74,12 +81,11 @@ import {
   modifyHelper,
 } from "./logicore-forms";
 
-import { useTranslation, Trans } from 'react-i18next';
-import './i18n';
+import { useTranslation, Trans } from "react-i18next";
+import "./i18n";
 
 // Editors - the main part of the system
 import JSON_MATCHER from "./editors/jsonmatcher";
-
 
 const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url);
 
@@ -115,22 +121,22 @@ Object.assign(formComponents, {
 const WithDeleteButton = ({ definition, renderedFields }) => {
   return (
     <div className="card mb-1">
-    <div className="card-body d-flex align-items-start">
-    <div className="flex-grow-1">
-    {renderedFields}
-    </div>
-      <a
+      <div className="card-body d-flex align-items-start">
+        <div className="flex-grow-1">{renderedFields}</div>
+        <a
           href="#"
           className="btn btn-sm btn-outline-danger"
-          style={{marginLeft: 16}}
+          style={{ marginLeft: 16 }}
           onClick={(e) => {
             e.preventDefault();
-                definition.onChangeParent(
-                  definition.parent.filter((x, i) => i != definition.index)
-                );
+            definition.onChangeParent(
+              definition.parent.filter((x, i) => i != definition.index)
+            );
           }}
-      >×</a>
-    </div>
+        >
+          ×
+        </a>
+      </div>
     </div>
   );
 };
@@ -139,260 +145,322 @@ Object.assign(fieldsLayouts, {
   WithDeleteButton,
 });
 
-const ListView = ({title, create_form, items, onChange, baseUrl}) => {
-  const theBaseUrl = baseUrl || '/';
-  return <div className="container">
-    <div className="d-flex align-items-center justify-content-between">
-      <h1>{title}</h1>
-      <FormComponent
-        path={[]}
-        definition={create_form.fields}
-        value={create_form.data}
-        onChange={onChange}
-        onReset={_ => _}
-        error={null}
-      />
-    </div>
-    <table className="table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Kind</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {items?.map((item) => (<tr>
-          <td><Link to={`${baseUrl}${item.id}`}>{item.name}</Link></td>
-          <td>{item.kind}</td>
-          <td>
-            <button
-              className="btn btn-sm btn-outline-danger"
-              type="button"
-              onClick={_ => confirm('Do you really want to delete this graph?').then(value => value && onChange({'action': 'delete', 'id': item.id}))}
-            >
-              <i className="fa fa-times" />
-            </button>
-          </td>
-        </tr>))}
-        {!items?.length && <tr>
-          <td><em>No items</em></td>
-        </tr>}
-      </tbody>
-    </table>
-  </div>;
-}
-
-const FiddleListView = ({title, create_form, items, onChange, baseUrl}) => {
-  const theBaseUrl = baseUrl || '/';
-  return <div className="container mt-3">
-    <div className="d-flex align-items-center justify-content-between mb-3">
-      <div>
-        <h3>{title}</h3>
-        <h5 className="text-muted">My explorations</h5>
+const ListView = ({ title, create_form, items, onChange, baseUrl }) => {
+  const theBaseUrl = baseUrl || "/";
+  return (
+    <div className="container">
+      <div className="d-flex align-items-center justify-content-between">
+        <h1>{title}</h1>
+        <FormComponent
+          path={[]}
+          definition={create_form.fields}
+          value={create_form.data}
+          onChange={onChange}
+          onReset={(_) => _}
+          error={null}
+        />
       </div>
-      <Link to={baseUrl + "new"} className="btn btn-lg btn-success">
-        <i className="fa fa-plus" />{" "}
-        New
-      </Link>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Kind</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items?.map((item) => (
+            <tr>
+              <td>
+                <Link to={`${baseUrl}${item.id}`}>{item.name}</Link>
+              </td>
+              <td>{item.kind}</td>
+              <td>
+                <button
+                  className="btn btn-sm btn-outline-danger"
+                  type="button"
+                  onClick={(_) =>
+                    confirm("Do you really want to delete this graph?").then(
+                      (value) =>
+                        value && onChange({ action: "delete", id: item.id })
+                    )
+                  }
+                >
+                  <i className="fa fa-times" />
+                </button>
+              </td>
+            </tr>
+          ))}
+          {!items?.length && (
+            <tr>
+              <td>
+                <em>No items</em>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
-    <table className="table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {items?.map((item) => (<tr>
-          <td><Link to={`${baseUrl}${item.id}`}>{item.name}</Link></td>
-          <td>{item.kind}</td>
-          <td>
-            <button
-              className="btn btn-sm btn-outline-danger"
-              type="button"
-              onClick={_ => confirm('Do you really want to delete this graph?').then(value => value && onChange({'action': 'delete', 'id': item.id}))}
-            >
-              <i className="fa fa-times" />
-            </button>
-          </td>
-        </tr>))}
-        {!items?.length && <tr>
-          <td colSpan="2"><em>None yet</em></td>
-        </tr>}
-      </tbody>
-    </table>
-  </div>;
-}
+  );
+};
 
-const LanguageView = ({onChange}) => {
-  const [text, setText] = useState('');
+const FiddleListView = ({ title, create_form, items, onChange, baseUrl }) => {
+  const theBaseUrl = baseUrl || "/";
+  return (
+    <div className="container mt-3">
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <h3>{title}</h3>
+          <h5 className="text-muted">My explorations</h5>
+        </div>
+        <Link to={baseUrl + "new"} className="btn btn-lg btn-success">
+          <i className="fa fa-plus" /> New
+        </Link>
+      </div>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items?.map((item) => (
+            <tr>
+              <td>
+                <Link to={`${baseUrl}${item.id}`}>{item.name}</Link>
+              </td>
+              <td>{item.kind}</td>
+              <td>
+                <button
+                  className="btn btn-sm btn-outline-danger"
+                  type="button"
+                  onClick={(_) =>
+                    confirm("Do you really want to delete this graph?").then(
+                      (value) =>
+                        value && onChange({ action: "delete", id: item.id })
+                    )
+                  }
+                >
+                  <i className="fa fa-times" />
+                </button>
+              </td>
+            </tr>
+          ))}
+          {!items?.length && (
+            <tr>
+              <td colSpan="2">
+                <em>None yet</em>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const LanguageView = ({ onChange }) => {
+  const [text, setText] = useState("");
   const [result, setResult] = useState(null);
-  console.log('got result', result);
-  return <div className="container-fluid my-4">
-    <div className="row">
-      <div className="col-md-6 d-flex justify-content-center">
-        <h3>Language</h3>
+  console.log("got result", result);
+  return (
+    <div className="container-fluid my-4">
+      <div className="row">
+        <div className="col-md-6 d-flex justify-content-center">
+          <h3>Language</h3>
+        </div>
+        <div className="col-md-6 d-flex justify-content-center">Result</div>
       </div>
-      <div className="col-md-6 d-flex justify-content-center">
-        Result
+      <div className="row my-5">
+        <div className="col-md-6">
+          Code:
+          <textarea
+            className="form-control"
+            style={{
+              height: "75vh",
+              fontFamily: "Monaco, Menlo, Consolas, monospace",
+            }}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          ></textarea>
+          <button
+            className="btn btn-primary my-2"
+            onClick={(_) => {
+              setResult(null);
+              onChange({ value: text }, null, ({ result }) =>
+                setResult(result)
+              );
+            }}
+          >
+            Update -&gt;
+          </button>
+        </div>
+        {typeof result === "string" ? (
+          <div className="col-md-6 text-danger">
+            Error:
+            <hr style={{ marginTop: 0 }} />
+            <code>{result}</code>
+          </div>
+        ) : (
+          <div className="col-md-6">
+            Result:
+            <hr style={{ marginTop: 0 }} />
+            <code style={{ whiteSpace: "pre" }}>
+              {JSON.stringify(result, null, 2)}
+            </code>
+          </div>
+        )}
       </div>
     </div>
-    <div className="row my-5">
-      <div className="col-md-6">
-        Code:
-        <textarea className="form-control" style={{height: "75vh", fontFamily: "Monaco, Menlo, Consolas, monospace"}} value={text} onChange={e => setText(e.target.value)}>
-        </textarea>
-        <button
-          className="btn btn-primary my-2"
-          onClick={_ => {
-            setResult(null);
-            onChange({value: text}, null, ({result}) => setResult(result));
-          }}
-        >Update  -&gt;</button>
-      </div>
-      {typeof result === 'string' ? <div className="col-md-6 text-danger">
-          Error:
-          <hr style={{marginTop: 0}} />
-          <code>{result}</code>
-        </div> : <div className="col-md-6">
-          Result:
-          <hr style={{marginTop: 0}} />
-          <code style={{whiteSpace: 'pre'}}>{JSON.stringify(result, null, 2)}</code>
-      </div>}
-    </div>
-  </div>;
+  );
 };
 
 const CodeDisplay = (props) => {
-  return (<div className="my-1">
-    <span style={{fontWeight: 'bold'}}>{props?.definition?.label}</span>
-    <textarea id="id_8c8c87ea-0942-4fbd-97a9-7af3fb3504a5" type="text" className="form-control" defaultValue={props?.value} readOnly />
-  </div>);
+  return (
+    <div className="my-1">
+      <span style={{ fontWeight: "bold" }}>{props?.definition?.label}</span>
+      <textarea
+        id="id_8c8c87ea-0942-4fbd-97a9-7af3fb3504a5"
+        type="text"
+        className="form-control"
+        defaultValue={props?.value}
+        readOnly
+      />
+    </div>
+  );
 };
 CodeDisplay.validatorRunner = (definition, value, parentValue, context) => {
   return null;
 };
-CodeDisplay.validatorChecker = (definition, error, state, parentState, context) => {
+CodeDisplay.validatorChecker = (
+  definition,
+  error,
+  state,
+  parentState,
+  context
+) => {
   return false;
 };
 
 const MatchObjectDefinition = {
-  "type": "Fields",
-  "fields": [
+  type: "Fields",
+  fields: [
     {
-      "type": "UUIDListField",
-      "k": "arg0",
-      "label": "Array",
-      "fields": [
-        { 
-          "k": "key",
-          "type": "TextField",
+      type: "UUIDListField",
+      k: "arg0",
+      label: "Array",
+      fields: [
+        {
+          k: "key",
+          type: "TextField",
           //"required": true,
           //"label": "Key",
         },
-        { 
-          "k": "value",
-          "type": "RecursiveField",
-          "definition_id": "grammar",
-        }
+        {
+          k: "value",
+          type: "RecursiveField",
+          definition_id: "grammar",
+        },
       ],
-      "layout": "ADTKeyValue",
-    }
-  ]
+      layout: "ADTKeyValue",
+    },
+  ],
 };
 
 const MatchArrayDefinition = {
-  "type": "Fields",
-  "fields": [
-    { 
-      "k": "element",
-      "type": "RecursiveField",
-      "definition_id": "grammar",
+  type: "Fields",
+  fields: [
+    {
+      k: "element",
+      type: "RecursiveField",
+      definition_id: "grammar",
     },
   ],
 };
 
 const JSONMatchPattern = [
   {
-    "label": "Containers",
-    "color": "primary",
+    label: "Containers",
+    color: "primary",
     children: [
-    {
-      key: "MatchObject",
-      label: "{ ! }",
-      title: "Object: All keys must match",
-      empty: [[["", null]]],
-      definition: MatchObjectDefinition,
-    },
-    {
-      key: "MatchObjectPartial",
-      label: "{ ? }",
-      title: "Object: Only specified keys must match",
-      empty: [[["", null]]],
-      definition: MatchObjectDefinition,
-    },
-    {
-      key: "MatchArray",
-      label: "[ ! ]",
-      title: "Array: All elements must match",
-      empty: [[null]],
-      definition: MatchArrayDefinition,
-    },
-    {
-      key: "MatchArraySome",
-      label: "[ ? ]",
-      title: "Array: Some of the elements must match",
-      empty: [[null]],
-      definition: MatchArrayDefinition,
-    },
-    {
-      key: "MatchArrayExact",
-      label: "[ , ]",
-      title: "Array: Literal (element-by-element) match",
-      empty: [[null]],
-      definition: {
-        "type": "Fields",
-        "fields": [
-          {
-            "type": "UUIDListField",
-            "k": "arg0",
-            "label": "Array",
-            "fields": [{ 
-              "k": "element",
-              "type": "RecursiveField",
-              "definition_id": "grammar",
-            }],
-            "layout": "ADTElement",
-          },
-        ]
+      {
+        key: "MatchObject",
+        label: "{ ! }",
+        title: "Object: All keys must match",
+        empty: [[["", null]]],
+        definition: MatchObjectDefinition,
       },
-    },
-    /*{
+      {
+        key: "MatchObjectPartial",
+        label: "{ ? }",
+        title: "Object: Only specified keys must match",
+        empty: [[["", null]]],
+        definition: MatchObjectDefinition,
+      },
+      {
+        key: "MatchArray",
+        label: "[ ! ]",
+        title: "Array: All elements must match",
+        empty: [[null]],
+        definition: MatchArrayDefinition,
+      },
+      {
+        key: "MatchArraySome",
+        label: "[ ? ]",
+        title: "Array: Some of the elements must match",
+        empty: [[null]],
+        definition: MatchArrayDefinition,
+      },
+      {
+        key: "MatchArrayExact",
+        label: "[ , ]",
+        title: "Array: Literal (element-by-element) match",
+        empty: [[null]],
+        definition: {
+          type: "Fields",
+          fields: [
+            {
+              type: "UUIDListField",
+              k: "arg0",
+              label: "Array",
+              fields: [
+                {
+                  k: "element",
+                  type: "RecursiveField",
+                  definition_id: "grammar",
+                },
+              ],
+              layout: "ADTElement",
+            },
+          ],
+        },
+      },
+      /*{
       key: "MatchArrayContextFree",
       label: "[ * ]",
       title: "Array: Match using context-free grammar",
       empty: [[null]],
     },*/
-  ]
+    ],
   },
   {
-    "label": "Literals",
-    "color": "success",
+    label: "Literals",
+    color: "success",
     children: [
       {
         key: "MatchString",
-        label: "\"abc\"",
+        label: '"abc"',
         title: "Match String",
         empty: ["wow!"],
         definition: {
-          "type": "Fields",
-          "fields": [
+          type: "Fields",
+          fields: [
             {
-              "type": "TextField",
-              "k": "arg0",
-            }
-          ]
+              type: "TextField",
+              k: "arg0",
+            },
+          ],
         },
       },
       {
@@ -401,13 +469,13 @@ const JSONMatchPattern = [
         title: "Match Number",
         empty: [0],
         definition: {
-          "type": "Fields",
-          "fields": [
+          type: "Fields",
+          fields: [
             {
-              "type": "NumberField",
-              "k": "arg0",
-            }
-          ]
+              type: "NumberField",
+              k: "arg0",
+            },
+          ],
         },
       },
       {
@@ -416,13 +484,13 @@ const JSONMatchPattern = [
         title: "Match Boolean",
         empty: [false],
         definition: {
-          "type": "Fields",
-          "fields": [
+          type: "Fields",
+          fields: [
             {
-              "type": "BooleanField",
-              "k": "arg0",
-            }
-          ]
+              type: "BooleanField",
+              k: "arg0",
+            },
+          ],
         },
       },
       {
@@ -433,8 +501,8 @@ const JSONMatchPattern = [
     ],
   },
   {
-    "label": "Conditions",
-    "color": "warning",
+    label: "Conditions",
+    color: "warning",
     children: [
       {
         key: "MatchSimpleOr",
@@ -453,24 +521,24 @@ const JSONMatchPattern = [
         label: "If",
         title: "«if-then» match",
         definition: {
-          "type": "Fields",
-          "fields": [
+          type: "Fields",
+          fields: [
             {
-              "k": "arg0",
-              "type": "RecursiveField",
-              "definition_id": "grammar",
+              k: "arg0",
+              type: "RecursiveField",
+              definition_id: "grammar",
             },
             {
-              "k": "arg1",
-              "type": "RecursiveField",
-              "definition_id": "grammar",
+              k: "arg1",
+              type: "RecursiveField",
+              definition_id: "grammar",
             },
             {
-              "k": "arg2",
-              "type": "TextField",
+              k: "arg2",
+              type: "TextField",
             },
           ],
-          "layout": "ADTIfThen",
+          layout: "ADTIfThen",
         },
         empty: [[null, null, ""]],
       },
@@ -495,7 +563,7 @@ const JSONMatchPattern = [
         label: "kU",
         title: "Match keys to funnel (unique)",
       },
-    ]
+    ],
   },
 ];
 
@@ -565,31 +633,52 @@ const ADTSelectField = ({
   const { label } = definition;
   let inner = null;
   const [editing, setEditing] = useState(false);
-  return (<div style={{flexShrink: 0}}>
-      {(!value || editing) ? (
+  return (
+    <div style={{ flexShrink: 0 }}>
+      {!value || editing ? (
         <div>
-          <div className="d-flex" style={{gridGap: 5}}>
-          {adtDefintion.map(g => {
-            return <div style={{flexShrink: 0}}>
-              <div style={{fontSize: "0.75rem"}}>{g.label}</div>
-              <div className="btn-group">
-                {g.children.map(t => {
-                  const active = t.key === value;
-                  return <button type="button" className={classd`btn btn-sm btn${!active ? "-outline" : ""}-${g.color} fw-bold`} style={{flexShrink: 0}} onClick={_ => {
-                    if (!active) {
-                      onChange(t.key);
-                    }
-                    setEditing(false);
-                  }}>{t.label}</button>;
-              })}
-              </div>
-            </div>
-          })}
+          <div className="d-flex" style={{ gridGap: 5 }}>
+            {adtDefintion.map((g) => {
+              return (
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{ fontSize: "0.75rem" }}>{g.label}</div>
+                  <div className="btn-group">
+                    {g.children.map((t) => {
+                      const active = t.key === value;
+                      return (
+                        <button
+                          type="button"
+                          className={classd`btn btn-sm btn${
+                            !active ? "-outline" : ""
+                          }-${g.color} fw-bold`}
+                          style={{ flexShrink: 0 }}
+                          onClick={(_) => {
+                            if (!active) {
+                              onChange(t.key);
+                            }
+                            setEditing(false);
+                          }}
+                        >
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      ) : (<button className="btn btn-sm btn-outline-dark" type="button" onClick={_ => setEditing(true)} style={{flexShrink: 0, whiteSpace: "nowrap"}}>
-        {(adtDefintionItems.find(x => x.key === value) || {}).label}
-      </button>)}
+      ) : (
+        <button
+          className="btn btn-sm btn-outline-dark"
+          type="button"
+          onClick={(_) => setEditing(true)}
+          style={{ flexShrink: 0, whiteSpace: "nowrap" }}
+        >
+          {(adtDefintionItems.find((x) => x.key === value) || {}).label}
+        </button>
+      )}
       {error && <div className="invalid-feedback d-block">{error}</div>}
     </div>
   );
@@ -603,12 +692,13 @@ Object.assign(formComponents, {
 });
 
 const CodeSearchSubmit = ({}) => {
-  return <div className="d-grid">
-    <button className="btn btn-primary" type="submit">
-      Save &amp; Run{" "}
-      <i className="fas fa-play-circle" />
-    </button>
-  </div>;
+  return (
+    <div className="d-grid">
+      <button className="btn btn-primary" type="submit">
+        Save &amp; Run <i className="fas fa-play-circle" />
+      </button>
+    </div>
+  );
 };
 
 Object.assign(submitButtonWidgets, {
@@ -617,121 +707,156 @@ Object.assign(submitButtonWidgets, {
 
 const CodeSearchLayout = (props) => {
   const { renderedFields } = props;
-  return (<>
-    <div className={classd`code-search ${{"is-error": props.value.error}}`} style={{
-      minHeight: "calc(max(100vh - 156px, 600px))",
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gridAutoRows: "1fr",
-      gridGap: 20,
-    }}>
-      <div className="">{renderedFields[0]}</div>
-      <div className="">{renderedFields[1]}</div>
-      <div className="">{renderedFields[2]}</div>
-      <div className="">{renderedFields[3]}</div>
-    </div>
-  </>);
+  return (
+    <>
+      <div
+        className={classd`code-search ${{ "is-error": props.value.error }}`}
+        style={{
+          minHeight: "calc(max(100vh - 156px, 600px))",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gridAutoRows: "1fr",
+          gridGap: 20,
+        }}
+      >
+        <div className="">{renderedFields[0]}</div>
+        <div className="">{renderedFields[1]}</div>
+        <div className="">{renderedFields[2]}</div>
+        <div className="">{renderedFields[3]}</div>
+      </div>
+    </>
+  );
 };
 
 const ADTNodeFields = (props) => {
   const { renderedFields } = props;
-  return (<>
-    <div className={classd`d-grid align-items-start`} style={{
-      margin: "0 0 0 0",
-      flexShrink: 0,
-      gridGap: 5,
-      gridAutoFlow: "column",
-    }}>
-      {renderedFields}
-    </div>
-  </>);
+  return (
+    <>
+      <div
+        className={classd`d-grid align-items-start`}
+        style={{
+          margin: "0 0 0 0",
+          flexShrink: 0,
+          gridGap: 5,
+          gridAutoFlow: "column",
+        }}
+      >
+        {renderedFields}
+      </div>
+    </>
+  );
 };
 
 const ADTNodeFieldsWrapper = (props) => {
   const { renderedFields } = props;
-  return (<>
-    <strong>Grammar</strong>
-    <div className="form-control" style={{
-      position: "relative",
-      minHeight: "40vh",
-      overflow: "auto",
-    }}>
-      <div className={classd``} style={{
-        margin: "0 0 0 0",
-        position: "absolute",
-      }}>
-        <div className="" style={{
-        }}>
-          {renderedFields}
+  return (
+    <>
+      <strong>Grammar</strong>
+      <div
+        className="form-control"
+        style={{
+          position: "relative",
+          minHeight: "40vh",
+          overflow: "auto",
+        }}
+      >
+        <div
+          className={classd``}
+          style={{
+            margin: "0 0 0 0",
+            position: "absolute",
+          }}
+        >
+          <div className="" style={{}}>
+            {renderedFields}
+          </div>
         </div>
       </div>
-    </div>
-  </>);
+    </>
+  );
 };
 
 const ADTKeyValue = (props) => {
   const { renderedFields, definition } = props;
-  return (<div className="d-flex">
+  return (
+    <div className="d-flex">
       <a
-          href="#"
-          className="text-danger"
-          style={{marginRight: 5, padding: "0.5rem"}}
-          onClick={(e) => {
-            e.preventDefault();
-                definition.onChangeParent(
-                  definition.parent.filter((x, i) => i != definition.index)
-                );
-          }}
-      >×</a>
-    <div className={classd`d-flex`} style={{
-      margin: "0 0 0 0",
-      gridGap: 5,
-      gridAutoFlow: "column",
-    }}>
-      {renderedFields.map(f => (<div style={{flexShrink: 0}}>{f}</div>))}
+        href="#"
+        className="text-danger"
+        style={{ marginRight: 5, padding: "0.5rem" }}
+        onClick={(e) => {
+          e.preventDefault();
+          definition.onChangeParent(
+            definition.parent.filter((x, i) => i != definition.index)
+          );
+        }}
+      >
+        ×
+      </a>
+      <div
+        className={classd`d-flex`}
+        style={{
+          margin: "0 0 0 0",
+          gridGap: 5,
+          gridAutoFlow: "column",
+        }}
+      >
+        {renderedFields.map((f) => (
+          <div style={{ flexShrink: 0 }}>{f}</div>
+        ))}
+      </div>
     </div>
-  </div>);
+  );
 };
-
 
 const ADTElement = (props) => {
   const { renderedFields, definition } = props;
-  return (<div className="d-flex">
+  return (
+    <div className="d-flex">
       <a
-          href="#"
-          className="text-danger"
-          style={{marginRight: 5, padding: "0.5rem"}}
-          onClick={(e) => {
-            e.preventDefault();
-                definition.onChangeParent(
-                  definition.parent.filter((x, i) => i != definition.index)
-                );
-          }}
-      >×</a>
-    <div className={classd`d-flex`} style={{
-      margin: "0 0 0 0",
-      gridGap: 5,
-      gridAutoFlow: "column",
-    }}>
-      {renderedFields.map(f => (<div style={{flexShrink: 0}}>{f}</div>))}
+        href="#"
+        className="text-danger"
+        style={{ marginRight: 5, padding: "0.5rem" }}
+        onClick={(e) => {
+          e.preventDefault();
+          definition.onChangeParent(
+            definition.parent.filter((x, i) => i != definition.index)
+          );
+        }}
+      >
+        ×
+      </a>
+      <div
+        className={classd`d-flex`}
+        style={{
+          margin: "0 0 0 0",
+          gridGap: 5,
+          gridAutoFlow: "column",
+        }}
+      >
+        {renderedFields.map((f) => (
+          <div style={{ flexShrink: 0 }}>{f}</div>
+        ))}
+      </div>
     </div>
-  </div>);
+  );
 };
 
 const ADTIfThen = (props) => {
   const { renderedFields, definition } = props;
-  return (<div>
-    <label className="fw-bold">Pre-condition:</label>
-    <div>{renderedFields[0]}</div>
-    <label className="fw-bold">Condition:</label>
-    <div>{renderedFields[1]}</div>
-    <div className="d-flex align-items-center">
-      <label className="fw-bold me-1">Error text:</label>
-      <div>{renderedFields[2]}</div>
+  return (
+    <div>
+      <label className="fw-bold">Pre-condition:</label>
+      <div>{renderedFields[0]}</div>
+      <label className="fw-bold">Condition:</label>
+      <div>{renderedFields[1]}</div>
+      <div className="d-flex align-items-center">
+        <label className="fw-bold me-1">Error text:</label>
+        <div>{renderedFields[2]}</div>
+      </div>
     </div>
-  </div>);
+  );
 };
-
 
 Object.assign(fieldsLayouts, {
   CodeSearchLayout,
@@ -743,17 +868,34 @@ Object.assign(fieldsLayouts, {
 });
 
 const GenericForm2 = (props) => {
-  return <div>
+  return (
+    <div>
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <div className="container-fluid">
-          <a className="navbar-brand" href="#">Logicore</a>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <a className="navbar-brand" href="#">
+            Logicore
+          </a>
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
             <span className="navbar-toggler-icon" />
           </button>
           <div className="collapse navbar-collapse" id="navbarSupportedContent">
             <ul className="navbar-nav me-auto mb-2 mb-lg-0">
               <li className="nav-item">
-                <Link className="nav-link active" aria-current="page" to="/logicore-code/">Go Back</Link>
+                <Link
+                  className="nav-link active"
+                  aria-current="page"
+                  to="/logicore-code/"
+                >
+                  Go Back
+                </Link>
               </li>
               {/*<li className="nav-item">
                 <a className="nav-link" href="#">Link</a>
@@ -780,30 +922,47 @@ const GenericForm2 = (props) => {
           </div>
         </div>
       </nav>
-			<div className="container-fluid">
-				<GenericForm {...props} />
-			</div>
-  </div>;
+      <div className="container-fluid">
+        <GenericForm {...props} />
+      </div>
+    </div>
+  );
 };
 
 const JSONExplorerGadget = (props) => {
-  const [state, setState] = useLocalStorage('LOGICORE_JSON_EXPLORER_DATA', {});
+  const [state, setState] = useLocalStorage("LOGICORE_JSON_EXPLORER_DATA", {});
   const [result, setResult] = useState({});
   const [i, setI] = useState(0);
-  return <div style={{overflow: "auto", height: "100vh"}}>
-  <div style={{minWidth: 1200, minHeight: 800}}>
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <div className="container-fluid">
-          <a className="navbar-brand" href="#">JSON Explorer</a>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span className="navbar-toggler-icon" />
-          </button>
-          <div className="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-              <li className="nav-item">
-                <Link className="nav-link active" aria-current="page" to="/">Visit home page</Link>
-              </li>
-              {/*<li className="nav-item">
+  return (
+    <div style={{ overflow: "auto", height: "100vh" }}>
+      <div style={{ minWidth: 1200, minHeight: 800 }}>
+        <nav className="navbar navbar-expand-lg navbar-light bg-light">
+          <div className="container-fluid">
+            <a className="navbar-brand" href="#">
+              JSON Explorer
+            </a>
+            <button
+              className="navbar-toggler"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#navbarSupportedContent"
+              aria-controls="navbarSupportedContent"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
+            >
+              <span className="navbar-toggler-icon" />
+            </button>
+            <div
+              className="collapse navbar-collapse"
+              id="navbarSupportedContent"
+            >
+              <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                <li className="nav-item">
+                  <Link className="nav-link active" aria-current="page" to="/">
+                    Visit home page
+                  </Link>
+                </li>
+                {/*<li className="nav-item">
                 <a className="nav-link" href="#">Link</a>
               </li>
               <li className="nav-item dropdown">
@@ -820,82 +979,103 @@ const JSONExplorerGadget = (props) => {
               <li className="nav-item">
                 <a className="nav-link disabled">Disabled</a>
               </li>*/}
-            </ul>
-            {/*<form className="d-flex">
+              </ul>
+              {/*<form className="d-flex">
               <input className="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
               <button className="btn btn-outline-success" type="submit">Search</button>
             </form>*/}
+            </div>
           </div>
-        </div>
-      </nav>
-			<div className="container-fluid">
-        <GenericForm
-          key={`s${i}`}
-          notifyOnError
-          data={{...state, ...result}}
-          onChange={newState => {
-            setState(newState);
-            setResult({});
-            props.onChange(
-              newState,
-              null,
-              resp => {
+        </nav>
+        <div className="container-fluid">
+          <GenericForm
+            key={`s${i}`}
+            notifyOnError
+            data={{ ...state, ...result }}
+            onChange={(newState) => {
+              setState(newState);
+              setResult({});
+              props.onChange(newState, null, (resp) => {
                 setResult(resp);
                 setI(i + 1);
-              }
-            );
-          }}
-          fields={{type: "Fields", fields: [
-            {"type": "TextareaField", "k": "source", "label": "Source JSON"},
-            {"k": "result", "type": "CodeDisplay", "label": "Result"},
-            {
-              "type": "Fields",
-              "fields": [
+              });
+            }}
+            fields={{
+              type: "Fields",
+              fields: [
+                { type: "TextareaField", k: "source", label: "Source JSON" },
+                { k: "result", type: "CodeDisplay", label: "Result" },
                 {
-                  "type": "Fields",
-                  "fields": [
+                  type: "Fields",
+                  fields: [
                     {
-                      "type": "ADTSelectField",
-                      "k": "grammar_type",
-                      "label": "Grammar",
-                    },
-                    {
-                      "type": "DefinedField",
-                      "k": "grammar_data",
-                      "label": "Grammar (structure)",
-                      "master_field": "grammar_type",
-                      "master_field_getter": x => x,
-                      "definitions": Object.fromEntries(
-                        adtDefintionItems.map(
-                          x => [x.key, x.definition || {type: "Fields", fields: []}]
-                        )
-                      ),
+                      type: "Fields",
+                      fields: [
+                        {
+                          type: "ADTSelectField",
+                          k: "grammar_type",
+                          label: "Grammar",
+                        },
+                        {
+                          type: "DefinedField",
+                          k: "grammar_data",
+                          label: "Grammar (structure)",
+                          master_field: "grammar_type",
+                          master_field_getter: (x) => x,
+                          definitions: Object.fromEntries(
+                            adtDefintionItems.map((x) => [
+                              x.key,
+                              x.definition || { type: "Fields", fields: [] },
+                            ])
+                          ),
+                        },
+                      ],
+                      interceptor: "ADTNodeInterceptor",
+                      adtDefintion: JSONMatchPattern,
+                      id: "grammar",
+                      layout: "ADTNodeFields",
                     },
                   ],
-                  "interceptor": "ADTNodeInterceptor",
-                  "adtDefintion": JSONMatchPattern,
-                  "id": "grammar",
-                  "layout": "ADTNodeFields",
+                  layout: "ADTNodeFieldsWrapper",
+                  interceptor: "recursiveFields",
+                  context: { formControlSm: true },
                 },
+                { k: "funnel", type: "CodeDisplay", label: "Funnel" },
               ],
-              "layout": "ADTNodeFieldsWrapper",
-              "interceptor": "recursiveFields",
-              "context": { formControlSm: true },
-            },
-            {"k": "funnel", "type": "CodeDisplay", "label": "Funnel"},
-          ], layout: "CodeSearchLayout"}}
-          submitButtonWidget="CodeSearchSubmit"
-        />
-			</div>
-			</div>
-  </div>;
+              layout: "CodeSearchLayout",
+            }}
+            submitButtonWidget="CodeSearchSubmit"
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const PageNotFound = () => {
-  return <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center", zIndex: -1}}>
-    <div><Trans>Page not found</Trans>. <Link to="/"><Trans>Visit Home</Trans></Link></div>
-  </div>;
-}
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: -1,
+      }}
+    >
+      <div>
+        <Trans>Page not found</Trans>.{" "}
+        <Link to="/">
+          <Trans>Visit Home</Trans>
+        </Link>
+      </div>
+    </div>
+  );
+};
 
 const fiddleTypes = {
   JSON_MATCHER,
@@ -906,7 +1086,7 @@ const Fiddle = (props) => {
   const [localChecked, setLocalChecked] = useState(false);
   const [dirty, setDirty] = useState(false);
 
-  const draftPrefix = props.uuid ? `${props.uuid}/` : '';
+  const draftPrefix = props.uuid ? `${props.uuid}/` : "";
   const draftId = `draft[${draftPrefix}${props.rev}]`;
 
   const { t } = useTranslation();
@@ -918,9 +1098,9 @@ const Fiddle = (props) => {
     window.localStorage.removeItem(draftId);
     setDirty(false);
     try {
-      await props.onChange({val});
+      await props.onChange({ val });
     } catch (e) {
-      console.log('error!!!!!!!!!!!!!!!!!!!!', e);
+      console.log("error!!!!!!!!!!!!!!!!!!!!", e);
       if (currentSaved) window.localStorage.setItem(draftId, currentSaved);
       setDirty(currentDirty);
     }
@@ -929,7 +1109,7 @@ const Fiddle = (props) => {
     setLocalChecked(false);
   }, [props.uuid]);
 
-  const langChangeHookId = draftId + '.langChangeHook';
+  const langChangeHookId = draftId + ".langChangeHook";
 
   useEffect(() => {
     if (localChecked) {
@@ -940,20 +1120,26 @@ const Fiddle = (props) => {
         if (v) {
           window.localStorage.removeItem(draftId);
           if (v !== val) {
-            if (window.localStorage.getItem(langChangeHookId) || await confirm(t('Unsaved changes exist. Apply?'), {okText: t('Apply'), cancelText: t('Discard')})) {
+            if (
+              window.localStorage.getItem(langChangeHookId) ||
+              (await confirm(t("Unsaved changes exist. Apply?"), {
+                okText: t("Apply"),
+                cancelText: t("Discard"),
+              }))
+            ) {
               window.localStorage.removeItem(langChangeHookId);
               setVal(v);
               setDirty(true);
             }
           }
         }
-      setLocalChecked(true);
+        setLocalChecked(true);
       })();
     }
   }, [val, localChecked]);
 
   const saveToLocal = useCallback(
-    debounce(val => {
+    debounce((val) => {
       window.localStorage.setItem(draftId, val);
     }, 200),
     []
@@ -964,60 +1150,95 @@ const Fiddle = (props) => {
       if (!dirty) setDirty(true);
       setVal(v);
     }
-  }
+  };
 
   const { Editor } = fiddleTypes[props.kind];
 
   if (!Editor) return `Not implemented: ${props.kind}`;
 
   const saveButton = (
-    <button className="btn btn-primary mt-2" type="button" onClick={save} disabled={!dirty}>
-      <i className="fas fa-save" />{" "}
-      <Trans>Save</Trans>
+    <button
+      className="btn btn-primary mt-2"
+      type="button"
+      onClick={save}
+      disabled={!dirty}
+    >
+      <i className="fas fa-save" /> <Trans>Save</Trans>
     </button>
   );
 
-  return <div className="container-fluid my-3 flex-grow-1 d-flex flex-column">
-    <Editor value={val} onChange={editVal} saveButton={saveButton} />
-  </div>;
-}
-
+  return (
+    <div className="container-fluid my-3 flex-grow-1 d-flex flex-column">
+      <Editor value={val} onChange={editVal} saveButton={saveButton} />
+    </div>
+  );
+};
 
 const FiddleNotFound = () => {
-  return <div style={{position: "fixed", top: 0, left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "center", alignItems: "center"}}>
-    <div><Trans>Tool not found.</Trans> <Link to={addLang("/toolbox/")}><Trans>View available</Trans></Link></div>
-  </div>;
-}
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <div>
+        <Trans>Tool not found.</Trans>{" "}
+        <Link to={addLang("/toolbox/")}>
+          <Trans>View available</Trans>
+        </Link>
+      </div>
+    </div>
+  );
+};
 
-const FiddleTypes = ({items}) => {
-  return <div className="container">
-    <h3 className="my-3"><Trans>Tool types</Trans></h3>
-    <ul>
-      {items?.map((item) => {
-        return (
-          <li><Link to={addLang(`/toolbox/${item.url}/`)}>{item.title}</Link></li>
-        );
-      })}
-    </ul>
-  </div>;
-}
+const FiddleTypes = ({ items }) => {
+  return (
+    <div className="container">
+      <h3 className="my-3">
+        <Trans>Tool types</Trans>
+      </h3>
+      <ul>
+        {items?.map((item) => {
+          return (
+            <li>
+              <Link to={addLang(`/toolbox/${item.url}/`)}>{item.title}</Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
 
-const MyFiddleList = ({items}) => {
-  return <div className="container">
-    <h3 className="my-3"><Trans>My copies</Trans></h3>
-    <ul>
-      {items?.map((item) => {
-        let url = `/toolbox/${item.url_key}/${item.uuid}/`;
-        if (item.rev > 1) {
-          url += `${item.rev}/`;
-        }
-        return (
-          <li><Link to={addLang(url)}>{item.title}</Link></li>
-        );
-      })}
-    </ul>
-  </div>;
-}
+const MyFiddleList = ({ items }) => {
+  return (
+    <div className="container">
+      <h3 className="my-3">
+        <Trans>My copies</Trans>
+      </h3>
+      <ul>
+        {items?.map((item) => {
+          let url = `/toolbox/${item.url_key}/${item.uuid}/`;
+          if (item.rev > 1) {
+            url += `${item.rev}/`;
+          }
+          return (
+            <li>
+              <Link to={addLang(url)}>{item.title}</Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
 
 const mainComponents = {
   ListView,
@@ -1039,23 +1260,27 @@ const mainComponents = {
 const MainWrapper = ({ result, onChange }) => {
   const Component = mainComponents[result?.template];
   return (
-    <>
-      {Component && result && <Component {...{ ...result, onChange }} />}
-    </>
+    <>{Component && result && <Component {...{ ...result, onChange }} />}</>
   );
 };
 
 const FiddleWrapper = ({ result, onChange }) => {
   let Component = mainComponents[result?.template];
-  console.log('Component', Component);
+  console.log("Component", Component);
   const loc = useLocation();
   const getUrl = (lang) => {
     const theUrl = loc.pathname + loc.search;
-    return addLangToPathName(lang, removeLangFromPathName(window.CURRENT_LANGUAGE, theUrl));
-  }
-	const { t } = useTranslation();
+    return addLangToPathName(
+      lang,
+      removeLangFromPathName(window.CURRENT_LANGUAGE, theUrl)
+    );
+  };
+  const { t } = useTranslation();
   return (
-    <div className="d-flex flex-column" style={{height: "calc(max(100vh, 700px))"}}>
+    <div
+      className="d-flex flex-column"
+      style={{ height: "calc(max(100vh, 700px))" }}
+    >
       <Navbar bg="light" expand="lg">
         <div className="container-fluid">
           {/*<Navbar.Brand href="#home"><Trans>Tools</Trans></Navbar.Brand>*/}
@@ -1066,13 +1291,30 @@ const FiddleWrapper = ({ result, onChange }) => {
                 <i className="fas fa-arrow-circle-left"></i>{" "}
                 <Trans>Back to main website</Trans>
               </Link>
-              <Link className="nav-link" to={addLang("/toolbox/")}><Trans>All tools</Trans></Link>
-              <Link className="nav-link" to={addLang("/toolbox/mine/")}><Trans>Mine</Trans></Link>
+              <Link className="nav-link" to={addLang("/toolbox/")}>
+                <Trans>All tools</Trans>
+              </Link>
+              <Link className="nav-link" to={addLang("/toolbox/mine/")}>
+                <Trans>Mine</Trans>
+              </Link>
             </Nav>
             <Nav className="ml-auto">
-              <NavDropdown title={<><i className="fas fa-language"></i>{" "}{ window.CURRENT_LANGUAGE_NAME }</>} id="basic-nav-dropdown" align="end">
+              <NavDropdown
+                title={
+                  <>
+                    <i className="fas fa-language"></i>{" "}
+                    {window.CURRENT_LANGUAGE_NAME}
+                  </>
+                }
+                id="basic-nav-dropdown"
+                align="end"
+              >
                 {window.LANGUAGES.map(([code, name]) => {
-                  return <NavDropdown.Item key={code} href={getUrl(code)}>{name}</NavDropdown.Item>;
+                  return (
+                    <NavDropdown.Item key={code} href={getUrl(code)}>
+                      {name}
+                    </NavDropdown.Item>
+                  );
                 })}
               </NavDropdown>
             </Nav>
@@ -1105,13 +1347,17 @@ const result_worth_processing = ({ result, loc, navigate }) => {
 };
 
 const gatherFileUids = (data) => {
-  if (Array.isArray(data)) return data.reduce((a, b) => ({...a, ...gatherFileUids(b)}), null);
-  if (data && typeof data === 'object') {
+  if (Array.isArray(data))
+    return data.reduce((a, b) => ({ ...a, ...gatherFileUids(b) }), null);
+  if (data && typeof data === "object") {
     if (data.its_uid_for_file_to_upload_239r8h239rh239r) {
       const uid = data.its_uid_for_file_to_upload_239r8h239rh239r;
-      return {[uid]: window[uid].file};
+      return { [uid]: window[uid].file };
     }
-    return Object.entries(data).reduce((a, [_, b]) => ({...a, ...gatherFileUids(b)}), null);
+    return Object.entries(data).reduce(
+      (a, [_, b]) => ({ ...a, ...gatherFileUids(b) }),
+      null
+    );
   }
 };
 
@@ -1120,10 +1366,13 @@ const BaseLayout = () => {
   const navigate = useNavigate();
   const lang = window.CURRENT_LANGUAGE;
   const { t, i18n } = useTranslation();
-	useEffect(() => {
-		i18n.changeLanguage(lang);
+  useEffect(() => {
+    i18n.changeLanguage(lang);
   }, [i18n.resolvedLanguage === lang]);
-  let apiUrl = addLangToPathName(lang, "/api" + removeLangFromPathName(lang, loc.pathname + loc.search));
+  let apiUrl = addLangToPathName(
+    lang,
+    "/api" + removeLangFromPathName(lang, loc.pathname + loc.search)
+  );
   //
   const [result, loading, _] = useApi(apiUrl, loc.key);
   const [show, setShow] = useState(false);
@@ -1150,13 +1399,13 @@ const BaseLayout = () => {
       for (const [k, v] of Object.entries(gatherFileUids(data))) {
         formData.append(k, v);
       }
-      formData.append('data', JSON.stringify(data));
+      formData.append("data", JSON.stringify(data));
       /*
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         }
       */
-        resp = await axios.post(apiUrl, formData);
+      resp = await axios.post(apiUrl, formData);
     } else {
       resp = await axios.post(apiUrl, {
         data,
@@ -1184,18 +1433,22 @@ const BaseLayout = () => {
 
   if (result?.navigate || result?.redirect || !Wrapper) return <div />;
 
-  return <>
-    <Wrapper {...{ loc, navigate, result, apiUrl, onChange }} />
-  </>;
+  return (
+    <>
+      <Wrapper {...{ loc, navigate, result, apiUrl, onChange }} />
+    </>
+  );
 };
 
 const updateFieldsByPath = (fields, path, f) => {
   if (path.length) {
     const [pathHead, ...nextPath] = path;
     if (!fields.fields) return fields;
-    const fields2 = fields.fields.map(field => field?.k === pathHead ? updateFieldsByPath(field, nextPath, f) : field);
-    console.log('reassemble', fields2);
-    return {...fields, fields: fields2};
+    const fields2 = fields.fields.map((field) =>
+      field?.k === pathHead ? updateFieldsByPath(field, nextPath, f) : field
+    );
+    console.log("reassemble", fields2);
+    return { ...fields, fields: fields2 };
   } else {
     return f(fields);
   }
@@ -1203,24 +1456,35 @@ const updateFieldsByPath = (fields, path, f) => {
 
 const RefsInterceptor = {
   processFields({ fields, definition, value }) {
-    const options = value[definition.refsSource].map(item => ({value: item.uuid, label: definition.refsLabel(item)}));
-    const ff = updateFieldsByPath({fields}, [...definition.refsNest, ...definition.refsTarget], field => ({...field, options})).fields;
+    const options = value[definition.refsSource].map((item) => ({
+      value: item.uuid,
+      label: definition.refsLabel(item),
+    }));
+    const ff = updateFieldsByPath(
+      { fields },
+      [...definition.refsNest, ...definition.refsTarget],
+      (field) => ({ ...field, options })
+    ).fields;
     return ff;
   },
   onChange(newValue, oldValue, definition, context) {
-    let v = {...newValue};
+    let v = { ...newValue };
     if (newValue[definition.refsSource] !== oldValue[definition.refsSource]) {
-      const available = Object.fromEntries(newValue[definition.refsSource].map(item => [item.uuid, item]));
-      const r = modifyHelper(
-        definition.refsNest, v, items => items.map(
-          (item) => {
+      const available = Object.fromEntries(
+        newValue[definition.refsSource].map((item) => [item.uuid, item])
+      );
+      const r = modifyHelper(definition.refsNest, v, (items) =>
+        items
+          .map((item) => {
             const v = getByPath(item, definition.refsTarget);
             const found = available[v?.value];
             if (!found || !v?.value) return null;
-            const vv = v?.value ? {value: v.value, label: definition.refsLabel(found)} : null;
-            return modifyHelper(definition.refsTarget, item, _ => vv);
-          }
-        ).filter(x => x)
+            const vv = v?.value
+              ? { value: v.value, label: definition.refsLabel(found) }
+              : null;
+            return modifyHelper(definition.refsTarget, item, (_) => vv);
+          })
+          .filter((x) => x)
       ); /*setByPath(
         v,
         definition.refsNest,
@@ -1235,42 +1499,43 @@ const RefsInterceptor = {
         ).filter(x => x)
       );*/
       return r;
-    };
+    }
     return v;
   },
 };
 
 const adtDefintion = JSONMatchPattern;
 
-const adtDefintionItems = adtDefintion.map(x=>x.children).reduce(
-  (a, b) => a.concat(b)
-);
+const adtDefintionItems = adtDefintion
+  .map((x) => x.children)
+  .reduce((a, b) => a.concat(b));
 
 console.log(
-  '!!!', Object.fromEntries(
-                        adtDefintionItems.map(
-                          x => [x.key, x.definition || {type: "Fields", fields: []}]
-                        )
-                      ));
+  "!!!",
+  Object.fromEntries(
+    adtDefintionItems.map((x) => [
+      x.key,
+      x.definition || { type: "Fields", fields: [] },
+    ])
+  )
+);
 
 const ADTNodeInterceptor = {
   processFields({ fields, definition, value }) {
     return fields;
   },
   onChange(newValue, oldValue, definition, context) {
-    const v = {...newValue};
+    const v = { ...newValue };
     if (oldValue?.grammar_type?.value !== newValue?.grammar_type?.value) {
-      const e = adtDefintionItems.find(
-        x => x.key === newValue?.grammar_type?.value
-      )?.empty || [];
+      const e =
+        adtDefintionItems.find((x) => x.key === newValue?.grammar_type?.value)
+          ?.empty || [];
       //console.log('search in', definition?.adtDefintion.map(x=>x.children));
-      v.grammar_data = Object.fromEntries(
-        e.map((a, i) => [`arg${i}`, a])
-      );
+      v.grammar_data = Object.fromEntries(e.map((a, i) => [`arg${i}`, a]));
       //console.log(`selected empty for ${newValue?.grammar_type?.value}`, v.grammar_data);
     }
     return v;
-  }
+  },
 };
 
 Object.assign(interceptors, {
@@ -1280,14 +1545,14 @@ Object.assign(interceptors, {
 
 function App() {
   return (
-    <>
+    <ModalProvider>
       <Router>
         <Routes>
           <Route path="*" element={<BaseLayout />} />
         </Routes>
       </Router>
       <NotificationContainer enterTimeout={10} leaveTimeout={10} />
-    </>
+    </ModalProvider>
   );
 }
 
