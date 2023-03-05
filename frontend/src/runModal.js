@@ -26,25 +26,24 @@ const ModalContext = createContext(null);
 const ModalProvider = () => {
   const [value, onChange] = useState(null);
   const [show, setShow] = useState(false);
-  const [state, setState] = useState(null);
   const [errors, setErrors] = useState(null);
   const [definition, setDefinition] = useState({});
+  const [cb, setCallback] = useState({});
   const context = {};
-  useEffect(() => {
+  /*useEffect(() => {
     setState(value);
     setErrors(null);
-  }, [show]);
+  }, [show]);*/
   const onReset1 = (path) => {
     setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
   };
   const handleClose = (_) => setShow(false);
   const handleSubmit = () => {
-    const error = validateDefinition(definition, state);
+    const error = validateDefinition(definition, value);
     setErrors(error);
-    if (!definitionIsInvalid(definition, error, state)) {
+    if (!definitionIsInvalid(definition, error, value)) {
       // ok
-      console.log("onchaaaaaaaaaaaaaange", state);
-      onChange(state);
+      cb && cb(value);
       //onReset(path);
       handleClose();
     } else {
@@ -63,7 +62,12 @@ const ModalProvider = () => {
       }, 50);*/
     }
   };
-  const runModal = async () => {};
+  const runModal = (definition, value, cb) => {
+    setDefinition(definition);
+    onChange(value);
+    setCallback(cb);
+    setShow(true);
+  };
   return (
     <ModalContext.Provider runModal={runModal}>
       <Modal
@@ -80,8 +84,8 @@ const ModalProvider = () => {
           <div>
             <FormComponent
               definition={{ ...definition, layout: void 0 }}
-              value={state}
-              onChange={setState}
+              value={value}
+              onChange={onChange}
               error={errors}
               onReset={onReset1}
               path={[]}
