@@ -3,7 +3,7 @@ import exampleData from "./jsonmatcher_example";
 import { update } from "../utils";
 import schema from "./jsonmatcher_schema";
 
-import "./jsonmatcher.scss"
+import "./jsonmatcher.scss";
 
 import {
   validateDefinition,
@@ -22,31 +22,42 @@ import {
 } from "../logicore-forms";
 import runModal from "../runModal";
 
-
 // MatchPattern, MatchResult, Value
 // KeyMap, ContextFreeGrammar, Text (String, Key) Scientific Bool
 // ObjectKeyMatch, List
 
-const ADTEditorNode = ({value, onChange, onSelect, path, schema, type, selectedPath}) => {
-  const isSelected = /*(!path?.length && !selectedPath?.length) ||*/ (
-    (path.length === selectedPath.length)
-    && path.every((e, i) => e == selectedPath[i])
-  );
+const ADTEditorNode = ({
+  value,
+  onChange,
+  onSelect,
+  path,
+  schema,
+  type,
+  selectedPath,
+}) => {
+  const isSelected =
+    /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
+      selectedPath.length && path.every((e, i) => e == selectedPath[i]);
   if (!value) {
-    return <div className="adt-editor-card">
-      <div className="adt-editor-card-title"><a href="#" onClick={
-        e => {
-          e.preventDefault();
-        }
-      }>[not selected]</a></div>
-    </div>;
+    return (
+      <div className="adt-editor-card">
+        <div className="adt-editor-card-title">
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+            }}
+          >
+            [not selected]
+          </a>
+        </div>
+      </div>
+    );
   }
-	return <div>
-    111
-  </div>;
-}
+  return <div>111</div>;
+};
 
-const JSONNode = ({value, onChange, level, noFirstIndent, path}) => {
+const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
   const lvl = (level || 0) + 1;
   const indent = new Array(lvl).join("  ");
   const firstIndent = noFirstIndent ? "" : indent;
@@ -74,51 +85,94 @@ const JSONNode = ({value, onChange, level, noFirstIndent, path}) => {
     return <><span className="text-warning">unknown node: {value?.tag}</span><br /></>;
   }*/
   /*
-*/
+   */
   if (typeof value === "string") {
-    return <>{firstIndent}{'"'}<span className="text-danger">{value}</span>{'"'}</>;
+    return (
+      <>
+        {firstIndent}
+        {'"'}
+        <span className="text-danger">{value}</span>
+        {'"'}
+      </>
+    );
   } else if (typeof value === "number") {
-    return <>{firstIndent}<span className="text-primary">{value}</span></>;
+    return (
+      <>
+        {firstIndent}
+        <span className="text-primary">{value}</span>
+      </>
+    );
   } else if (typeof value === "boolean") {
-    return <>{firstIndent}<span className="text-primary">{value ? "true" : "false"}</span></>;
+    return (
+      <>
+        {firstIndent}
+        <span className="text-primary">{value ? "true" : "false"}</span>
+      </>
+    );
   } else if (typeof value === null) {
-    return <>{firstIndent}<span className="text-primary">null</span></>;
+    return (
+      <>
+        {firstIndent}
+        <span className="text-primary">null</span>
+      </>
+    );
   } else if (Array.isArray(value)) {
-    return <>
-      <span>
-        {firstIndent + "["}<br />
+    return (
+      <>
+        <span>
+          {firstIndent + "["}
+          <br />
           {value.map((v) => {
-            return <><JSONNode value={v} level={lvl} />,<br /></>;
+            return (
+              <>
+                <JSONNode value={v} level={lvl} />,<br />
+              </>
+            );
           })}
-        {indent + "]"}
-      </span></>;
+          {indent + "]"}
+        </span>
+      </>
+    );
   } else if (typeof value === "object") {
-    return <><span>
-      {firstIndent + "{"}<br />
-      {Object.entries(value).map(([k, v]) => {
-        return <>{indent + "  "}{'"'}<span className="text-secondary">{k}</span>{'": '}<JSONNode value={v} level={lvl} noFirstIndent />,<br /></>;
-      })}
-      {indent + "}"}
-    </span></>;
+    return (
+      <>
+        <span>
+          {firstIndent + "{"}
+          <br />
+          {Object.entries(value).map(([k, v]) => {
+            return (
+              <>
+                {indent + "  "}
+                {'"'}
+                <span className="text-secondary">{k}</span>
+                {'": '}
+                <JSONNode value={v} level={lvl} noFirstIndent />,<br />
+              </>
+            );
+          })}
+          {indent + "}"}
+        </span>
+      </>
+    );
   } else {
     // error
-    return <div className="text-danger">{value + ''}</div>;
+    return <div className="text-danger">{value + ""}</div>;
   }
 };
 
 // Nodes end
 
 const t1 = {
-	"type": "VarT",
-	"value": "MatchResult"
+  type: "VarT",
+  value: "MatchResult",
 };
 
-const JSONMatcherEditor = ({value, onChange, saveButton}) => {
+const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
   //const [value, onChange] = useState(exampleData.value);
   const [selectedPath, setSelectedPath] = useState([]);
   return (
     <div className="row align-items-stretch flex-grow-1">
-			{/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
+      {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
       <div className="col d-flex flex-column">
         <div className="form-control flex-grow-1 jsonmatcher-editor">
           <ADTEditorNode
@@ -131,9 +185,7 @@ const JSONMatcherEditor = ({value, onChange, saveButton}) => {
             selectedPath={selectedPath}
           />
         </div>
-        <div className="d-grid">
-          {saveButton}
-        </div>
+        <div className="d-grid">{saveButton}</div>
       </div>
       <div className="col d-flex flex-column">
         <div className="form-control flex-grow-1 jsonmatcher-editor">
@@ -148,7 +200,7 @@ const JSONMatcherEditor = ({value, onChange, saveButton}) => {
       </div>
     </div>
   );
-}
+};
 
 export default {
   Editor: JSONMatcherEditor,
