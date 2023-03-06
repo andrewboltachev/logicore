@@ -176,6 +176,7 @@ export function zipArrays(a, b) {
 }
 
 export function pathToUpdate(path, value) {
+  if (!path.length) return value;
   let v = {},
     p,
     ee,
