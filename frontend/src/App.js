@@ -1112,16 +1112,18 @@ const Fiddle = (props) => {
   }, [props.uuid]);
 
   const langChangeHookId = draftId + ".langChangeHook";
+  const normalizeNull = (x) => (x === null ? "null" : x);
 
   useEffect(() => {
     if (localChecked) {
       saveToLocal(val);
     } else {
       (async () => {
-        const v = window.localStorage.getItem(draftId);
+        const rawV = window.localStorage.getItem(draftId) || "null";
+        const v = JSON.parse(rawV);
         if (v) {
           window.localStorage.removeItem(draftId);
-          if (v !== val) {
+          if (rawV !== JSON.stringify(val)) {
             if (
               window.localStorage.getItem(langChangeHookId) ||
               (await confirm(t("Unsaved changes exist. Apply?"), {
@@ -1142,7 +1144,8 @@ const Fiddle = (props) => {
 
   const saveToLocal = useCallback(
     debounce((val) => {
-      window.localStorage.setItem(draftId, val);
+      console.log("debounce", JSON.stringify(val));
+      window.localStorage.setItem(draftId, JSON.stringify(val));
     }, 200),
     []
   );

@@ -1101,7 +1101,7 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
             "kind": self.c.as_choice_key(),
             "uuid": uid,
             "rev": rev,
-            "val": str(obj.data) if obj else None,
+            "val": obj.data if obj else None,
             **self.c.get_data(self),
         }
 
