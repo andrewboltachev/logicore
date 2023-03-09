@@ -90,15 +90,17 @@ const ADTEditorNode = ({
                 },
                 modalSize: "md",
               },
-              { tag: currentValue?.tag },
-              ({ tag }) => {
-                console.log("setByPath", value === "");
-                onChange(setByPath(value, path, tag?.newValue || null));
-              }
+              {
+                tag:
+                  options.find(({ value }) => value === currentValue?.tag) ||
+                  null,
+              },
+              ({ tag }) =>
+                onChange(setByPath(value, path, tag?.newValue || null))
             );
           }}
         >
-          {!currentValue ? <>[not selected]</> : <>{currentValue + ""}</>}
+          {!currentValue ? <>[not selected]</> : <>{currentValue?.tag + ""}</>}
         </a>
       </div>
     </div>

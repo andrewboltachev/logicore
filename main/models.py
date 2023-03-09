@@ -105,7 +105,7 @@ class Fiddle(models.Model):
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
     # Data
     name = models.CharField(max_length=1024, blank=True, default="")
-    data = models.JSONField(default=getNone, blank=False, null=False)
+    data = models.JSONField(default=getNone, blank=True, null=True)
     # Timestamp
     created_dt = models.DateTimeField(auto_now_add=True)
     modified_dt = models.DateTimeField(auto_now=True)

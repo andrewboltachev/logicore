@@ -1102,7 +1102,7 @@ const Fiddle = (props) => {
     try {
       await props.onChange({ val });
     } catch (e) {
-      console.log("error!!!!!!!!!!!!!!!!!!!!", e);
+      NotificationManager.warning("", t("Unknown error"));
       if (currentSaved) window.localStorage.setItem(draftId, currentSaved);
       setDirty(currentDirty);
     }
