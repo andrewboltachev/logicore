@@ -350,6 +350,25 @@ const t2 = {
   type: "AppT",
 };
 
+const collapseAppT = (typeCall) => {
+  if (typeCall?.type === "AppT") {
+    const t = collapseAppT(typeCall.target);
+    let params = [typeCall.param];
+    let target = t;
+    if (t.type === "App") {
+      params = [...t.params, ...params];
+      target = t.target;
+    }
+    return { type: "App", target, params };
+  }
+  return typeCall;
+};
+
+const callType = (schema, typeCall) => {
+  //const typeDef = schema.find(({value}) => value ==
+  return collapseAppT(typeCall);
+};
+
 const convertListT = (x) => {
   return x;
   console.log("x", x);
@@ -375,7 +394,8 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
       <div className="col d-flex flex-column">
         <div className="form-control flex-grow-1 jsonmatcher-editor">
-          <ADTEditorNode
+          <JSONNode value={callType(schema, t2)} />
+          {/*<ADTEditorNode
             value={value}
             onChange={onChange}
             onSelect={setSelectedPath}
@@ -383,7 +403,7 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
             type={t2}
             schema={processedSchema}
             selectedPath={selectedPath}
-          />
+          />*/}
         </div>
         <div className="d-grid">{saveButton}</div>
       </div>
