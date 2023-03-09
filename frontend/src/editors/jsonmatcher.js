@@ -100,6 +100,8 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
         <span className="text-primary">null</span>
       </>
     );
+  } else if (Array.isArray(value) && value.length === 0) {
+    return firstIndent + "[]";
   } else if (Array.isArray(value)) {
     return (
       <>
@@ -117,6 +119,8 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
         </span>
       </>
     );
+  } else if (typeof value === "object" && Object.entries(value).length === 0) {
+    return firstIndent + "{}";
   } else if (typeof value === "object") {
     return (
       <>
@@ -155,11 +159,23 @@ const getTypeFromDef = (d) => {
   }
 };
 
+const getArgumentTypesFromDef = (d) => {
+  if (d.type === "ConT") {
+    return d.value;
+  } else if (d.type === "AppT") {
+    return getTypeFromDef(d.target);
+  } else {
+    console.log(d);
+    throw new Error(`Not implemented: ${d.type}`);
+  }
+};
+
 // MatchPattern, MatchResult, Value
 // KeyMap, ContextFreeGrammar, Text (String, Key) Scientific Bool
 // ObjectKeyMatch, List
 
 const applyTypeVars = (d, typeVars) => {
+  console.log("applyTypeVars", d, typeVars);
   if (d.type === "ConT") {
     return d;
   } else if (d.type === "AppT") {
@@ -203,7 +219,7 @@ const ADTEditorNode = ({
   path,
   schema,
   type,
-  typeVars,
+  vars,
   selectedPath,
 }) => {
   const currentValue = getByPath(value, path);
@@ -213,6 +229,7 @@ const ADTEditorNode = ({
     /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
       selectedPath.length && path.every((e, i) => e == selectedPath[i]);
   const typeFound = getTypeFromDef(type);
+  const typeArgs = getArgumentTypesFromDef(type);
   const typeDef = schema.find(({ value }) => value === typeFound);
   if (!typeDef) {
     throw new Error(`Not defined for type ${JSON.stringify(typeFound)}`);
@@ -229,6 +246,9 @@ const ADTEditorNode = ({
     typeDef?.contents && currentValue?.tag
       ? typeDef?.contents.find(({ tag }) => currentValue?.tag === tag)
       : null;
+  const typeVars = {};
+  const newTypeVars = { ...typeVars, ...typeDef?.vars };
+  return <JSONNode value={{}} />;
   return (
     <div className="adt-editor-card">
       <div className="adt-editor-card-title">
@@ -277,8 +297,9 @@ const ADTEditorNode = ({
       {Array.isArray(constructor?.contents)
         ? constructor.contents.map((arg, i) => {
             const NodeClass =
-              standardNodeEditors[`${getTypeFromDef(arg)}NodeEditor`] ||
-              ADTEditorNode;
+              standardNodeEditors[
+                `${getTypeFromDef(applyTypeVars(arg, newTypeVars))}NodeEditor`
+              ] || ADTEditorNode;
             const newPath = [...path, "contents"];
             if (constructor.contents.length > 1) {
               newPath.push(i);
@@ -292,7 +313,7 @@ const ADTEditorNode = ({
                   path={newPath}
                   schema={schema}
                   type={arg}
-                  typeVars={typeVars}
+                  vars={[]}
                   selectedPath={selectedPath}
                 />
               </div>
@@ -329,31 +350,6 @@ const t2 = {
   type: "AppT",
 };
 
-const tv2 = {
-  r_6989586621682300744: {
-    type: "ConT",
-    value: "MatchResult",
-  },
-  g_6989586621682300743: {
-    param: {
-      param: {
-        type: "ConT",
-        value: "MatchPattern",
-      },
-      target: {
-        type: "ConT",
-        value: "ContextFreeGrammar",
-      },
-      type: "AppT",
-    },
-    target: {
-      type: "ConT",
-      value: "KeyMap",
-    },
-    type: "AppT",
-  },
-};
-
 const convertListT = (x) => {
   return x;
   console.log("x", x);
@@ -385,7 +381,6 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
             onSelect={setSelectedPath}
             path={[]}
             type={t2}
-            typeVars={tv2}
             schema={processedSchema}
             selectedPath={selectedPath}
           />
