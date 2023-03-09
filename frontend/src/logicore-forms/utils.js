@@ -204,7 +204,7 @@ export function getByPath(struct, path) {
 }
 
 export function setByPath(struct, path, value) {
-  return update(value, pathToUpdate(path, { $set: value }));
+  return update(struct, pathToUpdate(path, { $set: value }));
 }
 
 export { update };

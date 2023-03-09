@@ -24,6 +24,23 @@ import {
 import { useTranslation, Trans } from "react-i18next";
 import runModal from "../runModal";
 
+// TODO
+// migrate fn
+// boxes boxes boxes
+// ListT transform
+// walk
+const walkStruct = (d, f) => {
+  let r = d;
+  if (Array.isArray(d)) {
+    r = d.map((x) => walkStruct(x, f));
+  } else if (d && typeof d === "object") {
+    r = Object.fromEntries(
+      Object.entries(d).map(([k, v]) => [k, walkStruct(v, f)])
+    );
+  }
+  return f(r);
+};
+
 const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
   const lvl = (level || 0) + 1;
   const indent = new Array(lvl).join("  ");
@@ -162,6 +179,23 @@ const applyTypeVars = (d, typeVars) => {
   }
 };
 
+const KeyMapNodeEditor = () => {
+  return "aaa";
+};
+
+const KeyNodeEditor = () => {
+  return "aaa";
+};
+
+const ListTEditor = () => {
+  return "aaa";
+};
+
+const standardNodeEditors = {
+  KeyMapNodeEditor,
+  KeyNodeEditor,
+};
+
 const ADTEditorNode = ({
   value,
   onChange,
@@ -178,9 +212,10 @@ const ADTEditorNode = ({
   const isSelected =
     /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
       selectedPath.length && path.every((e, i) => e == selectedPath[i]);
-  const typeDef = schema.find(({ value }) => value === getTypeFromDef(type));
+  const typeFound = getTypeFromDef(type);
+  const typeDef = schema.find(({ value }) => value === typeFound);
   if (!typeDef) {
-    throw new Error(`Not defined for type ${type}`);
+    throw new Error(`Not defined for type ${JSON.stringify(typeFound)}`);
   }
   const options = typeDef.contents.map(({ tag, contents }) => ({
     value: tag,
@@ -190,10 +225,10 @@ const ADTEditorNode = ({
       contents: contents.length === 1 ? null : contents.map((_) => null),
     },
   }));
-  const constructorContents =
+  const constructor =
     typeDef?.contents && currentValue?.tag
-      ? typeDef?.contents.find(({ tag }) => currentValue?.tag === tag).contents
-      : [];
+      ? typeDef?.contents.find(({ tag }) => currentValue?.tag === tag)
+      : null;
   return (
     <div className="adt-editor-card">
       <div className="adt-editor-card-title">
@@ -223,19 +258,47 @@ const ADTEditorNode = ({
                   options.find(({ value }) => value === currentValue?.tag) ||
                   null,
               },
-              ({ tag }) =>
-                onChange(setByPath(value, path, tag?.newValue || null))
+              ({ tag }) => {
+                console.log(
+                  "aaa",
+                  value,
+                  path,
+                  tag?.newValue,
+                  setByPath(value, path, tag?.newValue || null)
+                );
+                onChange(setByPath(value, path, tag?.newValue || null));
+              }
             );
           }}
         >
           {!currentValue ? <>[not selected]</> : <>{currentValue?.tag + ""}</>}
         </a>
       </div>
-      {constructorContents.map((cnst) => (
-        <div>
-          <JSONNode value={applyTypeVars(cnst, typeVars)} />
-        </div>
-      ))}
+      {Array.isArray(constructor?.contents)
+        ? constructor.contents.map((arg, i) => {
+            const NodeClass =
+              standardNodeEditors[`${getTypeFromDef(arg)}NodeEditor`] ||
+              ADTEditorNode;
+            const newPath = [...path, "contents"];
+            if (constructor.contents.length > 1) {
+              newPath.push(i);
+            }
+            return (
+              <div>
+                <NodeClass
+                  value={value}
+                  onChange={onChange}
+                  onSelect={onSelect}
+                  path={newPath}
+                  schema={schema}
+                  type={arg}
+                  typeVars={typeVars}
+                  selectedPath={selectedPath}
+                />
+              </div>
+            );
+          })
+        : null}
     </div>
   );
 };
@@ -291,9 +354,26 @@ const tv2 = {
   },
 };
 
+const convertListT = (x) => {
+  return x;
+  console.log("x", x);
+  if (
+    x &&
+    typeof x === "object" &&
+    x.type === "AppT" &&
+    x.target &&
+    x.target === "object" &&
+    x.target.tag === "ListT"
+  ) {
+    return { type: "List", element: x.param };
+  }
+  return x;
+};
+
 const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
   //const [value, onChange] = useState(exampleData.value);
   const [selectedPath, setSelectedPath] = useState([]);
+  const processedSchema = walkStruct(schema, convertListT);
   return (
     <div className="row align-items-stretch flex-grow-1">
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
@@ -306,7 +386,7 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
             path={[]}
             type={t2}
             typeVars={tv2}
-            schema={schema}
+            schema={processedSchema}
             selectedPath={selectedPath}
           />
         </div>
