@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import exampleData from "./jsonmatcher_example";
-import { update } from "../utils";
+import { update } from "../logicore-forms/utils";
 import schema from "./jsonmatcher_schema";
 import { ModalProvider, ModalContext } from "../runModal";
 
@@ -23,89 +23,6 @@ import {
 } from "../logicore-forms";
 import { useTranslation, Trans } from "react-i18next";
 import runModal from "../runModal";
-
-const getTypeFromDef = (d) => {
-  if (d.type === "ConT") {
-    return d.value;
-  } else if (d.type === "AppT") {
-    return getTypeFromDef(d.target);
-  } else {
-    console.log(d);
-    throw new Error(`Not implemented: ${d.type}`);
-  }
-};
-
-// MatchPattern, MatchResult, Value
-// KeyMap, ContextFreeGrammar, Text (String, Key) Scientific Bool
-// ObjectKeyMatch, List
-
-const ADTEditorNode = ({
-  value,
-  onChange,
-  onSelect,
-  path,
-  schema,
-  type,
-  selectedPath,
-}) => {
-  const currentValue = getByPath(value, path);
-  const { t } = useTranslation();
-  const { runModal } = useContext(ModalContext);
-  const isSelected =
-    /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
-      selectedPath.length && path.every((e, i) => e == selectedPath[i]);
-  const typeDef = schema.find(({ value }) => value === getTypeFromDef(type));
-  if (!typeDef) {
-    throw new Error(`Not defined for type ${type}`);
-  }
-  const options = typeDef.contents.map(({ tag, contents }) => ({
-    value: tag,
-    label: tag,
-    newValue: {
-      tag,
-      contents: contents.length === 1 ? null : contents.map((_) => null),
-    },
-  }));
-  return (
-    <div className="adt-editor-card">
-      <div className="adt-editor-card-title">
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            runModal(
-              {
-                title: t("Edit Node"),
-                fields: {
-                  type: "Fields",
-                  fields: [
-                    {
-                      type: "SelectField",
-                      k: "tag",
-                      label: "Type",
-                      //required: true,
-                      options,
-                    },
-                  ],
-                },
-                modalSize: "md",
-              },
-              {
-                tag:
-                  options.find(({ value }) => value === currentValue?.tag) ||
-                  null,
-              },
-              ({ tag }) =>
-                onChange(setByPath(value, path, tag?.newValue || null))
-            );
-          }}
-        >
-          {!currentValue ? <>[not selected]</> : <>{currentValue?.tag + ""}</>}
-        </a>
-      </div>
-    </div>
-  );
-};
 
 const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
   const lvl = (level || 0) + 1;
@@ -210,11 +127,168 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
   }
 };
 
+const getTypeFromDef = (d) => {
+  if (d.type === "ConT") {
+    return d.value;
+  } else if (d.type === "AppT") {
+    return getTypeFromDef(d.target);
+  } else {
+    console.log(d);
+    throw new Error(`Not implemented: ${d.type}`);
+  }
+};
+
+// MatchPattern, MatchResult, Value
+// KeyMap, ContextFreeGrammar, Text (String, Key) Scientific Bool
+// ObjectKeyMatch, List
+
+const applyTypeVars = (d, typeVars) => {
+  if (d.type === "ConT") {
+    return d;
+  } else if (d.type === "AppT") {
+    return update(d, {
+      target: { $apply: (x) => applyTypeVars(x, typeVars) },
+      param: { $apply: (x) => applyTypeVars(x, typeVars) },
+    });
+  } else if (d.type === "VarT") {
+    const v = typeVars[d?.value];
+    if (!v) throw new Error(`No var to resolve: ${d?.value}`);
+    return v;
+  } else if (d.type === "ListT") {
+    return d;
+  } else {
+    console.log(d);
+    throw new Error(`Not implemented: ${d.type}`);
+  }
+};
+
+const ADTEditorNode = ({
+  value,
+  onChange,
+  onSelect,
+  path,
+  schema,
+  type,
+  typeVars,
+  selectedPath,
+}) => {
+  const currentValue = getByPath(value, path);
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
+  const isSelected =
+    /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
+      selectedPath.length && path.every((e, i) => e == selectedPath[i]);
+  const typeDef = schema.find(({ value }) => value === getTypeFromDef(type));
+  if (!typeDef) {
+    throw new Error(`Not defined for type ${type}`);
+  }
+  const options = typeDef.contents.map(({ tag, contents }) => ({
+    value: tag,
+    label: tag,
+    newValue: {
+      tag,
+      contents: contents.length === 1 ? null : contents.map((_) => null),
+    },
+  }));
+  const constructorContents =
+    typeDef?.contents && currentValue?.tag
+      ? typeDef?.contents.find(({ tag }) => currentValue?.tag === tag).contents
+      : [];
+  return (
+    <div className="adt-editor-card">
+      <div className="adt-editor-card-title">
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            runModal(
+              {
+                title: t("Edit Node"),
+                fields: {
+                  type: "Fields",
+                  fields: [
+                    {
+                      type: "SelectField",
+                      k: "tag",
+                      label: "Type",
+                      //required: true,
+                      options,
+                    },
+                  ],
+                },
+                modalSize: "md",
+              },
+              {
+                tag:
+                  options.find(({ value }) => value === currentValue?.tag) ||
+                  null,
+              },
+              ({ tag }) =>
+                onChange(setByPath(value, path, tag?.newValue || null))
+            );
+          }}
+        >
+          {!currentValue ? <>[not selected]</> : <>{currentValue?.tag + ""}</>}
+        </a>
+      </div>
+      {constructorContents.map((cnst) => (
+        <div>
+          <JSONNode value={applyTypeVars(cnst, typeVars)} />
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // Nodes end
 
 const t1 = {
   type: "ConT",
   value: "MatchResult",
+};
+
+const t2 = {
+  param: {
+    type: "ConT",
+    value: "MatchResult",
+  },
+  target: {
+    param: {
+      type: "ConT",
+      value: "MatchPattern",
+    },
+    target: {
+      type: "ConT",
+      value: "ContextFreeGrammarResult",
+    },
+    type: "AppT",
+  },
+  type: "AppT",
+};
+
+const tv2 = {
+  r_6989586621682300744: {
+    type: "ConT",
+    value: "MatchResult",
+  },
+  g_6989586621682300743: {
+    param: {
+      param: {
+        type: "ConT",
+        value: "MatchPattern",
+      },
+      target: {
+        type: "ConT",
+        value: "ContextFreeGrammar",
+      },
+      type: "AppT",
+    },
+    target: {
+      type: "ConT",
+      value: "KeyMap",
+    },
+    type: "AppT",
+  },
 };
 
 const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
@@ -230,7 +304,8 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
             onChange={onChange}
             onSelect={setSelectedPath}
             path={[]}
-            type={t1}
+            type={t2}
+            typeVars={tv2}
             schema={schema}
             selectedPath={selectedPath}
           />
