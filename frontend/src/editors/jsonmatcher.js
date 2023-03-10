@@ -151,6 +151,8 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
 const getTypeFromDef = (d) => {
   if (d.type === "ConT") {
     return d.value;
+  } else if (d.type === "App") {
+    return getTypeFromDef(d.target);
   } else if (d.type === "AppT") {
     return getTypeFromDef(d.target);
   } else {
@@ -176,8 +178,14 @@ const getArgumentTypesFromDef = (d) => {
 
 const applyTypeVars = (d, typeVars) => {
   console.log("applyTypeVars", d, typeVars);
+  if (!d) return d;
   if (d.type === "ConT") {
     return d;
+  } else if (d.type === "App") {
+    return update(d, {
+      target: { $apply: (x) => applyTypeVars(x, typeVars) },
+      params: { $each: { $apply: (x) => applyTypeVars(x, typeVars) } },
+    });
   } else if (d.type === "AppT") {
     return update(d, {
       target: { $apply: (x) => applyTypeVars(x, typeVars) },
@@ -191,7 +199,7 @@ const applyTypeVars = (d, typeVars) => {
     return d;
   } else {
     console.log(d);
-    throw new Error(`Not implemented: ${d.type}`);
+    throw new Error(`Not implemented: ${JSON.stringify(d)}`);
   }
 };
 
@@ -365,8 +373,32 @@ const collapseAppT = (typeCall) => {
 };
 
 const callType = (schema, typeCall) => {
-  //const typeDef = schema.find(({value}) => value ==
-  return collapseAppT(typeCall);
+  const c = collapseAppT(typeCall);
+  const tt = getTypeFromDef(c);
+  for (const item of schema) {
+    const { value, contents, vars } = item;
+    if (value === tt) {
+      const typeVars = {};
+      for (let i = 0; i < vars.length; i++) {
+        typeVars[vars[i]] = c.params[i];
+      }
+      return update(item, {
+        contents: {
+          $apply: (cs) => {
+            return cs.map((cnst) =>
+              update(cnst, {
+                contents: {
+                  $apply: (ccc) => ccc.map((pm) => applyTypeVars(pm, typeVars)),
+                },
+              })
+            );
+          },
+        },
+        $unset: ["vars"],
+      });
+    }
+  }
+  throw new Error(`No type for ${JSON.stringify(c)}`);
 };
 
 const convertListT = (x) => {
