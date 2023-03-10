@@ -29,17 +29,6 @@ import runModal from "../runModal";
 // boxes boxes boxes
 // ListT transform
 // walk
-const walkStruct = (d, f) => {
-  let r = d;
-  if (Array.isArray(d)) {
-    r = d.map((x) => walkStruct(x, f));
-  } else if (d && typeof d === "object") {
-    r = Object.fromEntries(
-      Object.entries(d).map(([k, v]) => [k, walkStruct(v, f)])
-    );
-  }
-  return f(r);
-};
 
 const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
   const lvl = (level || 0) + 1;
@@ -155,20 +144,11 @@ const getTypeFromDef = (d) => {
     return getTypeFromDef(d.target);
   } else if (d.type === "AppT") {
     return getTypeFromDef(d.target);
+  } else if (d.type === "ListT") {
+    return "ListT";
   } else {
     console.log(d);
-    throw new Error(`Not implemented: ${d.type}`);
-  }
-};
-
-const getArgumentTypesFromDef = (d) => {
-  if (d.type === "ConT") {
-    return d.value;
-  } else if (d.type === "AppT") {
-    return getTypeFromDef(d.target);
-  } else {
-    console.log(d);
-    throw new Error(`Not implemented: ${d.type}`);
+    throw new Error(`Not implemented: ${JSON.stringify(d)}`);
   }
 };
 
@@ -236,9 +216,8 @@ const ADTEditorNode = ({
   const isSelected =
     /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
       selectedPath.length && path.every((e, i) => e == selectedPath[i]);
-  const typeFound = getTypeFromDef(type);
-  const typeArgs = getArgumentTypesFromDef(type);
-  const typeDef = schema.find(({ value }) => value === typeFound);
+  const typeDef = callType(schema, type);
+  const typeFound = typeDef.value;
   if (!typeDef) {
     throw new Error(`Not defined for type ${JSON.stringify(typeFound)}`);
   }
@@ -256,7 +235,6 @@ const ADTEditorNode = ({
       : null;
   const typeVars = {};
   const newTypeVars = { ...typeVars, ...typeDef?.vars };
-  return <JSONNode value={{}} />;
   return (
     <div className="adt-editor-card">
       <div className="adt-editor-card-title">
@@ -286,16 +264,8 @@ const ADTEditorNode = ({
                   options.find(({ value }) => value === currentValue?.tag) ||
                   null,
               },
-              ({ tag }) => {
-                console.log(
-                  "aaa",
-                  value,
-                  path,
-                  tag?.newValue,
-                  setByPath(value, path, tag?.newValue || null)
-                );
-                onChange(setByPath(value, path, tag?.newValue || null));
-              }
+              ({ tag }) =>
+                onChange(setByPath(value, path, tag?.newValue || null))
             );
           }}
         >
@@ -420,22 +390,21 @@ const convertListT = (x) => {
 const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
   //const [value, onChange] = useState(exampleData.value);
   const [selectedPath, setSelectedPath] = useState([]);
-  const processedSchema = walkStruct(schema, convertListT);
   return (
     <div className="row align-items-stretch flex-grow-1">
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
       <div className="col d-flex flex-column">
         <div className="form-control flex-grow-1 jsonmatcher-editor">
-          <JSONNode value={callType(schema, t2)} />
-          {/*<ADTEditorNode
+          {/*<JSONNode value={callType(schema, t2)} />*/}
+          <ADTEditorNode
             value={value}
             onChange={onChange}
             onSelect={setSelectedPath}
             path={[]}
             type={t2}
-            schema={processedSchema}
+            schema={schema}
             selectedPath={selectedPath}
-          />*/}
+          />
         </div>
         <div className="d-grid">{saveButton}</div>
       </div>
