@@ -157,7 +157,6 @@ const getTypeFromDef = (d) => {
 // ObjectKeyMatch, List
 
 const applyTypeVars = (d, typeVars) => {
-  console.log("applyTypeVars", d, typeVars);
   if (!d) return d;
   if (d.type === "ConT") {
     return d;
@@ -183,21 +182,295 @@ const applyTypeVars = (d, typeVars) => {
   }
 };
 
-const KeyMapNodeEditor = () => {
-  return "aaa";
+let ADTEditorNodeComponent = null;
+
+const KeyMapNodeEditor = ({
+  value,
+  onChange,
+  onSelect,
+  path,
+  schema,
+  type,
+  vars,
+  selectedPath,
+}) => {
+  const currentValue = getByPath(value, path);
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
+  const isSelected =
+    /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
+      selectedPath.length && path.every((e, i) => e == selectedPath[i]);
+  if (!type) {
+    throw new Error(`Not defined for type ${JSON.stringify(type)}`);
+  }
+  const options = type.contents.map(({ tag, contents }) => ({
+    value: tag,
+    label: tag,
+    newValue: {
+      tag,
+      contents: contents.length === 1 ? null : contents.map((_) => null),
+    },
+  }));
+  const constructor =
+    type?.contents && currentValue?.tag
+      ? type?.contents.find(({ tag }) => currentValue?.tag === tag)
+      : null;
+  const typeVars = {};
+  const newTypeVars = { ...typeVars, ...type?.vars };
+  return (
+    <div className="adt-editor-card">
+      <div className="adt-editor-card-title">KeyMap</div>
+      {/*<JSONNode value={type} />
+      <br />*/}
+      {currentValue?.map((_, i) => {
+        return (
+          <div>
+            <a
+              className="text-danger"
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setByPath(value, path, [
+                  ...(getByPath(value, path) || []),
+                  null,
+                ]);
+              }}
+            >
+              &times;
+            </a>
+            <span className="text-muted">{` ${i} `}</span>
+            <ADTEditorNodeComponent
+              value={value}
+              onChange={onChange}
+              onSelect={onSelect}
+              path={[...path, i]}
+              schema={schema}
+              type={callType(schema, type.contents[0].contents[0].param)}
+              selectedPath={selectedPath}
+            />
+          </div>
+        );
+      })}
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          onChange(
+            setByPath(value, path, [...(getByPath(value, path) || []), null])
+          );
+        }}
+      >
+        {"+ "}
+        <Trans>Add</Trans>
+      </a>
+    </div>
+  );
 };
 
-const KeyNodeEditor = () => {
-  return "aaa";
+const TextNodeEditor = ({
+  value,
+  onChange,
+  onSelect,
+  path,
+  schema,
+  type,
+  vars,
+  selectedPath,
+}) => {
+  const currentValue = getByPath(value, path);
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
+  const isSelected =
+    /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
+      selectedPath.length && path.every((e, i) => e == selectedPath[i]);
+  if (!type) {
+    throw new Error(`Not defined for type ${JSON.stringify(type)}`);
+  }
+  const options = type.contents.map(({ tag, contents }) => ({
+    value: tag,
+    label: tag,
+    newValue: {
+      tag,
+      contents: contents.length === 1 ? null : contents.map((_) => null),
+    },
+  }));
+  const constructor =
+    type?.contents && currentValue?.tag
+      ? type?.contents.find(({ tag }) => currentValue?.tag === tag)
+      : null;
+  const typeVars = {};
+  const newTypeVars = { ...typeVars, ...type?.vars };
+  return (
+    <div className="text-danger">
+      {'"'}
+      {currentValue}
+      {'"'}
+    </div>
+  );
 };
 
-const ListTEditor = () => {
-  return "aaa";
+const ScientificNodeEditor = ({
+  value,
+  onChange,
+  onSelect,
+  path,
+  schema,
+  type,
+  vars,
+  selectedPath,
+}) => {
+  const currentValue = getByPath(value, path);
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
+  const isSelected =
+    /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
+      selectedPath.length && path.every((e, i) => e == selectedPath[i]);
+  if (!type) {
+    throw new Error(`Not defined for type ${JSON.stringify(type)}`);
+  }
+  const options = type.contents.map(({ tag, contents }) => ({
+    value: tag,
+    label: tag,
+    newValue: {
+      tag,
+      contents: contents.length === 1 ? null : contents.map((_) => null),
+    },
+  }));
+  const constructor =
+    type?.contents && currentValue?.tag
+      ? type?.contents.find(({ tag }) => currentValue?.tag === tag)
+      : null;
+  const typeVars = {};
+  const newTypeVars = { ...typeVars, ...type?.vars };
+  return <div className="text-primary">{currentValue || 0}</div>;
+};
+
+const BoolNodeEditor = ({
+  value,
+  onChange,
+  onSelect,
+  path,
+  schema,
+  type,
+  vars,
+  selectedPath,
+}) => {
+  const currentValue = getByPath(value, path);
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
+  const isSelected =
+    /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
+      selectedPath.length && path.every((e, i) => e == selectedPath[i]);
+  if (!type) {
+    throw new Error(`Not defined for type ${JSON.stringify(type)}`);
+  }
+  const options = type.contents.map(({ tag, contents }) => ({
+    value: tag,
+    label: tag,
+    newValue: {
+      tag,
+      contents: contents.length === 1 ? null : contents.map((_) => null),
+    },
+  }));
+  const constructor =
+    type?.contents && currentValue?.tag
+      ? type?.contents.find(({ tag }) => currentValue?.tag === tag)
+      : null;
+  const typeVars = {};
+  const newTypeVars = { ...typeVars, ...type?.vars };
+  return <div className="text-primary">{currentValue ? "true" : "false"}</div>;
+};
+
+const ListNodeEditor = ({
+  value,
+  onChange,
+  onSelect,
+  path,
+  schema,
+  type,
+  vars,
+  selectedPath,
+}) => {
+  const currentValue = getByPath(value, path);
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
+  const isSelected =
+    /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
+      selectedPath.length && path.every((e, i) => e == selectedPath[i]);
+  if (!type) {
+    throw new Error(`Not defined for type ${JSON.stringify(type)}`);
+  }
+  const options = type.contents.map(({ tag, contents }) => ({
+    value: tag,
+    label: tag,
+    newValue: {
+      tag,
+      contents: contents.length === 1 ? null : contents.map((_) => null),
+    },
+  }));
+  const constructor =
+    type?.contents && currentValue?.tag
+      ? type?.contents.find(({ tag }) => currentValue?.tag === tag)
+      : null;
+  const typeVars = {};
+  const newTypeVars = { ...typeVars, ...type?.vars };
+  return (
+    <div className="adt-editor-card">
+      <div className="adt-editor-card-title">List</div>
+      {/*<JSONNode value={type} />
+      <br />*/}
+      {currentValue?.map((_, i) => {
+        return (
+          <div>
+            <a
+              className="text-danger"
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                const current = [...getByPath(value, path)];
+                current.splice(i, 1);
+                onChange(setByPath(value, path, current));
+              }}
+            >
+              &times;
+            </a>
+            <span className="text-muted">{` ${i} `}</span>
+            <ADTEditorNodeComponent
+              value={value}
+              onChange={onChange}
+              onSelect={onSelect}
+              path={[...path, i]}
+              schema={schema}
+              type={callType(schema, type.contents[0].contents[0].param)}
+              selectedPath={selectedPath}
+            />
+          </div>
+        );
+      })}
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          onChange(
+            setByPath(value, path, [...(getByPath(value, path) || []), null])
+          );
+        }}
+      >
+        {"+ "}
+        <Trans>Add</Trans>
+      </a>
+    </div>
+  );
 };
 
 const standardNodeEditors = {
   KeyMapNodeEditor,
-  KeyNodeEditor,
+  KeyNodeEditor: TextNodeEditor,
+  ListNodeEditor,
+  // String Scientific Bool
+  TextNodeEditor,
+  ScientificNodeEditor,
+  BoolNodeEditor,
 };
 
 const ADTEditorNode = ({
@@ -216,12 +489,10 @@ const ADTEditorNode = ({
   const isSelected =
     /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
       selectedPath.length && path.every((e, i) => e == selectedPath[i]);
-  const typeDef = callType(schema, type);
-  const typeFound = typeDef.value;
-  if (!typeDef) {
-    throw new Error(`Not defined for type ${JSON.stringify(typeFound)}`);
+  if (!type) {
+    throw new Error(`Not defined for type ${JSON.stringify(type)}`);
   }
-  const options = typeDef.contents.map(({ tag, contents }) => ({
+  const options = type.contents.map(({ tag, contents }) => ({
     value: tag,
     label: tag,
     newValue: {
@@ -230,11 +501,11 @@ const ADTEditorNode = ({
     },
   }));
   const constructor =
-    typeDef?.contents && currentValue?.tag
-      ? typeDef?.contents.find(({ tag }) => currentValue?.tag === tag)
+    type?.contents && currentValue?.tag
+      ? type?.contents.find(({ tag }) => currentValue?.tag === tag)
       : null;
   const typeVars = {};
-  const newTypeVars = { ...typeVars, ...typeDef?.vars };
+  const newTypeVars = { ...typeVars, ...type?.vars };
   return (
     <div className="adt-editor-card">
       <div className="adt-editor-card-title">
@@ -269,29 +540,34 @@ const ADTEditorNode = ({
             );
           }}
         >
-          {!currentValue ? <>[not selected]</> : <>{currentValue?.tag + ""}</>}
+          {/*{type?.value}
+          <br />*/}
+          {!currentValue ? (
+            <>
+              {"["}
+              <Trans>not selected</Trans>
+              {"]"}
+            </>
+          ) : (
+            <>{currentValue?.tag + ""}</>
+          )}
         </a>
       </div>
       {Array.isArray(constructor?.contents)
         ? constructor.contents.map((arg, i) => {
-            const NodeClass =
-              standardNodeEditors[
-                `${getTypeFromDef(applyTypeVars(arg, newTypeVars))}NodeEditor`
-              ] || ADTEditorNode;
             const newPath = [...path, "contents"];
             if (constructor.contents.length > 1) {
               newPath.push(i);
             }
             return (
               <div>
-                <NodeClass
+                <ADTEditorNodeComponent
                   value={value}
                   onChange={onChange}
                   onSelect={onSelect}
                   path={newPath}
                   schema={schema}
-                  type={arg}
-                  vars={[]}
+                  type={callType(schema, arg)}
                   selectedPath={selectedPath}
                 />
               </div>
@@ -300,6 +576,14 @@ const ADTEditorNode = ({
         : null}
     </div>
   );
+};
+
+ADTEditorNodeComponent = (props) => {
+  const { value, onChange, onSelect, path, schema, type, vars, selectedPath } =
+    props;
+  const standardNodeEditor = standardNodeEditors[`${type.value}NodeEditor`];
+  let Component = standardNodeEditor || ADTEditorNode;
+  return <Component {...props} />;
 };
 
 // Nodes end
@@ -342,14 +626,26 @@ const collapseAppT = (typeCall) => {
   return typeCall;
 };
 
+const convertListT = (typeCall) => {
+  if (typeCall?.type === "App") {
+    let r = { ...typeCall };
+    if (r.target && typeof r.target === "object" && r.target.type === "ListT") {
+      r.target = { type: "ConT", value: "List" };
+    }
+    r.params = r.params?.map(convertListT);
+    return r;
+  }
+  return typeCall;
+};
+
 const callType = (schema, typeCall) => {
-  const c = collapseAppT(typeCall);
+  const c = convertListT(collapseAppT(typeCall));
   const tt = getTypeFromDef(c);
   for (const item of schema) {
     const { value, contents, vars } = item;
     if (value === tt) {
       const typeVars = {};
-      for (let i = 0; i < vars.length; i++) {
+      for (let i = 0; i < vars?.length || 0; i++) {
         typeVars[vars[i]] = c.params[i];
       }
       return update(item, {
@@ -368,28 +664,42 @@ const callType = (schema, typeCall) => {
       });
     }
   }
-  throw new Error(`No type for ${JSON.stringify(c)}`);
+  throw new Error(`No type for: ${tt}`);
 };
 
-const convertListT = (x) => {
-  return x;
-  console.log("x", x);
-  if (
-    x &&
-    typeof x === "object" &&
-    x.type === "AppT" &&
-    x.target &&
-    x.target === "object" &&
-    x.target.tag === "ListT"
-  ) {
-    return { type: "List", element: x.param };
-  }
-  return x;
-};
+const standardSchema = [
+  {
+    contents: [{ tag: "List", contents: [{ type: "VarT", value: "k1" }] }],
+    value: "List",
+    vars: ["k1"],
+  },
+  {
+    contents: [{ tag: "KeyMap", contents: [{ type: "VarT", value: "k1" }] }],
+    value: "KeyMap",
+    vars: ["k1"],
+  },
+  {
+    contents: [],
+    value: "Text",
+  },
+  {
+    contents: [],
+    value: "Scientific",
+  },
+  {
+    contents: [],
+    value: "Bool",
+  },
+  {
+    contents: [],
+    value: "Null",
+  },
+];
 
 const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
   //const [value, onChange] = useState(exampleData.value);
   const [selectedPath, setSelectedPath] = useState([]);
+  const processedSchema = [...standardSchema, ...schema];
   return (
     <div className="row align-items-stretch flex-grow-1">
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
@@ -401,8 +711,8 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
             onChange={onChange}
             onSelect={setSelectedPath}
             path={[]}
-            type={t2}
-            schema={schema}
+            type={callType(processedSchema, t2)}
+            schema={processedSchema}
             selectedPath={selectedPath}
           />
         </div>
