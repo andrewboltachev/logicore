@@ -184,6 +184,19 @@ const applyTypeVars = (d, typeVars) => {
 
 let ADTEditorNodeComponent = null;
 
+const emptyToLast = (es) => {
+  const items = [...es.map((x, i) => [x, i])];
+  items.sort(([[kA, vA], iA], [[kB, vB], iB]) => {
+    if (kA === "") return 1;
+    if (kB === "") return -1;
+    if (kA > kB) return 1;
+    if (kA < kB) return -1;
+    return 0;
+  });
+  return items.map(([x, i]) => x);
+};
+window.emptyToLast = emptyToLast;
+
 const KeyMapNodeEditor = ({
   value,
   onChange,
@@ -222,7 +235,7 @@ const KeyMapNodeEditor = ({
       <div className="adt-editor-card-title">KeyMap</div>
       {/*<JSONNode value={type} />
       <br />*/}
-      {currentValue?.map((_, i) => {
+      {emptyToLast(Object.entries(currentValue || {})).map(([k, v], i) => {
         return (
           <div>
             <a
@@ -230,20 +243,19 @@ const KeyMapNodeEditor = ({
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                setByPath(value, path, [
-                  ...(getByPath(value, path) || []),
-                  null,
-                ]);
+                const current = { ...getByPath(value, path) };
+                delete current[k];
+                setByPath(value, path, current);
               }}
             >
               &times;
             </a>
-            <span className="text-muted">{` ${i} `}</span>
+            <span className="text-muted">{` ${k} `}</span>
             <ADTEditorNodeComponent
               value={value}
               onChange={onChange}
               onSelect={onSelect}
-              path={[...path, i]}
+              path={[...path, k]}
               schema={schema}
               type={callType(schema, type.contents[0].contents[0].param)}
               selectedPath={selectedPath}
@@ -256,7 +268,10 @@ const KeyMapNodeEditor = ({
         onClick={(e) => {
           e.preventDefault();
           onChange(
-            setByPath(value, path, [...(getByPath(value, path) || []), null])
+            setByPath(value, path, {
+              ...(getByPath(value, path) || {}),
+              "": null,
+            })
           );
         }}
       >
