@@ -189,8 +189,8 @@ const emptyToLast = (es) => {
   items.sort(([[kA, vA], iA], [[kB, vB], iB]) => {
     if (kA === "") return 1;
     if (kB === "") return -1;
-    if (kA > kB) return 1;
-    if (kA < kB) return -1;
+    if (iA > iB) return 1;
+    if (iA < iB) return -1;
     return 0;
   });
   return items.map(([x, i]) => x);
@@ -230,6 +230,17 @@ const KeyMapNodeEditor = ({
       : null;
   const typeVars = {};
   const newTypeVars = { ...typeVars, ...type?.vars };
+  const childType = type.contents[0].contents[0];
+  if (!childType) {
+    return (
+      <div className="adt-editor-card">
+        No child type:
+        <br />
+        <JSONNode value={type} />
+      </div>
+    );
+  }
+  const childTypeDef = callType(schema, childType);
   return (
     <div className="adt-editor-card">
       <div className="adt-editor-card-title">KeyMap</div>
@@ -245,19 +256,52 @@ const KeyMapNodeEditor = ({
                 e.preventDefault();
                 const current = { ...getByPath(value, path) };
                 delete current[k];
-                setByPath(value, path, current);
+                onChange(setByPath(value, path, current));
               }}
             >
               &times;
             </a>
-            <span className="text-muted">{` ${k} `}</span>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                runModal(
+                  {
+                    title: t("Change item key"),
+                    fields: {
+                      type: "Fields",
+                      fields: [
+                        {
+                          type: "TextField",
+                          k: "val",
+                          label: "Key",
+                          required: true,
+                        },
+                      ],
+                    },
+                    modalSize: "md",
+                  },
+                  {
+                    val: k,
+                  },
+                  ({ val }) => {
+                    const current = { ...getByPath(value, path) };
+                    delete current[k];
+                    current[val] = v;
+                    onChange(setByPath(value, path, current));
+                  }
+                );
+              }}
+            >
+              <span className="text-muted">{` ${k} `}</span>
+            </a>
             <ADTEditorNodeComponent
               value={value}
               onChange={onChange}
               onSelect={onSelect}
               path={[...path, k]}
               schema={schema}
-              type={callType(schema, type.contents[0].contents[0].param)}
+              type={childTypeDef}
               selectedPath={selectedPath}
             />
           </div>
@@ -267,11 +311,32 @@ const KeyMapNodeEditor = ({
         href="#"
         onClick={(e) => {
           e.preventDefault();
-          onChange(
-            setByPath(value, path, {
-              ...(getByPath(value, path) || {}),
-              "": null,
-            })
+          runModal(
+            {
+              title: t("Add item"),
+              fields: {
+                type: "Fields",
+                fields: [
+                  {
+                    type: "TextField",
+                    k: "val",
+                    label: "Key",
+                    required: true,
+                  },
+                ],
+              },
+              modalSize: "md",
+            },
+            {
+              val: "",
+            },
+            ({ val }) =>
+              onChange(
+                setByPath(value, path, {
+                  ...(getByPath(value, path) || {}),
+                  [val]: null,
+                })
+              )
           );
         }}
       >
