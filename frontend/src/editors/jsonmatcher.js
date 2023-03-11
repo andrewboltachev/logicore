@@ -153,7 +153,7 @@ const getTypeFromDef = (d) => {
 };
 
 // MatchPattern, MatchResult, Value
-// KeyMap, ContextFreeGrammar, Text (String, Key) Scientific Bool
+// KeyMap, ContextFreeGrammar, Text (Key) Scientific Bool
 // ObjectKeyMatch, List
 
 const applyTypeVars = (d, typeVars) => {
@@ -387,6 +387,27 @@ const TextNodeEditor = ({
         href="#"
         onClick={(e) => {
           e.preventDefault();
+          runModal(
+            {
+              title: t("Add item"),
+              fields: {
+                type: "Fields",
+                fields: [
+                  {
+                    type: "TextField",
+                    k: "val",
+                    label: t("Key"),
+                    required: true,
+                  },
+                ],
+              },
+              modalSize: "md",
+            },
+            {
+              val: "",
+            },
+            ({ val }) => onChange(setByPath(value, path, val))
+          );
         }}
       >
         {currentValue}
