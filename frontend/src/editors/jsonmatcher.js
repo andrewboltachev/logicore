@@ -1,8 +1,9 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useRef } from "react";
 import exampleData from "./jsonmatcher_example";
 import { update } from "../logicore-forms/utils";
 import schema from "./jsonmatcher_schema";
 import { ModalProvider, ModalContext } from "../runModal";
+import { useDraggable } from "react-use-draggable-scroll";
 
 import "./jsonmatcher.scss";
 
@@ -857,10 +858,32 @@ const standardSchema = [
 ];
 
 const ScrollArea = ({ children }) => {
+  const innerRef = useRef(null);
+  const [isDown, setIsDown] = useState(null);
+  const mouseDown = (e) => {
+    e.persist();
+    console.log(e);
+    setIsDown([]);
+  };
+  const mouseUp = () => {
+    setIsDown(null);
+  };
+  const mouseMove = (e) => {
+    e.preventDefault();
+  };
   return (
     <div className="lc-adt-editor">
       <div className="lc-adt-editor-wrapper">
-        <div className="lc-adt-editor-inner">{children}</div>
+        <div
+          className="lc-adt-editor-inner"
+          style={{ cursor: isDown ? "grab" : "auto" }}
+          ref={innerRef}
+          onMouseDown={mouseDown}
+          onMouseMove={mouseMove}
+          onMouseUp={mouseUp}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
