@@ -97,10 +97,12 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
         <span>
           {firstIndent + "["}
           <br />
-          {value.map((v) => {
+          {value.map((v, i) => {
             return (
               <>
-                <JSONNode value={v} level={lvl} />,<br />
+                <JSONNode value={v} level={lvl} />
+                {i === value.length - 1 ? "" : ","}
+                <br />
               </>
             );
           })}
@@ -111,19 +113,22 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
   } else if (typeof value === "object" && Object.entries(value).length === 0) {
     return firstIndent + "{}";
   } else if (typeof value === "object") {
+    const items = Object.entries(value);
     return (
       <>
         <span>
           {firstIndent + "{"}
           <br />
-          {Object.entries(value).map(([k, v]) => {
+          {items.map(([k, v], i) => {
             return (
               <>
                 {indent + "  "}
                 {'"'}
                 <span className="text-secondary">{k}</span>
                 {'": '}
-                <JSONNode value={v} level={lvl} noFirstIndent />,<br />
+                <JSONNode value={v} level={lvl} noFirstIndent />
+                {i === items.length - 1 ? "" : ","}
+                <br />
               </>
             );
           })}
