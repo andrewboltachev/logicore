@@ -383,7 +383,14 @@ const TextNodeEditor = ({
   return (
     <div className="text-danger">
       {'"'}
-      {currentValue}
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+        }}
+      >
+        {currentValue}
+      </a>
       {'"'}
     </div>
   );
