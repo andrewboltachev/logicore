@@ -451,7 +451,40 @@ const ScientificNodeEditor = ({
       : null;
   const typeVars = {};
   const newTypeVars = { ...typeVars, ...type?.vars };
-  return <div className="text-primary">{currentValue || 0}</div>;
+  return (
+    <div>
+      <a
+        className="text-dark"
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          runModal(
+            {
+              title: t("Change value"),
+              fields: {
+                type: "Fields",
+                fields: [
+                  {
+                    type: "NumberField",
+                    k: "val",
+                    label: t("Value"),
+                    required: true,
+                  },
+                ],
+              },
+              modalSize: "md",
+            },
+            {
+              val: currentValue,
+            },
+            ({ val }) => onChange(setByPath(value, path, val))
+          );
+        }}
+      >
+        <span className="text-primary">{currentValue || 0}</span>
+      </a>
+    </div>
+  );
 };
 
 const BoolNodeEditor = ({
@@ -487,7 +520,20 @@ const BoolNodeEditor = ({
       : null;
   const typeVars = {};
   const newTypeVars = { ...typeVars, ...type?.vars };
-  return <div className="text-primary">{currentValue ? "true" : "false"}</div>;
+  return (
+    <div>
+      <a
+        className="text-primary"
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          onChange(setByPath(value, path, !currentValue));
+        }}
+      >
+        {currentValue ? "true" : "false"}
+      </a>
+    </div>
+  );
 };
 
 const ListNodeEditor = ({
@@ -813,7 +859,7 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
     <div className="row align-items-stretch flex-grow-1">
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
       <div className="col d-flex flex-column">
-        <div className="form-control flex-grow-1 jsonmatcher-editor">
+        <div className="form-control flex-grow-1 adt-editor">
           {/*<JSONNode value={callType(schema, t2)} />*/}
           <ADTEditorNode
             value={value}
