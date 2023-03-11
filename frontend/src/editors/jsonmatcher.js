@@ -274,7 +274,7 @@ const KeyMapNodeEditor = ({
                         {
                           type: "TextField",
                           k: "val",
-                          label: "Key",
+                          label: t("Key"),
                           required: true,
                         },
                       ],
@@ -320,7 +320,7 @@ const KeyMapNodeEditor = ({
                   {
                     type: "TextField",
                     k: "val",
-                    label: "Key",
+                    label: t("Key"),
                     required: true,
                   },
                 ],
