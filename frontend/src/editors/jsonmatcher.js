@@ -860,22 +860,30 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
       <div className="col d-flex flex-column">
         <div className="form-control flex-grow-1 adt-editor">
-          {/*<JSONNode value={callType(schema, t2)} />*/}
-          <ADTEditorNode
-            value={value}
-            onChange={onChange}
-            onSelect={setSelectedPath}
-            path={[]}
-            type={callType(processedSchema, t2)}
-            schema={processedSchema}
-            selectedPath={selectedPath}
-          />
+          <div className="adt-editor-wrapper">
+            <div className="adt-editor-inner">
+              {/*<JSONNode value={callType(schema, t2)} />*/}
+              <ADTEditorNode
+                value={value}
+                onChange={onChange}
+                onSelect={setSelectedPath}
+                path={[]}
+                type={callType(processedSchema, t2)}
+                schema={processedSchema}
+                selectedPath={selectedPath}
+              />
+            </div>
+          </div>
         </div>
         <div className="d-grid">{saveButton}</div>
       </div>
       <div className="col d-flex flex-column">
         <div className="form-control flex-grow-1 jsonmatcher-editor">
-          <JSONNode value={value} onChange={onChange} />
+          <div className="adt-editor-wrapper">
+            <div className="adt-editor-inner">
+              <JSONNode value={value} onChange={onChange} />
+            </div>
+          </div>
         </div>
         {/*<div className="d-grid">
           <button className="btn btn-success mt-2" type="button" onClick={_ => _}>

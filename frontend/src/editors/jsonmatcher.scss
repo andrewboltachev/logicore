@@ -20,8 +20,6 @@ $s: 0.75rem;
   a {
     text-decoration: none;
   }
-}
-.adt-editor {
   &-card {
     box-shadow: 0 0 2px 2px #ccc;
     margin-right: -4px;
@@ -35,4 +33,14 @@ $s: 0.75rem;
       border-bottom: 1px solid gray;
     }
   }
+  position: relative;
+}
+.adt-editor-wrapper {
+  position: absolute;
+  $p: 0.25rem;
+  top: $p;
+  left: $p;
+  right: $p;
+  bottom: $p;
+  overflow: auto;
 }
