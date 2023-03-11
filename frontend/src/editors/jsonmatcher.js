@@ -238,7 +238,7 @@ const KeyMapNodeEditor = ({
   const childType = type.contents[0].contents[0];
   if (!childType) {
     return (
-      <div className="adt-editor-card">
+      <div className="lc-adt-editor-card">
         No child type:
         <br />
         <JSONNode value={type} />
@@ -247,8 +247,8 @@ const KeyMapNodeEditor = ({
   }
   const childTypeDef = callType(schema, childType);
   return (
-    <div className="adt-editor-card">
-      <div className="adt-editor-card-title">KeyMap</div>
+    <div className="lc-adt-editor-card">
+      <div className="lc-adt-editor-card-title">KeyMap</div>
       {/*<JSONNode value={type} />
       <br />*/}
       {emptyToLast(Object.entries(currentValue || {})).map(([k, v], i) => {
@@ -575,8 +575,8 @@ const ListNodeEditor = ({
   const typeVars = {};
   const newTypeVars = { ...typeVars, ...type?.vars };
   return (
-    <div className="adt-editor-card">
-      <div className="adt-editor-card-title">List</div>
+    <div className="lc-adt-editor-card">
+      <div className="lc-adt-editor-card-title">List</div>
       {/*<JSONNode value={type} />
       <br />*/}
       {currentValue?.map((_, i) => {
@@ -667,8 +667,8 @@ const ADTEditorNode = ({
   const typeVars = {};
   const newTypeVars = { ...typeVars, ...type?.vars };
   return (
-    <div className="adt-editor-card">
-      <div className="adt-editor-card-title">
+    <div className="lc-adt-editor-card">
+      <div className="lc-adt-editor-card-title">
         <a
           href="#"
           onClick={(e) => {
@@ -856,6 +856,16 @@ const standardSchema = [
   },
 ];
 
+const ScrollArea = ({ children }) => {
+  return (
+    <div className="lc-adt-editor">
+      <div className="lc-adt-editor-wrapper">
+        <div className="lc-adt-editor-inner">{children}</div>
+      </div>
+    </div>
+  );
+};
+
 const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
   //const [value, onChange] = useState(exampleData.value);
   const [selectedPath, setSelectedPath] = useState([]);
@@ -864,29 +874,28 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
     <div className="row align-items-stretch flex-grow-1">
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
       <div className="col d-flex flex-column">
-        <div className="form-control flex-grow-1 adt-editor">
-          <div className="adt-editor-wrapper">
-            <div className="adt-editor-inner">
-              {/*<JSONNode value={callType(schema, t2)} />*/}
-              <ADTEditorNode
-                value={value}
-                onChange={onChange}
-                onSelect={setSelectedPath}
-                path={[]}
-                type={callType(processedSchema, t2)}
-                schema={processedSchema}
-                selectedPath={selectedPath}
-              />
-            </div>
-          </div>
+        <div className="form-control flex-grow-1">
+          <ScrollArea>
+            <ADTEditorNode
+              value={value}
+              onChange={onChange}
+              onSelect={setSelectedPath}
+              path={[]}
+              type={callType(processedSchema, t2)}
+              schema={processedSchema}
+              selectedPath={selectedPath}
+            />
+          </ScrollArea>
         </div>
         <div className="d-grid">{saveButton}</div>
       </div>
       <div className="col d-flex flex-column">
-        <div className="form-control flex-grow-1 jsonmatcher-editor">
-          <div className="adt-editor-wrapper">
-            <div className="adt-editor-inner">
-              <JSONNode value={value} onChange={onChange} />
+        <div className="form-control flex-grow-1">
+          <div className="lc-adt-editor">
+            <div className="lc-adt-editor-wrapper">
+              <div className="lc-adt-editor-inner">
+                <JSONNode value={value} onChange={onChange} />
+              </div>
             </div>
           </div>
         </div>

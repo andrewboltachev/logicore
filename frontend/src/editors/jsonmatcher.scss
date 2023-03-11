@@ -1,22 +1,11 @@
 $s: 0.75rem;
-.adt-editor,
-.jsonmatcher-editor {
+.lc-adt-editor {
+  position: relative;
+  height: 100%;
   font-family: "Monaco", monospace;
   font-size: $s;
   line-height: 1.5 * $s;
   white-space: pre;
-  input.form-control {
-    border: 0;
-    padding: 0;
-    margin: 0;
-    height: 1em;
-    min-height: auto;
-    font-size: 1em;
-    line-height: 1em;
-    display: inline;
-    width: auto;
-    max-width: 100%;
-  }
   a {
     text-decoration: none;
   }
@@ -33,14 +22,13 @@ $s: 0.75rem;
       border-bottom: 1px solid gray;
     }
   }
-  position: relative;
-}
-.adt-editor-wrapper {
-  position: absolute;
-  $p: 0.25rem;
-  top: $p;
-  left: $p;
-  right: $p;
-  bottom: $p;
-  overflow: auto;
+  &-wrapper {
+    position: absolute;
+    $p: 0.25rem;
+    top: $p;
+    left: $p;
+    right: $p;
+    bottom: $p;
+    overflow: auto;
+  }
 }
