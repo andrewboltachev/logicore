@@ -381,22 +381,22 @@ const TextNodeEditor = ({
   const typeVars = {};
   const newTypeVars = { ...typeVars, ...type?.vars };
   return (
-    <div className="text-danger">
-      {'"'}
+    <div>
       <a
+        className="text-dark"
         href="#"
         onClick={(e) => {
           e.preventDefault();
           runModal(
             {
-              title: t("Add item"),
+              title: t("Change value"),
               fields: {
                 type: "Fields",
                 fields: [
                   {
                     type: "TextField",
                     k: "val",
-                    label: t("Key"),
+                    label: t("Value"),
                     required: true,
                   },
                 ],
@@ -404,15 +404,16 @@ const TextNodeEditor = ({
               modalSize: "md",
             },
             {
-              val: "",
+              val: currentValue,
             },
             ({ val }) => onChange(setByPath(value, path, val))
           );
         }}
       >
-        {currentValue}
+        {'"'}
+        <span className="text-danger">{currentValue}</span>
+        {'"'}
       </a>
-      {'"'}
     </div>
   );
 };
