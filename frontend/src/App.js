@@ -265,7 +265,6 @@ const FiddleListView = ({ title, create_form, items, onChange, baseUrl }) => {
 const LanguageView = ({ onChange }) => {
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
-  console.log("got result", result);
   return (
     <div className="container-fluid my-4">
       <div className="row">
@@ -1144,7 +1143,6 @@ const Fiddle = (props) => {
 
   const saveToLocal = useCallback(
     debounce((val) => {
-      console.log("debounce", JSON.stringify(val));
       window.localStorage.setItem(draftId, JSON.stringify(val));
     }, 200),
     []
@@ -1271,7 +1269,6 @@ const MainWrapper = ({ result, onChange }) => {
 
 const FiddleWrapper = ({ result, onChange }) => {
   let Component = mainComponents[result?.template];
-  console.log("Component", Component);
   const loc = useLocation();
   const getUrl = (lang) => {
     const theUrl = loc.pathname + loc.search;
