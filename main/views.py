@@ -12,6 +12,8 @@ from rest_framework.response import Response
 from proxy.views import proxy_view
 import networkx as nx
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
 
 
 from django.conf import settings
@@ -1076,6 +1078,7 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
         return {"items": items}
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class NewFiddleItemApiView(FiddleTypeMixin, MainView):
     url_path = "/toolbox/<kind>/"
     url_name = "new-fiddle-item"
