@@ -625,10 +625,80 @@ const ListNodeEditor = ({
   );
 };
 
+const ValueNodeEditor = ({
+  value,
+  onChange,
+  onSelect,
+  path,
+  schema,
+  type,
+  vars,
+  selectedPath,
+}) => {
+  const currentValue = getByPath(value, path);
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
+  const isSelected =
+    /*(!path?.length && !selectedPath?.length) ||*/ path.length ===
+      selectedPath.length && path.every((e, i) => e == selectedPath[i]);
+  if (!type) {
+    throw new Error(`Not defined for type ${JSON.stringify(type)}`);
+  }
+  const options = type.contents.map(({ tag, contents }) => ({
+    value: tag,
+    label: tag,
+    newValue: {
+      tag,
+      contents: contents.length === 1 ? null : contents.map((_) => null),
+    },
+  }));
+  const constructor =
+    type?.contents && currentValue?.tag
+      ? type?.contents.find(({ tag }) => currentValue?.tag === tag)
+      : null;
+  const typeVars = {};
+  const newTypeVars = { ...typeVars, ...type?.vars };
+  return (
+    <div>
+      <a
+        className="text-dark"
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          runModal(
+            {
+              title: t("Change value"),
+              fields: {
+                type: "Fields",
+                fields: [
+                  {
+                    type: "TextareaField",
+                    k: "val",
+                    label: t("Value"),
+                    required: true,
+                  },
+                ],
+              },
+              modalSize: "md",
+            },
+            {
+              val: JSON.stringify(currentValue),
+            },
+            ({ val }) => onChange(setByPath(value, path, JSON.parse(val)))
+          );
+        }}
+      >
+        <JSONNode value={currentValue} />
+      </a>
+    </div>
+  );
+};
+
 const standardNodeEditors = {
   KeyMapNodeEditor,
   KeyNodeEditor: TextNodeEditor,
   ListNodeEditor,
+  ValueNodeEditor,
   // String Scientific Bool
   TextNodeEditor,
   ScientificNodeEditor,
@@ -855,6 +925,10 @@ const standardSchema = [
   {
     contents: [],
     value: "Null",
+  },
+  {
+    contents: [],
+    value: "Value",
   },
 ];
 
