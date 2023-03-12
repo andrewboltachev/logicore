@@ -33,6 +33,13 @@ import { useTranslation, Trans } from "react-i18next";
 // ListT transform
 // walk
 
+const onPath = (value, onChange, path) => {
+  return {
+    value: getByPath(value, path),
+    onChange: (newValue) => onChange(setByPath(value, path, newValue)),
+  };
+};
+
 const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
   const lvl = (level || 0) + 1;
   const indent = new Array(lvl).join("  ");
@@ -604,7 +611,7 @@ const ListNodeEditor = ({
               onSelect={onSelect}
               path={[...path, i]}
               schema={schema}
-              type={callType(schema, type.contents[0].contents[0].param)}
+              type={callType(schema, type.contents[0].contents[0])}
               selectedPath={selectedPath}
             />
           </div>
@@ -974,13 +981,6 @@ const ScrollArea = ({ storageKey, prevStorageKey, children }) => {
   );
 };
 
-const onPath = (value, onChange, path) => {
-  return {
-    value: getByPath(value, path),
-    onChange: (newValue) => onChange(setByPath(value, path, newValue)),
-  };
-};
-
 const JSONMatcherEditor = ({
   revId,
   prevRevId,
@@ -1051,8 +1051,8 @@ const JSONMatcherEditor = ({
                     }
                     try {
                       resp = await axios.post(
-                        "/haskell-api/valueToExactGrammar",
-                        { value1: 1 }
+                        "/haskell-api/valueToExactResult",
+                        { value: arg }
                       );
                     } catch (e) {
                       NotificationManager.warning("", t("Unknown error"));
@@ -1060,6 +1060,8 @@ const JSONMatcherEditor = ({
                     if (resp.data.error) {
                       NotificationManager.error("", resp.data.error);
                     } else {
+                      NotificationManager.info("", t("Added JSON"));
+                      onChange({ left: resp.data.result, right: arg });
                     }
                     //onChange();
                   }
