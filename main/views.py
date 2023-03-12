@@ -9,7 +9,10 @@ from collections import defaultdict
 from decimal import Decimal
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from proxy.views import proxy_view
 import networkx as nx
+from django.views.decorators.csrf import csrf_exempt
+
 
 from django.conf import settings
 from django.db import models as db_models
@@ -1175,3 +1178,8 @@ class ExistingFiddleItemApiView(NewFiddleItemApiView):
 class RevisionFiddleItemApiView(ExistingFiddleItemApiView):
     url_path = "/toolbox/<kind>/<uuid>/<rev>/"
     url_name = "revision-fiddle-item"
+
+
+@csrf_exempt
+def haskell_api(request, path):
+    return proxy_view(request, f"http://localhost:3042/{path}", {})

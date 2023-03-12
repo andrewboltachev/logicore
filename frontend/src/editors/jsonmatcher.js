@@ -5,6 +5,8 @@ import schema from "./jsonmatcher_schema";
 import { ModalProvider, ModalContext } from "../runModal";
 import { useDraggable } from "react-use-draggable-scroll";
 import { useLocalStorage } from "../utils";
+import { NotificationManager } from "react-notifications";
+import { axios } from "../imports";
 
 import "./jsonmatcher.scss";
 
@@ -24,7 +26,6 @@ import {
   modifyHelper,
 } from "../logicore-forms";
 import { useTranslation, Trans } from "react-i18next";
-import runModal from "../runModal";
 
 // TODO
 // migrate fn
@@ -973,6 +974,13 @@ const ScrollArea = ({ storageKey, prevStorageKey, children }) => {
   );
 };
 
+const onPath = (value, onChange, path) => {
+  return {
+    value: getByPath(value, path),
+    onChange: (newValue) => onChange(setByPath(value, path, newValue)),
+  };
+};
+
 const JSONMatcherEditor = ({
   revId,
   prevRevId,
@@ -983,6 +991,9 @@ const JSONMatcherEditor = ({
   //const [value, onChange] = useState(exampleData.value);
   const [selectedPath, setSelectedPath] = useState([]);
   const processedSchema = [...standardSchema, ...schema];
+  const right = onPath(value, onChange, ["right"]);
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
   return (
     <div className="row align-items-stretch flex-grow-1">
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
@@ -993,11 +1004,10 @@ const JSONMatcherEditor = ({
             prevStorageKey={prevRevId ? `scroll-left-${prevRevId}` : null}
           >
             <ADTEditorNode
-              value={value}
-              onChange={onChange}
+              {...onPath(value, onChange, ["left"])}
               onSelect={setSelectedPath}
               path={[]}
-              type={callType(processedSchema, t2)}
+              type={callType(processedSchema, t1)}
               schema={processedSchema}
               selectedPath={selectedPath}
             />
@@ -1006,12 +1016,66 @@ const JSONMatcherEditor = ({
         <div className="d-grid">{saveButton}</div>
       </div>
       <div className="col d-flex flex-column">
+        <div>
+          <div className="btn-group">
+            <button
+              className="btn btn-sm btn-outline-primary"
+              type="button"
+              onClick={(_) => {
+                runModal(
+                  {
+                    title: t("Insert JSON"),
+                    fields: {
+                      type: "Fields",
+                      fields: [
+                        {
+                          type: "TextareaField",
+                          k: "val",
+                          label: t("Value"),
+                          required: true,
+                        },
+                      ],
+                    },
+                    modalSize: "md",
+                  },
+                  {
+                    val: "",
+                  },
+                  async ({ val }) => {
+                    let resp = null;
+                    let arg = null;
+                    try {
+                      arg = JSON.parse(val);
+                    } catch (e) {
+                      NotificationManager.error("", t("JSON parsing error"));
+                    }
+                    try {
+                      resp = await axios.post(
+                        "/haskell-api/valueToExactGrammar",
+                        { value1: 1 }
+                      );
+                    } catch (e) {
+                      NotificationManager.warning("", t("Unknown error"));
+                    }
+                    if (resp.data.error) {
+                      NotificationManager.error("", resp.data.error);
+                    } else {
+                    }
+                    //onChange();
+                  }
+                );
+              }}
+            >
+              <i className="fa fa-paste" /> <Trans>Add JSON</Trans>
+            </button>
+          </div>
+        </div>
         <div className="form-control flex-grow-1">
           <ScrollArea
             storageKey={`scroll-right-${revId}`}
             prevStorageKey={prevRevId ? `scroll-right-${prevRevId}` : null}
           >
-            <JSONNode value={value} onChange={onChange} />
+            <JSONNode value={right?.value} />
           </ScrollArea>
         </div>
         {/*<div className="d-grid">
