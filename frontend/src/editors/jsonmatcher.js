@@ -1,9 +1,10 @@
-import { useState, useContext, useRef } from "react";
+import { useState, useContext, useRef, useEffect } from "react";
 import exampleData from "./jsonmatcher_example";
 import { update } from "../logicore-forms/utils";
 import schema from "./jsonmatcher_schema";
 import { ModalProvider, ModalContext } from "../runModal";
 import { useDraggable } from "react-use-draggable-scroll";
+import { useLocalStorage } from "../utils";
 
 import "./jsonmatcher.scss";
 
@@ -857,39 +858,54 @@ const standardSchema = [
   },
 ];
 
-const ScrollArea = ({ children }) => {
+const ScrollArea = ({ storageKey, prevStorageKey, children }) => {
   const innerRef = useRef(null);
-  const [isDown, setIsDown] = useState(null);
-  const mouseDown = (e) => {
-    e.persist();
-    console.log(e);
-    setIsDown([]);
-  };
-  const mouseUp = () => {
-    setIsDown(null);
-  };
-  const mouseMove = (e) => {
-    e.preventDefault();
-  };
+  const draggable = useDraggable(innerRef);
+  const { events } = draggable;
+  const [state, setState] = useLocalStorage(storageKey);
+  useEffect(() => {
+    if (!storageKey) return;
+    if (state) {
+      innerRef?.current.scrollTo(state[0], state[1]);
+    } else {
+      console.log("try read prev state", prevStorageKey);
+      let prevState = null;
+      try {
+        prevState = JSON.parse(window.localStorage.getItem(prevStorageKey));
+      } catch (e) {
+        //
+        console.warn(e);
+      }
+      console.log("got prev state", prevState);
+      if (Array.isArray(prevState)) {
+        innerRef?.current.scrollTo(prevState[0], prevState[1]);
+        //setState(prevState[0], prevState[1]);
+      }
+    }
+  }, [!state, storageKey]);
   return (
     <div className="lc-adt-editor">
-      <div className="lc-adt-editor-wrapper">
-        <div
-          className="lc-adt-editor-inner"
-          style={{ cursor: isDown ? "grab" : "auto" }}
-          ref={innerRef}
-          onMouseDown={mouseDown}
-          onMouseMove={mouseMove}
-          onMouseUp={mouseUp}
-        >
-          {children}
-        </div>
+      <div
+        className="lc-adt-editor-wrapper"
+        ref={innerRef}
+        {...events}
+        onScroll={(e) => {
+          if (storageKey) setState([e.target.scrollLeft, e.target.scrollTop]);
+        }}
+      >
+        <div className="lc-adt-editor-inner">{children}</div>
       </div>
     </div>
   );
 };
 
-const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
+const JSONMatcherEditor = ({
+  revId,
+  prevRevId,
+  value,
+  onChange,
+  saveButton,
+}) => {
   //const [value, onChange] = useState(exampleData.value);
   const [selectedPath, setSelectedPath] = useState([]);
   const processedSchema = [...standardSchema, ...schema];
@@ -898,7 +914,10 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
       <div className="col d-flex flex-column">
         <div className="form-control flex-grow-1">
-          <ScrollArea>
+          <ScrollArea
+            storageKey={`scroll-left-${revId}`}
+            prevStorageKey={prevRevId ? `scroll-left-${prevRevId}` : null}
+          >
             <ADTEditorNode
               value={value}
               onChange={onChange}
@@ -914,13 +933,12 @@ const JSONMatcherEditor = ({ value, onChange, saveButton }) => {
       </div>
       <div className="col d-flex flex-column">
         <div className="form-control flex-grow-1">
-          <div className="lc-adt-editor">
-            <div className="lc-adt-editor-wrapper">
-              <div className="lc-adt-editor-inner">
-                <JSONNode value={value} onChange={onChange} />
-              </div>
-            </div>
-          </div>
+          <ScrollArea
+            storageKey={`scroll-right-${revId}`}
+            prevStorageKey={prevRevId ? `scroll-right-${prevRevId}` : null}
+          >
+            <JSONNode value={value} onChange={onChange} />
+          </ScrollArea>
         </div>
         {/*<div className="d-grid">
           <button className="btn btn-success mt-2" type="button" onClick={_ => _}>

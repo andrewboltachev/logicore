@@ -1088,7 +1088,9 @@ const Fiddle = (props) => {
   const [dirty, setDirty] = useState(false);
 
   const draftPrefix = props.uuid ? `${props.uuid}/` : "";
-  const draftId = `draft[${draftPrefix}${props.rev}]`;
+  const draftKey = `${draftPrefix}${props.rev}`;
+  const prevDraftKey = props.rev > 1 ? `${draftPrefix}${props.rev - 1}` : null;
+  const draftId = `draft[${draftKey}]`;
 
   const { t } = useTranslation();
   const save = async () => {
@@ -1172,7 +1174,13 @@ const Fiddle = (props) => {
 
   return (
     <div className="container-fluid my-3 flex-grow-1 d-flex flex-column">
-      <Editor value={val} onChange={editVal} saveButton={saveButton} />
+      <Editor
+        revId={draftKey}
+        prevRevId={prevDraftKey}
+        value={val}
+        onChange={editVal}
+        saveButton={saveButton}
+      />
     </div>
   );
 };
