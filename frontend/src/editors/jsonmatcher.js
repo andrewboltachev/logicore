@@ -762,7 +762,10 @@ const ADTEditorNode = ({
           return (
             <a
               href="#"
-              onClick={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                run({ value, path, onChange, runModal });
+              }}
               className={`me-1 ${className || ""}`}
             >
               <i className={icon} />
@@ -1002,6 +1005,71 @@ const ScrollArea = ({ storageKey, prevStorageKey, children }) => {
   );
 };
 
+const ADTEditorGrammarValue = ({
+  value,
+  onChange,
+  error,
+  definition,
+  context,
+  path,
+  disabled,
+}) => {
+  //const [value, onChange] = useState(exampleData.value);
+  const [selectedPath, setSelectedPath] = useState([]);
+  const processedSchema = [...standardSchema, ...schema];
+  const right = onPath(value, onChange, ["right"]);
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
+  return (
+    <div className="row align-items-stretch flex-grow-1">
+      {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
+      <div className="col d-flex flex-column">
+        <div className="form-control flex-grow-1" style={{ height: "70vh" }}>
+          <ScrollArea
+            storageKey={`scroll-left-${context?.revId}`}
+            prevStorageKey={
+              context?.prevRevId ? `scroll-left-${context?.prevRevId}` : null
+            }
+          >
+            <ADTEditorNode
+              {...onPath(value, onChange, ["left"])}
+              onSelect={setSelectedPath}
+              path={[]}
+              type={callType(processedSchema, definition?.t1)}
+              schema={processedSchema}
+              selectedPath={selectedPath}
+              getActions={null}
+            />
+          </ScrollArea>
+        </div>
+        <div className="d-grid"></div>
+      </div>
+      <div className="col d-flex flex-column">
+        <div className="form-control flex-grow-1">
+          <ScrollArea
+            storageKey={`scroll-right-${context?.revId}`}
+            prevStorageKey={
+              context?.prevRevId ? `scroll-right-${context?.prevRevId}` : null
+            }
+          >
+            <JSONNode value={right?.value} />
+          </ScrollArea>
+        </div>
+        {/*<div className="d-grid">
+          <button className="btn btn-success mt-2" type="button" onClick={_ => _}>
+            <i className="fa fa-play-circle" />{" "}
+            <Trans>Run</Trans>
+          </button>
+        </div>*/}
+      </div>
+    </div>
+  );
+};
+ADTEditorGrammarValue.isEmpty = (_) => false;
+Object.assign(formComponents, {
+  ADTEditorGrammarValue,
+});
+
 const JSONMatcherEditor = ({
   revId,
   prevRevId,
@@ -1018,7 +1086,90 @@ const JSONMatcherEditor = ({
   const getActions = (theType) => {
     if (theType?.value === "MatchResult") {
       return [
-        { icon: "fa fa-cog", className: "text-success", run: () => {} },
+        {
+          icon: "fa fa-cog",
+          className: "text-success",
+          run: async ({ value, onChange, path, runModal }) => {
+            const result = getByPath(value, path);
+            let resp = null;
+            let left = null;
+            let right = null;
+            try {
+              resp = await axios.post("/haskell-api/matchResultToPattern", {
+                result,
+              });
+            } catch (e) {
+              NotificationManager.warning("", t("Unknown error"));
+              return;
+            }
+            if (resp.data.error) {
+              NotificationManager.error("", resp.data.error);
+              return;
+            }
+            left = resp.data.pattern;
+            try {
+              resp = await axios.post("/haskell-api/matchResultToValue", {
+                result,
+              });
+            } catch (e) {
+              NotificationManager.warning("", t("Unknown error"));
+              return;
+            }
+            if (resp.data.error) {
+              NotificationManager.error("", resp.data.error);
+              return;
+            }
+            right = resp.data;
+            // else, if all ok
+            runModal(
+              {
+                title: t("Split into Grammar and Value"),
+                fields: {
+                  type: "Fields",
+                  fields: [
+                    {
+                      type: "ADTEditorGrammarValue",
+                      k: "val",
+                      label: t("Value"),
+                      required: true,
+                      t1: {
+                        type: "ConT",
+                        value: "MatchPattern",
+                      },
+                    },
+                  ],
+                },
+                modalSize: "xl",
+              },
+              {
+                val: { left, right },
+              },
+              async ({ val }) => {
+                /*let resp = null;
+                let arg = null;
+                try {
+                  arg = JSON.parse(val);
+                } catch (e) {
+                  NotificationManager.error("", t("JSON parsing error"));
+                }
+                try {
+                  resp = await axios.post("/haskell-api/valueToExactResult", {
+                    value: arg,
+                  });
+                } catch (e) {
+                  NotificationManager.warning("", t("Unknown error"));
+                }
+                if (resp.data.error) {
+                  NotificationManager.error("", resp.data.error);
+                } else {
+                  NotificationManager.info("", t("Added JSON"));
+                  onChange({ left: resp.data.result, right: arg });
+                }*/
+                //onChange();
+              }
+            );
+          },
+        },
         { icon: "fa fa-cog", className: "text-warning", run: () => {} },
       ];
     }
