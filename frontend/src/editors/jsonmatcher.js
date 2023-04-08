@@ -221,6 +221,7 @@ const KeyMapNodeEditor = ({
   type,
   vars,
   selectedPath,
+  getActions,
 }) => {
   const currentValue = getByPath(value, path);
   const { t } = useTranslation();
@@ -318,6 +319,7 @@ const KeyMapNodeEditor = ({
               schema={schema}
               type={childTypeDef}
               selectedPath={selectedPath}
+              getActions={getActions}
             />
           </div>
         );
@@ -371,6 +373,7 @@ const TextNodeEditor = ({
   type,
   vars,
   selectedPath,
+  getActions,
 }) => {
   const currentValue = getByPath(value, path);
   const { t } = useTranslation();
@@ -442,6 +445,7 @@ const ScientificNodeEditor = ({
   type,
   vars,
   selectedPath,
+  getActions,
 }) => {
   const currentValue = getByPath(value, path);
   const { t } = useTranslation();
@@ -511,6 +515,7 @@ const BoolNodeEditor = ({
   type,
   vars,
   selectedPath,
+  getActions,
 }) => {
   const currentValue = getByPath(value, path);
   const { t } = useTranslation();
@@ -560,6 +565,7 @@ const ListNodeEditor = ({
   type,
   vars,
   selectedPath,
+  getActions,
 }) => {
   const currentValue = getByPath(value, path);
   const { t } = useTranslation();
@@ -613,6 +619,7 @@ const ListNodeEditor = ({
               schema={schema}
               type={callType(schema, type.contents[0].contents[0])}
               selectedPath={selectedPath}
+              getActions={getActions}
             />
           </div>
         );
@@ -642,6 +649,7 @@ const ValueNodeEditor = ({
   type,
   vars,
   selectedPath,
+  getActions,
 }) => {
   const currentValue = getByPath(value, path);
   const { t } = useTranslation();
@@ -722,6 +730,7 @@ const ADTEditorNode = ({
   type,
   vars,
   selectedPath,
+  getActions,
 }) => {
   const currentValue = getByPath(value, path);
   const { t } = useTranslation();
@@ -749,6 +758,17 @@ const ADTEditorNode = ({
   return (
     <div className="lc-adt-editor-card">
       <div className="lc-adt-editor-card-title">
+        {(getActions?.(type) || []).map(({ icon, run, className }) => {
+          return (
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className={`me-1 ${className || ""}`}
+            >
+              <i className={icon} />
+            </a>
+          );
+        })}
         <a
           href="#"
           onClick={(e) => {
@@ -809,6 +829,7 @@ const ADTEditorNode = ({
                   schema={schema}
                   type={callType(schema, arg)}
                   selectedPath={selectedPath}
+                  getActions={getActions}
                 />
               </div>
             );
@@ -994,6 +1015,14 @@ const JSONMatcherEditor = ({
   const right = onPath(value, onChange, ["right"]);
   const { t } = useTranslation();
   const { runModal } = useContext(ModalContext);
+  const getActions = (theType) => {
+    if (theType?.value === "MatchResult") {
+      return [
+        { icon: "fa fa-cog", className: "text-success", run: () => {} },
+        { icon: "fa fa-cog", className: "text-warning", run: () => {} },
+      ];
+    }
+  };
   return (
     <div className="row align-items-stretch flex-grow-1">
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
@@ -1010,6 +1039,7 @@ const JSONMatcherEditor = ({
               type={callType(processedSchema, t1)}
               schema={processedSchema}
               selectedPath={selectedPath}
+              getActions={getActions}
             />
           </ScrollArea>
         </div>
