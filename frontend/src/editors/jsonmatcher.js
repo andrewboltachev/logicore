@@ -7,6 +7,9 @@ import { useDraggable } from "react-use-draggable-scroll";
 import { useLocalStorage } from "../utils";
 import { NotificationManager } from "react-notifications";
 import { axios } from "../imports";
+import _ from "lodash";
+
+import { Button, Modal } from "react-bootstrap";
 
 import "./jsonmatcher.scss";
 
@@ -25,6 +28,7 @@ import {
   setByPath,
   modifyHelper,
 } from "../logicore-forms";
+import { modalComponents } from "../runModal";
 import { useTranslation, Trans } from "react-i18next";
 
 // TODO
@@ -218,6 +222,7 @@ const KeyMapNodeEditor = ({
   onSelect,
   path,
   schema,
+  schemaConversions,
   type,
   vars,
   selectedPath,
@@ -315,6 +320,7 @@ const KeyMapNodeEditor = ({
               onSelect={onSelect}
               path={[...path, k]}
               schema={schema}
+              schemaConversions={schemaConversions}
               type={childTypeDef}
               selectedPath={selectedPath}
               getActions={getActions}
@@ -367,6 +373,7 @@ const TextNodeEditor = ({
   onSelect,
   path,
   schema,
+  schemaConversions,
   type,
   vars,
   selectedPath,
@@ -437,6 +444,7 @@ const ScientificNodeEditor = ({
   onSelect,
   path,
   schema,
+  schemaConversions,
   type,
   vars,
   selectedPath,
@@ -505,6 +513,7 @@ const BoolNodeEditor = ({
   onSelect,
   path,
   schema,
+  schemaConversions,
   type,
   vars,
   selectedPath,
@@ -555,6 +564,7 @@ const ListNodeEditor = ({
   onSelect,
   path,
   schema,
+  schemaConversions,
   type,
   vars,
   selectedPath,
@@ -610,6 +620,7 @@ const ListNodeEditor = ({
               onSelect={onSelect}
               path={[...path, i]}
               schema={schema}
+              schemaConversions={schemaConversions}
               type={callType(schema, type.contents[0].contents[0])}
               selectedPath={selectedPath}
               getActions={getActions}
@@ -639,6 +650,7 @@ const ValueNodeEditor = ({
   onSelect,
   path,
   schema,
+  schemaConversions,
   type,
   vars,
   selectedPath,
@@ -720,6 +732,7 @@ const ADTEditorNode = ({
   onSelect,
   path,
   schema,
+  schemaConversions,
   type,
   vars,
   selectedPath,
@@ -770,7 +783,7 @@ const ADTEditorNode = ({
           href="#"
           onClick={async (e) => {
             e.preventDefault();
-            const result = runModal({
+            const result = await runModal({
               title: t("Edit Node"),
               fields: {
                 type: "Fields",
@@ -792,7 +805,19 @@ const ADTEditorNode = ({
               },
             });
             if (result) {
-              onChange(setByPath(value, path, result.tag?.newValue || null));
+              let r = null;
+              if (result.tag?.newValue) {
+                r = { ...result.tag?.newValue };
+                if (currentValue?.tag && r?.tag) {
+                  let c = schemaConversions[type?.value] || {};
+                  c = c[currentValue?.tag] || {};
+                  c = c[r?.tag];
+                  if (c) {
+                    r.contents = c(currentValue?.contents);
+                  }
+                }
+              }
+              onChange(setByPath(value, path, r));
             }
           }}
         >
@@ -823,6 +848,7 @@ const ADTEditorNode = ({
                   onSelect={onSelect}
                   path={newPath}
                   schema={schema}
+                  schemaConversions={schemaConversions}
                   type={callType(schema, arg)}
                   selectedPath={selectedPath}
                   getActions={getActions}
@@ -998,6 +1024,23 @@ const ScrollArea = ({ storageKey, prevStorageKey, children }) => {
   );
 };
 
+const schemaConversions1 = {
+  MatchPattern: {
+    MatchObjectFull: { MatchObjectPartial: _.identity },
+    MatchObjectPartial: { MatchObjectFull: _.identity },
+  },
+  MatchResult: {
+    MatchObjectFullResult: { MatchObjectPartialResult: _.identity },
+    MatchObjectPartialResult: { MatchObjectFullResult: _.identity },
+    MatchStringAnyResult: { MatchStringExactResult: _.identity },
+    MatchStringExactResult: { MatchStringAnyResult: _.identity },
+    MatchNumberAnyResult: { MatchNumberExactResult: _.identity },
+    MatchNumberExactResult: { MatchNumberAnyResult: _.identity },
+    MatchBoolAnyResult: { MatchBoolExactResult: _.identity },
+    MatchBoolExactResult: { MatchBoolAnyResult: _.identity },
+  },
+};
+
 const ADTEditorGrammarValue = ({
   value,
   onChange,
@@ -1030,6 +1073,7 @@ const ADTEditorGrammarValue = ({
               path={[]}
               type={callType(processedSchema, definition?.t1)}
               schema={processedSchema}
+              schemaConversions={schemaConversions1}
               selectedPath={selectedPath}
               getActions={null}
             />
@@ -1061,6 +1105,224 @@ const ADTEditorGrammarValue = ({
 ADTEditorGrammarValue.isEmpty = (_) => false;
 Object.assign(formComponents, {
   ADTEditorGrammarValue,
+});
+
+const ADTEditorGrammarValueModal = (config) => {
+  const { resolve } = config;
+  const { t } = useTranslation();
+  const [value, onChange1] = useState(config.value);
+  const [matchResult, setMatchResult] = useState(config.matchResult);
+  const onChange = (v) => {
+    setMatchResult(null);
+    onChange1(v);
+  };
+  const [errors, setErrors] = useState(null);
+  const context = config?.context || {};
+  const onReset1 = (path) => {
+    setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
+  };
+  const run = async () => {
+    let result = null;
+    let resp = null;
+    try {
+      resp = await axios.post("/haskell-api/matchPattern", {
+        pattern: value.val.left,
+        value: value.val.right,
+      });
+    } catch (e) {
+      NotificationManager.warning("", t("Unknown error"));
+      console.error(e);
+      return;
+    }
+    if (resp.data.error) {
+      NotificationManager.error("", resp.data.error);
+      return;
+    }
+    NotificationManager.info("", t("Pattern updated"));
+    setMatchResult(resp.data.result);
+  };
+  const fullReset = () => {
+    onChange1(config.value);
+    setMatchResult(config.matchResult);
+  };
+  const handleSubmit = async () => {
+    const error = validateDefinition(config?.fields, value);
+    setErrors(error);
+    if (!definitionIsInvalid(config?.fields, error, value)) {
+      // ok
+      resolve(matchResult);
+      //onReset(path);
+    } else {
+      /*NotificationManager.error(
+        "Please fix the errors below",
+        "Error"
+      );
+      setTimeout(() => {
+        try {
+          document
+            .getElementsByClassName("invalid-feedback d-block")[0]
+            .parentNode.scrollIntoViewIfNeeded();
+        } catch (e) {
+          console.warn(e);
+        }
+      }, 50);*/
+    }
+  };
+  return (
+    <>
+      <Modal.Body>
+        <FormComponent
+          definition={{ ...config?.fields, layout: void 0 }}
+          value={value}
+          onChange={onChange}
+          error={errors}
+          onReset={onReset1}
+          path={[]}
+          context={{
+            ...context,
+            forceLabelWidth: "100%",
+            labelPlacement: "horizontalPlus",
+            handleSubmit,
+          }}
+        />
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="success" onClick={run}>
+          Run
+        </Button>
+        <Button variant="danger" onClick={fullReset}>
+          Reset
+        </Button>
+        <div className="flex-grow-1" />
+        <Button variant="secondary" onClick={() => resolve(null)}>
+          Close
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={!matchResult}
+        >
+          Accept
+        </Button>
+      </Modal.Footer>
+    </>
+  );
+};
+const ADTEditorThinValueModal = (config) => {
+  const initial = {
+    val: JSON.stringify(config.value.right),
+  };
+  //console.log("INITIAL", initial);
+  const { resolve } = config;
+  const { t } = useTranslation();
+  const [value, onChange1] = useState(initial);
+  const [matchResult, setMatchResult] = useState(config.matchResult);
+  const onChange = (v) => {
+    setMatchResult(null);
+    onChange1(v);
+  };
+  const [errors, setErrors] = useState(null);
+  const context = config?.context || {};
+  const onReset1 = (path) => {
+    setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
+  };
+  const run = async () => {
+    let result = null;
+    let resp = null;
+    let thinValue = null;
+    try {
+      thinValue = JSON.parse(value.val);
+    } catch (e) {
+      NotificationManager.warning(e.message, t("JSON parsing error"));
+      console.error(e);
+      return;
+    }
+    try {
+      resp = await axios.post("/haskell-api/thinPattern", {
+        pattern: config.value.left,
+        thinValue,
+      });
+    } catch (e) {
+      NotificationManager.warning("", t("Unknown error"));
+      console.error(e);
+      return;
+    }
+    if (resp.data.error) {
+      NotificationManager.error("", resp.data.error);
+      return;
+    }
+    NotificationManager.info("", t("Pattern updated"));
+    setMatchResult(resp.data.result);
+  };
+  const fullReset = () => {
+    onChange1(initial);
+    setMatchResult(config.matchResult);
+  };
+  const handleSubmit = async () => {
+    const error = validateDefinition(config?.fields, value);
+    setErrors(error);
+    if (!definitionIsInvalid(config?.fields, error, value)) {
+      // ok
+      resolve(matchResult);
+      //onReset(path);
+    } else {
+      /*NotificationManager.error(
+        "Please fix the errors below",
+        "Error"
+      );
+      setTimeout(() => {
+        try {
+          document
+            .getElementsByClassName("invalid-feedback d-block")[0]
+            .parentNode.scrollIntoViewIfNeeded();
+        } catch (e) {
+          console.warn(e);
+        }
+      }, 50);*/
+    }
+  };
+  return (
+    <>
+      <Modal.Body>
+        <FormComponent
+          definition={{ ...config?.fields, layout: void 0 }}
+          {...onPath(value, onChange, [])}
+          error={errors}
+          onReset={onReset1}
+          path={[]}
+          context={{
+            ...context,
+            forceLabelWidth: "100%",
+            labelPlacement: "horizontalPlus",
+            handleSubmit,
+          }}
+        />
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="success" onClick={run}>
+          Run
+        </Button>
+        <Button variant="danger" onClick={fullReset}>
+          Reset
+        </Button>
+        <div className="flex-grow-1" />
+        <Button variant="secondary" onClick={() => resolve(null)}>
+          Close
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={!matchResult}
+        >
+          Accept
+        </Button>
+      </Modal.Footer>
+    </>
+  );
+};
+Object.assign(modalComponents, {
+  ADTEditorGrammarValueModal,
+  ADTEditorThinValueModal,
 });
 
 const JSONMatcherEditor = ({
@@ -1113,10 +1375,11 @@ const JSONMatcherEditor = ({
               NotificationManager.error("", resp.data.error);
               return;
             }
-            right = resp.data;
+            right = resp.data.value;
             // else, if all ok
-            return await runModal({
+            const newMatchPattern = await runModal({
               title: t("Split into Grammar and Value"),
+              component: "ADTEditorGrammarValueModal",
               fields: {
                 type: "Fields",
                 fields: [
@@ -1137,33 +1400,99 @@ const JSONMatcherEditor = ({
                 val: { left, right },
               },
             });
-            /*let resp = null;
-                let arg = null;
-                try {
-                  arg = JSON.parse(val);
-                } catch (e) {
-                  NotificationManager.error("", t("JSON parsing error"));
-                }
-                try {
-                  resp = await axios.post("/haskell-api/valueToExactResult", {
-                    value: arg,
-                  });
-                } catch (e) {
-                  NotificationManager.warning("", t("Unknown error"));
-                }
-                if (resp.data.error) {
-                  NotificationManager.error("", resp.data.error);
-                } else {
-                  NotificationManager.info("", t("Added JSON"));
-                  onChange({ left: resp.data.result, right: arg });
-                }*/
-            //onChange();
+            if (newMatchPattern) {
+              onChange(setByPath(value, path, newMatchPattern));
+            }
           },
         },
-        { icon: "fa fa-cog", className: "text-warning", run: () => {} },
+        {
+          icon: "fa fa-cog",
+          className: "text-warning",
+          run: async ({ value, onChange, path, runModal }) => {
+            console.log("willl work", value);
+            const result = getByPath(value, path);
+            let resp = null;
+            let left = null;
+            let right = null;
+            try {
+              resp = await axios.post("/haskell-api/matchResultToPattern", {
+                result,
+              });
+            } catch (e) {
+              NotificationManager.warning("", t("Unknown error"));
+              return;
+            }
+            if (resp.data.error) {
+              NotificationManager.error("", resp.data.error);
+              return;
+            }
+            left = resp.data.pattern;
+            try {
+              resp = await axios.post("/haskell-api/matchResultToThinValue", {
+                result,
+              });
+            } catch (e) {
+              NotificationManager.warning("", t("Unknown error"));
+              return;
+            }
+            if (resp.data.error) {
+              NotificationManager.error("", resp.data.error);
+              return;
+            }
+            right = resp.data.thinValue;
+            // else, if all ok
+            const newMatchPattern = await runModal({
+              title: t("Edit Thin Value"),
+              component: "ADTEditorThinValueModal",
+              fields: {
+                type: "Fields",
+                fields: [
+                  {
+                    type: "TextareaField",
+                    k: "val",
+                    label: t("Value"),
+                    required: true,
+                    t1: {
+                      type: "ConT",
+                      value: "MatchPattern",
+                    },
+                  },
+                ],
+              },
+              modalSize: "xl",
+              value: {
+                left,
+                right,
+              },
+            });
+            if (newMatchPattern) {
+              onChange(setByPath(value, path, newMatchPattern));
+            }
+          },
+        },
       ];
     }
   };
+  useEffect(() => {
+    (async () => {
+      let resp = null,
+        right = null;
+      try {
+        resp = await axios.post("/haskell-api/matchResultToValue", {
+          result: value.left,
+        });
+      } catch (e) {
+        NotificationManager.warning("", t("Unknown error"));
+        return;
+      }
+      if (resp.data.error) {
+        NotificationManager.error("", resp.data.error);
+        return;
+      }
+      right = resp.data.value;
+      onChange(update(value, { right: { $set: right } }));
+    })();
+  }, [value.left]);
   return (
     <div className="row align-items-stretch flex-grow-1">
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
@@ -1179,6 +1508,7 @@ const JSONMatcherEditor = ({
               path={[]}
               type={callType(processedSchema, t1)}
               schema={processedSchema}
+              schemaConversions={schemaConversions1}
               selectedPath={selectedPath}
               getActions={getActions}
             />

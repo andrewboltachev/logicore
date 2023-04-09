@@ -118,7 +118,10 @@ const ModalProvider = ({ children }) => {
         ([id, config]) => {
           const { level, component, modalSize, title, resolve } = config;
           const closeThis = () => resolve(null);
-          const ModalComponent = modalComponents[component || "FormModal"];
+          const ModalComponent =
+            typeof component === "object"
+              ? component
+              : modalComponents[component || "FormModal"];
           return (
             <Modal
               key={id}
