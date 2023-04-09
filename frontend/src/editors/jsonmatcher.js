@@ -281,7 +281,7 @@ const KeyMapNodeEditor = ({
               href="#"
               onClick={async (e) => {
                 e.preventDefault();
-                const { val } = await runModal(
+                const result = await runModal(
                   {
                     title: t("Change item key"),
                     fields: {
@@ -301,10 +301,12 @@ const KeyMapNodeEditor = ({
                     val: k,
                   }
                 );
-                const current = { ...getByPath(value, path) };
-                delete current[k];
-                current[val] = v;
-                onChange(setByPath(value, path, current));
+                if (result) {
+                  const current = { ...getByPath(value, path) };
+                  delete current[k];
+                  current[result.val] = v;
+                  onChange(setByPath(value, path, current));
+                }
               }}
             >
               <span className="text-muted">{` ${k} `}</span>
@@ -324,9 +326,9 @@ const KeyMapNodeEditor = ({
       })}
       <a
         href="#"
-        onClick={(e) => {
+        onClick={async (e) => {
           e.preventDefault();
-          runModal(
+          const result = await runModal(
             {
               title: t("Add item"),
               fields: {
@@ -344,15 +346,16 @@ const KeyMapNodeEditor = ({
             },
             {
               val: "",
-            },
-            ({ val }) =>
-              onChange(
-                setByPath(value, path, {
-                  ...(getByPath(value, path) || {}),
-                  [val]: null,
-                })
-              )
+            }
           );
+          if (result) {
+            onChange(
+              setByPath(value, path, {
+                ...(getByPath(value, path) || {}),
+                [result.val]: null,
+              })
+            );
+          }
         }}
       >
         {"+ "}
@@ -401,9 +404,9 @@ const TextNodeEditor = ({
       <a
         className="text-dark"
         href="#"
-        onClick={(e) => {
+        onClick={async (e) => {
           e.preventDefault();
-          runModal(
+          const result = await runModal(
             {
               title: t("Change value"),
               fields: {
@@ -421,9 +424,9 @@ const TextNodeEditor = ({
             },
             {
               val: currentValue,
-            },
-            ({ val }) => onChange(setByPath(value, path, val))
+            }
           );
+          if (result) onChange(setByPath(value, path, result.val));
         }}
       >
         {'"'}
@@ -473,9 +476,9 @@ const ScientificNodeEditor = ({
       <a
         className="text-dark"
         href="#"
-        onClick={(e) => {
+        onClick={async (e) => {
           e.preventDefault();
-          runModal(
+          const result = runModal(
             {
               title: t("Change value"),
               fields: {
@@ -493,9 +496,9 @@ const ScientificNodeEditor = ({
             },
             {
               val: currentValue,
-            },
-            ({ val }) => onChange(setByPath(value, path, val))
+            }
           );
+          if (result) onChange(setByPath(value, path, result.val));
         }}
       >
         <span className="text-primary">{currentValue || 0}</span>
@@ -677,9 +680,9 @@ const ValueNodeEditor = ({
       <a
         className="text-dark"
         href="#"
-        onClick={(e) => {
+        onClick={async (e) => {
           e.preventDefault();
-          runModal(
+          const result = runModal(
             {
               title: t("Change value"),
               fields: {
@@ -697,9 +700,11 @@ const ValueNodeEditor = ({
             },
             {
               val: JSON.stringify(currentValue),
-            },
-            ({ val }) => onChange(setByPath(value, path, JSON.parse(val)))
+            }
           );
+          if (result) {
+            onChange(setByPath(value, path, JSON.parse(result.val)));
+          }
         }}
       >
         <JSONNode value={currentValue} />
@@ -773,9 +778,9 @@ const ADTEditorNode = ({
         })}
         <a
           href="#"
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault();
-            runModal(
+            const result = runModal(
               {
                 title: t("Edit Node"),
                 fields: {
@@ -796,10 +801,11 @@ const ADTEditorNode = ({
                 tag:
                   options.find(({ value }) => value === currentValue?.tag) ||
                   null,
-              },
-              ({ tag }) =>
-                onChange(setByPath(value, path, tag?.newValue || null))
+              }
             );
+            if (result) {
+              onChange(setByPath(value, path, result.tag?.newValue || null));
+            }
           }}
         >
           {/*{type?.value}

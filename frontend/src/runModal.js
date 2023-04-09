@@ -22,9 +22,9 @@ import {
 import { Button, Modal } from "react-bootstrap";
 
 const FormModal = (config) => {
+  const { resolve } = config;
   const [value, onChange] = useState(null);
   const [errors, setErrors] = useState(null);
-  const cb = useRef(null);
   const context = config?.context || {};
   const onReset1 = (path) => {
     setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
@@ -35,7 +35,7 @@ const FormModal = (config) => {
     if (!definitionIsInvalid(config?.fields, error, value)) {
       // ok
       console.log("run cb");
-      cb?.current(value);
+      resolve(value);
       //onReset(path);
     } else {
       /*NotificationManager.error(
@@ -54,22 +54,32 @@ const FormModal = (config) => {
     }
   };
   return (
-    <div>
-      <FormComponent
-        definition={{ ...config?.fields, layout: void 0 }}
-        value={value}
-        onChange={onChange}
-        error={errors}
-        onReset={onReset1}
-        path={[]}
-        context={{
-          ...context,
-          forceLabelWidth: "100%",
-          labelPlacement: "horizontalPlus",
-          handleSubmit,
-        }}
-      />
-    </div>
+    <>
+      <Modal.Body>
+        <FormComponent
+          definition={{ ...config?.fields, layout: void 0 }}
+          value={value}
+          onChange={onChange}
+          error={errors}
+          onReset={onReset1}
+          path={[]}
+          context={{
+            ...context,
+            forceLabelWidth: "100%",
+            labelPlacement: "horizontalPlus",
+            handleSubmit,
+          }}
+        />
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => resolve(null)}>
+          Close
+        </Button>
+        <Button variant="primary" onClick={handleSubmit}>
+          OK
+        </Button>
+      </Modal.Footer>
+    </>
   );
 };
 
@@ -120,17 +130,7 @@ const ModalProvider = ({ children }) => {
               <Modal.Header closeButton>
                 <Modal.Title>{title || "Edit"}</Modal.Title>
               </Modal.Header>
-              <Modal.Body>
-                <ModalComponent id={id} {...config} />
-              </Modal.Body>
-              <Modal.Footer>
-                {/*<Button variant="secondary" onClick={closeThis}>
-                  Close
-                </Button>
-                <Button variant="primary" onClick={closeThis}>
-                  OK
-                </Button>*/}
-              </Modal.Footer>
+              <ModalComponent id={id} {...config} />
             </Modal>
           );
         }
