@@ -21,21 +21,14 @@ import {
 
 import { Button, Modal } from "react-bootstrap";
 
-const FormModal = () => {
+const FormModal = (config) => {
   const [value, onChange] = useState(null);
-  const [show, setShow] = useState(false);
   const [errors, setErrors] = useState(null);
-  const [config, setConfig] = useState({});
   const cb = useRef(null);
   const context = config?.context || {};
-  /*useEffect(() => {
-    setState(value);
-    setErrors(null);
-  }, [show]);*/
   const onReset1 = (path) => {
     setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
   };
-  const handleClose = (_) => setShow(false);
   const handleSubmit = () => {
     const error = validateDefinition(config?.fields, value);
     setErrors(error);
@@ -44,7 +37,7 @@ const FormModal = () => {
       console.log("run cb");
       cb?.current(value);
       //onReset(path);
-      handleClose();
+      config.closeThis();
     } else {
       /*NotificationManager.error(
         "Please fix the errors below",
@@ -61,13 +54,6 @@ const FormModal = () => {
       }, 50);*/
     }
   };
-  const runModal = (config, value, cbNew) => {
-    setConfig(config);
-    onChange(value);
-    cb.current = cbNew;
-    setShow(true);
-  };
-  //container={(_) => document.getElementById("bootstrap-modals")}
   return (
     <div>
       <FormComponent
@@ -98,7 +84,13 @@ const ModalProvider = ({ children }) => {
   const [modals, setModals] = useState({});
   const runModal = (config) => {
     const id = "id_" + uuidv4();
-    return new Promise((resolve, reject) => {
+    return new Promise((doResolve, doReject) => {
+      const resolve = (result) => {
+        doResolve(result);
+      };
+      const reject = (error) => {
+        doReject(error);
+      };
       setModals(
         update(modals, {
           [id]: {
@@ -108,6 +100,7 @@ const ModalProvider = ({ children }) => {
       );
     });
   };
+  //container={(_) => document.getElementById("bootstrap-modals")}
   return (
     <ModalContext.Provider value={{ runModal }}>
       {_.sortBy(Object.entries(modals), ([_, { level }]) => level).map(
