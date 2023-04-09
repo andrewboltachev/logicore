@@ -281,26 +281,24 @@ const KeyMapNodeEditor = ({
               href="#"
               onClick={async (e) => {
                 e.preventDefault();
-                const result = await runModal(
-                  {
-                    title: t("Change item key"),
-                    fields: {
-                      type: "Fields",
-                      fields: [
-                        {
-                          type: "TextField",
-                          k: "val",
-                          label: t("Key"),
-                          required: true,
-                        },
-                      ],
-                    },
-                    modalSize: "md",
+                const result = await runModal({
+                  title: t("Change item key"),
+                  fields: {
+                    type: "Fields",
+                    fields: [
+                      {
+                        type: "TextField",
+                        k: "val",
+                        label: t("Key"),
+                        required: true,
+                      },
+                    ],
                   },
-                  {
+                  modalSize: "md",
+                  value: {
                     val: k,
-                  }
-                );
+                  },
+                });
                 if (result) {
                   const current = { ...getByPath(value, path) };
                   delete current[k];
@@ -328,26 +326,24 @@ const KeyMapNodeEditor = ({
         href="#"
         onClick={async (e) => {
           e.preventDefault();
-          const result = await runModal(
-            {
-              title: t("Add item"),
-              fields: {
-                type: "Fields",
-                fields: [
-                  {
-                    type: "TextField",
-                    k: "val",
-                    label: t("Key"),
-                    required: true,
-                  },
-                ],
-              },
-              modalSize: "md",
+          const result = await runModal({
+            title: t("Add item"),
+            fields: {
+              type: "Fields",
+              fields: [
+                {
+                  type: "TextField",
+                  k: "val",
+                  label: t("Key"),
+                  required: true,
+                },
+              ],
             },
-            {
+            modalSize: "md",
+            value: {
               val: "",
-            }
-          );
+            },
+          });
           if (result) {
             onChange(
               setByPath(value, path, {
@@ -406,26 +402,24 @@ const TextNodeEditor = ({
         href="#"
         onClick={async (e) => {
           e.preventDefault();
-          const result = await runModal(
-            {
-              title: t("Change value"),
-              fields: {
-                type: "Fields",
-                fields: [
-                  {
-                    type: "TextField",
-                    k: "val",
-                    label: t("Value"),
-                    required: true,
-                  },
-                ],
-              },
-              modalSize: "md",
+          const result = await runModal({
+            title: t("Change value"),
+            fields: {
+              type: "Fields",
+              fields: [
+                {
+                  type: "TextField",
+                  k: "val",
+                  label: t("Value"),
+                  required: true,
+                },
+              ],
             },
-            {
+            modalSize: "md",
+            value: {
               val: currentValue,
-            }
-          );
+            },
+          });
           if (result) onChange(setByPath(value, path, result.val));
         }}
       >
@@ -478,26 +472,24 @@ const ScientificNodeEditor = ({
         href="#"
         onClick={async (e) => {
           e.preventDefault();
-          const result = runModal(
-            {
-              title: t("Change value"),
-              fields: {
-                type: "Fields",
-                fields: [
-                  {
-                    type: "NumberField",
-                    k: "val",
-                    label: t("Value"),
-                    required: true,
-                  },
-                ],
-              },
-              modalSize: "md",
+          const result = runModal({
+            title: t("Change value"),
+            fields: {
+              type: "Fields",
+              fields: [
+                {
+                  type: "NumberField",
+                  k: "val",
+                  label: t("Value"),
+                  required: true,
+                },
+              ],
             },
-            {
+            modalSize: "md",
+            value: {
               val: currentValue,
-            }
-          );
+            },
+          });
           if (result) onChange(setByPath(value, path, result.val));
         }}
       >
@@ -682,26 +674,24 @@ const ValueNodeEditor = ({
         href="#"
         onClick={async (e) => {
           e.preventDefault();
-          const result = runModal(
-            {
-              title: t("Change value"),
-              fields: {
-                type: "Fields",
-                fields: [
-                  {
-                    type: "TextareaField",
-                    k: "val",
-                    label: t("Value"),
-                    required: true,
-                  },
-                ],
-              },
-              modalSize: "md",
+          const result = runModal({
+            title: t("Change value"),
+            fields: {
+              type: "Fields",
+              fields: [
+                {
+                  type: "TextareaField",
+                  k: "val",
+                  label: t("Value"),
+                  required: true,
+                },
+              ],
             },
-            {
+            modalSize: "md",
+            value: {
               val: JSON.stringify(currentValue),
-            }
-          );
+            },
+          });
           if (result) {
             onChange(setByPath(value, path, JSON.parse(result.val)));
           }
@@ -780,29 +770,27 @@ const ADTEditorNode = ({
           href="#"
           onClick={async (e) => {
             e.preventDefault();
-            const result = runModal(
-              {
-                title: t("Edit Node"),
-                fields: {
-                  type: "Fields",
-                  fields: [
-                    {
-                      type: "SelectField",
-                      k: "tag",
-                      label: "Type",
-                      //required: true,
-                      options,
-                    },
-                  ],
-                },
-                modalSize: "md",
+            const result = runModal({
+              title: t("Edit Node"),
+              fields: {
+                type: "Fields",
+                fields: [
+                  {
+                    type: "SelectField",
+                    k: "tag",
+                    label: "Type",
+                    //required: true,
+                    options,
+                  },
+                ],
               },
-              {
+              modalSize: "md",
+              value: {
                 tag:
                   options.find(({ value }) => value === currentValue?.tag) ||
                   null,
-              }
-            );
+              },
+            });
             if (result) {
               onChange(setByPath(value, path, result.tag?.newValue || null));
             }
@@ -1095,6 +1083,7 @@ const JSONMatcherEditor = ({
           icon: "fa fa-cog",
           className: "text-success",
           run: async ({ value, onChange, path, runModal }) => {
+            console.log("willl work", value);
             const result = getByPath(value, path);
             let resp = null;
             let left = null;
@@ -1126,31 +1115,29 @@ const JSONMatcherEditor = ({
             }
             right = resp.data;
             // else, if all ok
-            return await runModal(
-              {
-                title: t("Split into Grammar and Value"),
-                fields: {
-                  type: "Fields",
-                  fields: [
-                    {
-                      type: "ADTEditorGrammarValue",
-                      k: "val",
-                      label: t("Value"),
-                      required: true,
-                      t1: {
-                        type: "ConT",
-                        value: "MatchPattern",
-                      },
+            return await runModal({
+              title: t("Split into Grammar and Value"),
+              fields: {
+                type: "Fields",
+                fields: [
+                  {
+                    type: "ADTEditorGrammarValue",
+                    k: "val",
+                    label: t("Value"),
+                    required: true,
+                    t1: {
+                      type: "ConT",
+                      value: "MatchPattern",
                     },
-                  ],
-                },
-                modalSize: "xl",
+                  },
+                ],
               },
-              {
+              modalSize: "xl",
+              value: {
                 val: { left, right },
               },
-              async ({ val }) => {
-                /*let resp = null;
+            });
+            /*let resp = null;
                 let arg = null;
                 try {
                   arg = JSON.parse(val);
@@ -1170,9 +1157,7 @@ const JSONMatcherEditor = ({
                   NotificationManager.info("", t("Added JSON"));
                   onChange({ left: resp.data.result, right: arg });
                 }*/
-                //onChange();
-              }
-            );
+            //onChange();
           },
         },
         { icon: "fa fa-cog", className: "text-warning", run: () => {} },
@@ -1208,26 +1193,24 @@ const JSONMatcherEditor = ({
               className="btn btn-sm btn-outline-primary"
               type="button"
               onClick={async () => {
-                const result = await runModal(
-                  {
-                    title: t("Insert JSON"),
-                    fields: {
-                      type: "Fields",
-                      fields: [
-                        {
-                          type: "TextareaField",
-                          k: "val",
-                          label: t("Value"),
-                          required: true,
-                        },
-                      ],
-                    },
-                    modalSize: "md",
+                const result = await runModal({
+                  title: t("Insert JSON"),
+                  fields: {
+                    type: "Fields",
+                    fields: [
+                      {
+                        type: "TextareaField",
+                        k: "val",
+                        label: t("Value"),
+                        required: true,
+                      },
+                    ],
                   },
-                  {
+                  modalSize: "md",
+                  value: {
                     val: "",
-                  }
-                );
+                  },
+                });
                 if (!result) return;
                 let resp = null;
                 let arg = null;

@@ -23,7 +23,7 @@ import { Button, Modal } from "react-bootstrap";
 
 const FormModal = (config) => {
   const { resolve } = config;
-  const [value, onChange] = useState(null);
+  const [value, onChange] = useState(config.value);
   const [errors, setErrors] = useState(null);
   const context = config?.context || {};
   const onReset1 = (path) => {
