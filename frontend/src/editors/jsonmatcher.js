@@ -1207,8 +1207,8 @@ const JSONMatcherEditor = ({
             <button
               className="btn btn-sm btn-outline-primary"
               type="button"
-              onClick={(_) => {
-                runModal(
+              onClick={async () => {
+                const result = await runModal(
                   {
                     title: t("Insert JSON"),
                     fields: {
@@ -1226,32 +1226,29 @@ const JSONMatcherEditor = ({
                   },
                   {
                     val: "",
-                  },
-                  async ({ val }) => {
-                    let resp = null;
-                    let arg = null;
-                    try {
-                      arg = JSON.parse(val);
-                    } catch (e) {
-                      NotificationManager.error("", t("JSON parsing error"));
-                    }
-                    try {
-                      resp = await axios.post(
-                        "/haskell-api/valueToExactResult",
-                        { value: arg }
-                      );
-                    } catch (e) {
-                      NotificationManager.warning("", t("Unknown error"));
-                    }
-                    if (resp.data.error) {
-                      NotificationManager.error("", resp.data.error);
-                    } else {
-                      NotificationManager.info("", t("Added JSON"));
-                      onChange({ left: resp.data.result, right: arg });
-                    }
-                    //onChange();
                   }
                 );
+                if (!result) return;
+                let resp = null;
+                let arg = null;
+                try {
+                  arg = JSON.parse(result.val);
+                } catch (e) {
+                  NotificationManager.error("", t("JSON parsing error"));
+                }
+                try {
+                  resp = await axios.post("/haskell-api/valueToExactResult", {
+                    value: arg,
+                  });
+                } catch (e) {
+                  NotificationManager.warning("", t("Unknown error"));
+                }
+                if (resp.data.error) {
+                  NotificationManager.error("", resp.data.error);
+                } else {
+                  NotificationManager.info("", t("Added JSON"));
+                  onChange({ left: resp.data.result, right: arg });
+                }
               }}
             >
               <i className="fa fa-paste" /> <Trans>Add JSON</Trans>
