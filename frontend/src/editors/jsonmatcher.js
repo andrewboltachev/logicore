@@ -762,9 +762,10 @@ const ADTEditorNode = ({
           return (
             <a
               href="#"
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
-                run({ value, path, onChange, runModal });
+                const r = await run({ value, path, onChange, runModal });
+                console.log("rrrrrrrrrrrrrr", r);
               }}
               className={`me-1 ${className || ""}`}
             >
@@ -1121,7 +1122,7 @@ const JSONMatcherEditor = ({
             }
             right = resp.data;
             // else, if all ok
-            runModal(
+            return await runModal(
               {
                 title: t("Split into Grammar and Value"),
                 fields: {
