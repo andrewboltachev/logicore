@@ -37,7 +37,6 @@ const FormModal = (config) => {
       console.log("run cb");
       cb?.current(value);
       //onReset(path);
-      config.closeThis();
     } else {
       /*NotificationManager.error(
         "Please fix the errors below",
@@ -86,9 +85,11 @@ const ModalProvider = ({ children }) => {
     const id = "id_" + uuidv4();
     return new Promise((doResolve, doReject) => {
       const resolve = (result) => {
+        setModals(update(modals, { $unset: [id] }));
         doResolve(result);
       };
       const reject = (error) => {
+        setModals(update(modals, { $unset: [id] }));
         doReject(error);
       };
       setModals(
@@ -106,13 +107,11 @@ const ModalProvider = ({ children }) => {
       {_.sortBy(Object.entries(modals), ([_, { level }]) => level).map(
         ([id, config]) => {
           const { level, component, modalSize, title, resolve } = config;
-          const closeThis = () => {
-            setModals(update(modals, { $unset: [id] }));
-            resolve(null);
-          };
+          const closeThis = () => resolve(null);
           const ModalComponent = modalComponents[component || "FormModal"];
           return (
             <Modal
+              key={id}
               show={true}
               onHide={closeThis}
               animation={false}
@@ -125,12 +124,12 @@ const ModalProvider = ({ children }) => {
                 <ModalComponent id={id} {...config} />
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="secondary" onClick={closeThis}>
+                {/*<Button variant="secondary" onClick={closeThis}>
                   Close
                 </Button>
                 <Button variant="primary" onClick={closeThis}>
                   OK
-                </Button>
+                </Button>*/}
               </Modal.Footer>
             </Modal>
           );

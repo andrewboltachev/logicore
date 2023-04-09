@@ -1,4 +1,4 @@
-import { useState, useContext, useRef, useEffect } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import exampleData from "./jsonmatcher_example";
 import { update } from "../logicore-forms/utils";
 import schema from "./jsonmatcher_schema";
@@ -109,11 +109,11 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
           <br />
           {value.map((v, i) => {
             return (
-              <>
+              <React.Fragment key={i}>
                 <JSONNode value={v} level={lvl} />
                 {i === value.length - 1 ? "" : ","}
                 <br />
-              </>
+              </React.Fragment>
             );
           })}
           {indent + "]"}
@@ -131,7 +131,7 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
           <br />
           {items.map(([k, v], i) => {
             return (
-              <>
+              <React.Fragment key={i}>
                 {indent + "  "}
                 {'"'}
                 <span className="text-secondary">{k}</span>
@@ -139,7 +139,7 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
                 <JSONNode value={v} level={lvl} noFirstIndent />
                 {i === items.length - 1 ? "" : ","}
                 <br />
-              </>
+              </React.Fragment>
             );
           })}
           {indent + "}"}
@@ -264,7 +264,7 @@ const KeyMapNodeEditor = ({
       <br />*/}
       {emptyToLast(Object.entries(currentValue || {})).map(([k, v], i) => {
         return (
-          <div>
+          <div key={i}>
             <a
               className="text-danger"
               href="#"
@@ -279,9 +279,9 @@ const KeyMapNodeEditor = ({
             </a>
             <a
               href="#"
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
-                runModal(
+                const { val } = await runModal(
                   {
                     title: t("Change item key"),
                     fields: {
@@ -299,14 +299,12 @@ const KeyMapNodeEditor = ({
                   },
                   {
                     val: k,
-                  },
-                  ({ val }) => {
-                    const current = { ...getByPath(value, path) };
-                    delete current[k];
-                    current[val] = v;
-                    onChange(setByPath(value, path, current));
                   }
                 );
+                const current = { ...getByPath(value, path) };
+                delete current[k];
+                current[val] = v;
+                onChange(setByPath(value, path, current));
               }}
             >
               <span className="text-muted">{` ${k} `}</span>
@@ -597,7 +595,7 @@ const ListNodeEditor = ({
       <br />*/}
       {currentValue?.map((_, i) => {
         return (
-          <div>
+          <div key={i}>
             <a
               className="text-danger"
               href="#"
@@ -758,14 +756,14 @@ const ADTEditorNode = ({
   return (
     <div className="lc-adt-editor-card">
       <div className="lc-adt-editor-card-title">
-        {(getActions?.(type) || []).map(({ icon, run, className }) => {
+        {(getActions?.(type) || []).map(({ icon, run, className }, i) => {
           return (
             <a
+              key={i}
               href="#"
               onClick={async (e) => {
                 e.preventDefault();
                 const r = await run({ value, path, onChange, runModal });
-                console.log("rrrrrrrrrrrrrr", r);
               }}
               className={`me-1 ${className || ""}`}
             >
@@ -824,7 +822,7 @@ const ADTEditorNode = ({
               newPath.push(i);
             }
             return (
-              <div>
+              <div key={i}>
                 <ADTEditorNodeComponent
                   value={value}
                   onChange={onChange}
