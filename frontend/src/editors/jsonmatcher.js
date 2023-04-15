@@ -1475,6 +1475,7 @@ const JSONMatcherEditor = ({
   };
   useEffect(() => {
     (async () => {
+      if (!value.left) return;
       let resp = null,
         right = null;
       try {
@@ -1492,7 +1493,7 @@ const JSONMatcherEditor = ({
       right = resp.data.value;
       onChange(update(value, { right: { $set: right } }));
     })();
-  }, [value.left]);
+  }, [value?.left]);
   return (
     <div className="row align-items-stretch flex-grow-1">
       {/*<button type="button" onClick={e => {e.preventDefault(); setShow();}}>Modal</button>*/}
