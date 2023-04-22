@@ -1059,14 +1059,13 @@ const PageNotFound = () => {
     <div
       style={{
         position: "fixed",
-        top: 0,
+        top: 56,
         left: 0,
         right: 0,
         bottom: 0,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        zIndex: -1,
       }}
     >
       <div>
@@ -1192,7 +1191,7 @@ const FiddleNotFound = () => {
     <div
       style={{
         position: "fixed",
-        top: 0,
+        top: 56,
         left: 0,
         right: 0,
         bottom: 0,
