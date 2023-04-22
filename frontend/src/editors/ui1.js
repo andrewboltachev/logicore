@@ -1325,13 +1325,7 @@ Object.assign(modalComponents, {
   ADTEditorThinValueModal,
 });
 
-const JSONMatcherEditor = ({
-  revId,
-  prevRevId,
-  value,
-  onChange,
-  saveButton,
-}) => {
+const UI1Editor = ({ revId, prevRevId, value, onChange, saveButton }) => {
   //const [value, onChange] = useState(exampleData.value);
   const [selectedPath, setSelectedPath] = useState([]);
   const processedSchema = [...standardSchema, ...schema];
@@ -1589,5 +1583,5 @@ const JSONMatcherEditor = ({
 };
 
 export default {
-  Editor: JSONMatcherEditor,
+  Editor: UI1Editor,
 };

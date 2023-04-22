@@ -143,7 +143,7 @@ class ClassHierarchy:
                 len(result)
                 and is_all_upper(result[-1])
                 and is_all_upper(s)
-                and len(s) == 1
+                #and len(s) == 1
             ):
                 result[-1] = result[-1] + s
             else:

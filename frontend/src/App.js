@@ -88,6 +88,7 @@ import "./i18n";
 
 // Editors - the main part of the system
 import JSON_MATCHER from "./editors/jsonmatcher";
+import UI1 from "./editors/ui1";
 
 const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url);
 
@@ -1080,6 +1081,7 @@ const PageNotFound = () => {
 
 const fiddleTypes = {
   JSON_MATCHER,
+  UI1,
 };
 
 const Fiddle = (props) => {

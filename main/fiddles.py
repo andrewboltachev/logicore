@@ -13,3 +13,7 @@ class FiddleType(ClassHierarchy):
 
 class JSONMatcherFiddleType(FiddleType):
     pass
+
+
+class UI1FiddleType(FiddleType):
+    pass
