@@ -1,18 +1,20 @@
-import React, { useState, useContext, useRef, useEffect } from "react";
-import exampleData from "./jsonmatcher_example";
-import { update } from "../logicore-forms/utils";
-import schema from "./jsonmatcher_schema";
-import { ModalProvider, ModalContext } from "../runModal";
-import { useDraggable } from "react-use-draggable-scroll";
-import { useLocalStorage } from "../utils";
-import { NotificationManager } from "react-notifications";
-import { axios } from "../imports";
+// Global libs
 import _ from "lodash";
 
+// React
+import React, { useState, useContext, useRef, useEffect } from "react";
+
+// React modules
+import { useTranslation, Trans } from "react-i18next";
 import { Button, Modal } from "react-bootstrap";
+import { useDraggable } from "react-use-draggable-scroll";
+import { NotificationManager } from "react-notifications";
 
-import "./jsonmatcher.scss";
-
+// Local React and general modules
+import { ModalProvider, ModalContext, modalComponents } from "../runModal";
+import { axios } from "../imports";
+import { update } from "../logicore-forms/utils";
+import { useLocalStorage } from "../utils";
 import {
   validateDefinition,
   definitionIsInvalid,
@@ -28,8 +30,11 @@ import {
   setByPath,
   modifyHelper,
 } from "../logicore-forms";
-import { modalComponents } from "../runModal";
-import { useTranslation, Trans } from "react-i18next";
+
+// Module-local
+import "./jsonmatcher.scss";
+import exampleData from "./jsonmatcher_example";
+import schema from "./jsonmatcher_schema";
 
 // TODO
 // migrate fn
@@ -42,6 +47,47 @@ const onPath = (value, onChange, path) => {
     value: getByPath(value, path),
     onChange: (newValue) => onChange(setByPath(value, path, newValue)),
   };
+};
+
+const ScrollArea = ({ storageKey, prevStorageKey, children }) => {
+  const innerRef = useRef(null);
+  const draggable = useDraggable(innerRef);
+  const { events } = draggable;
+  const [state, setState] = useLocalStorage(storageKey);
+  useEffect(() => {
+    if (!storageKey) return;
+    if (state) {
+      innerRef?.current.scrollTo(state[0], state[1]);
+    } else {
+      console.log("try read prev state", prevStorageKey);
+      let prevState = null;
+      try {
+        prevState = JSON.parse(window.localStorage.getItem(prevStorageKey));
+      } catch (e) {
+        //
+        console.warn(e);
+      }
+      console.log("got prev state", prevState);
+      if (Array.isArray(prevState)) {
+        innerRef?.current.scrollTo(prevState[0], prevState[1]);
+        //setState(prevState[0], prevState[1]);
+      }
+    }
+  }, [!state, storageKey]);
+  return (
+    <div className="lc-adt-editor">
+      <div
+        className="lc-adt-editor-wrapper"
+        ref={innerRef}
+        {...events}
+        onScroll={(e) => {
+          if (storageKey) setState([e.target.scrollLeft, e.target.scrollTop]);
+        }}
+      >
+        <div className="lc-adt-editor-inner">{children}</div>
+      </div>
+    </div>
+  );
 };
 
 const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
@@ -156,6 +202,8 @@ const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
   }
 };
 
+let ADTEditorNodeComponent = null;
+
 const getTypeFromDef = (d) => {
   if (d.type === "ConT") {
     return d.value;
@@ -200,8 +248,6 @@ const applyTypeVars = (d, typeVars) => {
     throw new Error(`Not implemented: ${JSON.stringify(d)}`);
   }
 };
-
-let ADTEditorNodeComponent = null;
 
 const emptyToLast = (es) => {
   const items = [...es.map((x, i) => [x, i])];
@@ -983,47 +1029,6 @@ const standardSchema = [
   },
 ];
 
-const ScrollArea = ({ storageKey, prevStorageKey, children }) => {
-  const innerRef = useRef(null);
-  const draggable = useDraggable(innerRef);
-  const { events } = draggable;
-  const [state, setState] = useLocalStorage(storageKey);
-  useEffect(() => {
-    if (!storageKey) return;
-    if (state) {
-      innerRef?.current.scrollTo(state[0], state[1]);
-    } else {
-      console.log("try read prev state", prevStorageKey);
-      let prevState = null;
-      try {
-        prevState = JSON.parse(window.localStorage.getItem(prevStorageKey));
-      } catch (e) {
-        //
-        console.warn(e);
-      }
-      console.log("got prev state", prevState);
-      if (Array.isArray(prevState)) {
-        innerRef?.current.scrollTo(prevState[0], prevState[1]);
-        //setState(prevState[0], prevState[1]);
-      }
-    }
-  }, [!state, storageKey]);
-  return (
-    <div className="lc-adt-editor">
-      <div
-        className="lc-adt-editor-wrapper"
-        ref={innerRef}
-        {...events}
-        onScroll={(e) => {
-          if (storageKey) setState([e.target.scrollLeft, e.target.scrollTop]);
-        }}
-      >
-        <div className="lc-adt-editor-inner">{children}</div>
-      </div>
-    </div>
-  );
-};
-
 const schemaConversions1 = {
   MatchPattern: {
     MatchObjectFull: { MatchObjectPartial: _.identity },
@@ -1332,12 +1337,12 @@ const JSONMatcherEditor = ({
   onChange,
   saveButton,
 }) => {
+  const { t } = useTranslation();
+  const { runModal } = useContext(ModalContext);
   //const [value, onChange] = useState(exampleData.value);
   const [selectedPath, setSelectedPath] = useState([]);
   const processedSchema = [...standardSchema, ...schema];
-  const right = onPath(value, onChange, ["right"]);
-  const { t } = useTranslation();
-  const { runModal } = useContext(ModalContext);
+  const [right, setRight] = useState({ value: null });
   const getActions = (theType) => {
     if (theType?.value === "MatchResult") {
       return [
@@ -1475,7 +1480,7 @@ const JSONMatcherEditor = ({
   };
   useEffect(() => {
     (async () => {
-      if (!value.left) return;
+      if (!value?.left) return;
       let resp = null,
         right = null;
       try {
@@ -1483,15 +1488,17 @@ const JSONMatcherEditor = ({
           result: value.left,
         });
       } catch (e) {
-        NotificationManager.warning("", t("Unknown error"));
+        //NotificationManager.warning("", t("Unknown error"));
+        setRight({ value: "---not defined---" });
         return;
       }
       if (resp.data.error) {
-        NotificationManager.error("", resp.data.error);
+        //NotificationManager.error("", resp.data.error);
+        setRight({ value: `Error: ${resp.data.error}` });
         return;
       }
-      right = resp.data.value;
-      onChange(update(value, { right: { $set: right } }));
+      right = resp.data;
+      setRight(right);
     })();
   }, [value?.left]);
   return (
