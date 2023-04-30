@@ -46,12 +46,32 @@ const PythonMatcherEditor = ({
 }) => {
   const { t } = useTranslation();
   const { runModal } = useContext(ModalContext);
+  const step1 = async () => {
+    let result = null;
+    let resp = null;
+    try {
+      resp = await axios.post("/python-api/step1", {
+        grammar: value.grammar,
+        code: value.code,
+      });
+    } catch (e) {
+      NotificationManager.warning("", t("Unknown error"));
+      console.error(e);
+      return;
+    }
+    if (resp.data.error) {
+      NotificationManager.error("", resp.data.error);
+      return;
+    }
+    NotificationManager.info("", t("Pattern updated"));
+    //setMatchResult(resp.data.result);
+  };
   return (
     <div className="row align-items-stretch flex-grow-1">
       <div className="col d-flex flex-column">
         <h5>
           Grammar (Pseudo-Python){" "}
-          <button className="btn btn-sm btn-primary">
+          <button className="btn btn-sm btn-primary" onClick={step1}>
             Grammar × Code -> Thin value
           </button>
         </h5>

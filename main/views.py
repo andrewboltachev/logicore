@@ -15,7 +15,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 
-
 from django.conf import settings
 from django.db import models as db_models
 from django.contrib.postgres.aggregates import ArrayAgg, StringAgg
@@ -1078,7 +1077,7 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
         return {"items": items}
 
 
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(csrf_exempt, name="dispatch")
 class NewFiddleItemApiView(FiddleTypeMixin, MainView):
     url_path = "/toolbox/<kind>/"
     url_name = "new-fiddle-item"
@@ -1186,3 +1185,39 @@ class RevisionFiddleItemApiView(ExistingFiddleItemApiView):
 @csrf_exempt
 def haskell_api(request, path):
     return proxy_view(request, f"http://localhost:3042/{path}", {})
+
+
+@csrf_exempt
+def python_api(request, proc):
+    import libcst
+    from main.parser.python import serialize_dc
+
+    data = json.loads(request.body)
+
+    if proc == "step1":
+        try:
+            module = libcst.parse_module(data["grammar"])
+            grammar = serialize_dc(module)
+        except Exception as e:
+            return JsonResponse({"error": str(e)})
+        try:
+            module = libcst.parse_module(data["code"])
+            code = serialize_dc(module)
+        except Exception as e:
+            return JsonResponse({"error": str(e)})
+        try:
+            resp = requests.post(
+                "http://localhost:3042/pythonStep1",
+                json={"pattern": grammar, "value": code},
+            )
+        except Exception as e:
+            return JsonResponse({"error": str(e)})
+        if resp.status_code != 200:
+            return JsonResponse({"error": f"Haskell API returned: {resp.content.decode('utf-8')}"})
+        return JsonResponse(resp.json())
+    elif proc == "step2":
+        module = libcst.parse_module(read_file(path))
+        serialized = serialize_dc(module)
+        return JsonResponse({"code": serialized})
+
+    return JsonResponse({"error": "No such method"})
