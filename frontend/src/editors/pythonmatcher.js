@@ -274,7 +274,7 @@ const PythonMatcherEditor = ({
                   NotificationManager.error("", resp.data.error);
                 } else {
                   NotificationManager.info("", t("Added JSON"));
-                  onChange({ left: resp.data.result, right: arg });
+                  onChange({ left: resp.data.result });
                 }
               }}
             >
