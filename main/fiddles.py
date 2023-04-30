@@ -17,3 +17,7 @@ class JSONMatcherFiddleType(FiddleType):
 
 class UI1FiddleType(FiddleType):
     pass
+
+
+class PythonMatcherFiddleType(FiddleType):
+    pass
