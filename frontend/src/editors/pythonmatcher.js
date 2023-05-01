@@ -95,7 +95,7 @@ const PythonMatcherEditor = ({
       NotificationManager.error("", resp.data.error);
       return;
     }
-    NotificationManager.info("", t("Thin grammar generated"));
+    NotificationManager.info("", t("Code generated"));
     onChange(
       update(value, {
         code: { $set: resp.data.code },
