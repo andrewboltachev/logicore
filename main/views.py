@@ -1191,7 +1191,7 @@ def haskell_api(request, path):
 @csrf_exempt
 def python_api(request, proc):
     import libcst
-    from main.parser.python import serialize_dc
+    from main.parser.python import serialize_dc, unserialize_dc
 
     data = json.loads(request.body)
 
@@ -1206,10 +1206,9 @@ def python_api(request, proc):
             code = serialize_dc(module)
         except Exception as e:
             return JsonResponse({"error": str(e)})
-        pprint.pprint(grammar)
         try:
             resp = requests.post(
-                "http://localhost:3042/pythonStep0",
+                "http://localhost:3042/pythonStep1",
                 json={"pattern": grammar, "value": code},
             )
         except Exception as e:
@@ -1218,8 +1217,29 @@ def python_api(request, proc):
             return JsonResponse({"error": f"Haskell API returned: {resp.content.decode('utf-8')}"})
         return JsonResponse(resp.json())
     elif proc == "step2":
-        module = libcst.parse_module(read_file(path))
-        serialized = serialize_dc(module)
-        return JsonResponse({"code": serialized})
+        try:
+            module = libcst.parse_module(data["grammar"])
+            grammar = serialize_dc(module)
+        except Exception as e:
+            print(e)
+            return JsonResponse({"error": str(e)})
+        thinGrammar = data["thinGrammar"]
+        try:
+            resp = requests.post(
+                "http://localhost:3042/pythonStep2",
+                json={"pattern": grammar, "thinGrammar": thinGrammar},
+            )
+        except Exception as e:
+            print(e)
+            return JsonResponse({"error": str(e)})
+        if resp.status_code != 200:
+            return JsonResponse({"error": f"Haskell API returned: {resp.content.decode('utf-8')}"})
+        try:
+            j = resp.json()
+            code = unserialize_dc(j["code"]).code
+        except Exception as e:
+            print(e)
+            return JsonResponse({"error": str(e)})
+        return JsonResponse({"code": code})
 
     return JsonResponse({"error": "No such method"})

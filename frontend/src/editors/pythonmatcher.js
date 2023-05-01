@@ -63,8 +63,44 @@ const PythonMatcherEditor = ({
       NotificationManager.error("", resp.data.error);
       return;
     }
-    NotificationManager.info("", t("Pattern updated"));
-    //setMatchResult(resp.data.result);
+    NotificationManager.info("", t("Thin grammar generated"));
+    onChange(
+      update(value, {
+        thinGrammar: { $set: JSON.stringify(resp.data.thinValue) },
+      })
+    );
+  };
+  const step2 = async () => {
+    let result = null;
+    let resp = null;
+    let thinGrammar = null;
+    try {
+      thinGrammar = JSON.parse(value.thinGrammar);
+    } catch (e) {
+      NotificationManager.warning("", t("Thin grammar JSON parsing error"));
+      console.error(e);
+      return;
+    }
+    try {
+      resp = await axios.post("/python-api/step2", {
+        grammar: value.grammar,
+        thinGrammar,
+      });
+    } catch (e) {
+      NotificationManager.warning("", t("Unknown error"));
+      console.error(e);
+      return;
+    }
+    if (resp.data.error) {
+      NotificationManager.error("", resp.data.error);
+      return;
+    }
+    NotificationManager.info("", t("Thin grammar generated"));
+    onChange(
+      update(value, {
+        code: { $set: resp.data.code },
+      })
+    );
   };
   return (
     <div className="row align-items-stretch flex-grow-1">
@@ -81,7 +117,7 @@ const PythonMatcherEditor = ({
         />
         <h5>
           Thin grammar (JSON)
-          <button className="btn btn-sm btn-primary">
+          <button className="btn btn-sm btn-primary" onClick={step2}>
             Thin Grammar × Code -> Thin value
           </button>
         </h5>
