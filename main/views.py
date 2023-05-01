@@ -4,6 +4,7 @@ import json
 import locale
 import uuid
 import requests
+import pprint
 from itertools import groupby
 from collections import defaultdict
 from decimal import Decimal
@@ -1205,9 +1206,10 @@ def python_api(request, proc):
             code = serialize_dc(module)
         except Exception as e:
             return JsonResponse({"error": str(e)})
+        pprint.pprint(grammar)
         try:
             resp = requests.post(
-                "http://localhost:3042/pythonStep1",
+                "http://localhost:3042/pythonStep0",
                 json={"pattern": grammar, "value": code},
             )
         except Exception as e:
