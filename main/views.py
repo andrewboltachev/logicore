@@ -1223,11 +1223,11 @@ def python_api(request, proc):
         except Exception as e:
             print(e)
             return JsonResponse({"error": str(e)})
-        thinGrammar = data["thinGrammar"]
+        thinValue = data["thinValue"]
         try:
             resp = requests.post(
                 "http://localhost:3042/pythonStep2",
-                json={"pattern": grammar, "thinGrammar": thinGrammar},
+                json={"pattern": grammar, "thinValue": thinValue},
             )
         except Exception as e:
             print(e)

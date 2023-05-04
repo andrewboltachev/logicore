@@ -63,28 +63,28 @@ const PythonMatcherEditor = ({
       NotificationManager.error("", resp.data.error);
       return;
     }
-    NotificationManager.info("", t("Thin grammar generated"));
+    NotificationManager.info("", t("Thin value generated"));
     onChange(
       update(value, {
-        thinGrammar: { $set: JSON.stringify(resp.data.thinValue) },
+        thinValue: { $set: JSON.stringify(resp.data.thinValue) },
       })
     );
   };
   const step2 = async () => {
     let result = null;
     let resp = null;
-    let thinGrammar = null;
+    let thinValue = null;
     try {
-      thinGrammar = JSON.parse(value.thinGrammar);
+      thinValue = JSON.parse(value.thinValue);
     } catch (e) {
-      NotificationManager.warning("", t("Thin grammar JSON parsing error"));
+      NotificationManager.warning("", t("Thin value JSON parsing error"));
       console.error(e);
       return;
     }
     try {
       resp = await axios.post("/python-api/step2", {
         grammar: value.grammar,
-        thinGrammar,
+        thinValue,
       });
     } catch (e) {
       NotificationManager.warning("", t("Unknown error"));
@@ -116,15 +116,15 @@ const PythonMatcherEditor = ({
           className="form-control flex-grow-1"
         />
         <h5>
-          Thin grammar (JSON)
+          Thin value (JSON)
           <button className="btn btn-sm btn-primary" onClick={step2}>
-            Thin Grammar × Code -> Thin value
+            Thin Value × Grammar -> Code
           </button>
         </h5>
-        <textarea
-          {...onPath(value, onChange, ["thinGrammar"], eV)}
+        {value?.thinValue ? <textarea
+          {...onPath(value, onChange, ["thinValue"], eV)}
           className="form-control flex-grow-1"
-        />
+        /> : <textarea className="form-control flex-grow-1" value="No thin value" disabled />}
         <div className="d-grid">{saveButton}</div>
       </div>
       <div className="col d-flex flex-column">
