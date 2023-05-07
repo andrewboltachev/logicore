@@ -60,7 +60,7 @@ const PythonMatcherEditor = ({
       return;
     }
     if (resp.data.error) {
-      NotificationManager.error("", resp.data.error);
+      NotificationManager.error("", resp.data.error, 50000);
       return;
     }
     NotificationManager.info("", t("Thin value generated"));

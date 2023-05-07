@@ -1206,6 +1206,9 @@ def python_api(request, proc):
             code = serialize_dc(module)
         except Exception as e:
             return JsonResponse({"error": str(e)})
+        print("step1")
+        pprint.pprint(grammar)
+        pprint.pprint(code)
         try:
             resp = requests.post(
                 "http://localhost:3042/pythonStep1",
