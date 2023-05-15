@@ -42,7 +42,7 @@ import ReactFlow, {
   //useEdgesState,
 	applyNodeChanges,
 	applyEdgeChanges,
-	useOnViewportChange,
+	useViewport,
 	ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -59,7 +59,7 @@ const initialNodes = [
 
 const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
 
-function Flow({ value, onChange }) {
+function Flow({ storageKey, prevStorageKey, value, onChange }) {
   /*const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);*/
 
@@ -79,16 +79,46 @@ function Flow({ value, onChange }) {
   	setNodes([...nodes, { id, position: { x: 0, y: 0 }, data: { label: '1' } }]);
 	};
 
+  const [state, setState] = useLocalStorage(storageKey);
+
+  const [initialized, setInitialized] = useState(null);
+
 	const onInit = (instance) => {
-		instance.setViewport(value?.viewport || {x: 0, y: 0, zoom: 1});
+    setInitialized(instance);
 	};
 
-  useOnViewportChange({
-	  //onStart: useCallback((viewport: Viewport) => console.log('start', viewport), []),
-		//onChange: useCallback((viewport: Viewport) => console.log('change', viewport), []),
-		//onEnd: useCallback((viewport: Viewport) => console.log('end', viewport), []),
-		onEnd: useCallback((viewport: Viewport) => onChange(update(value, {viewport: {$set: viewport}})), []),
-	});
+  useEffect(() => {
+    if (!storageKey) return;
+    if (!initialized) return;
+    //console.log('state', state);
+    let v = {x: 0, y: 0, zoom: 1};
+    if (state) {
+      if (state) {
+        v = state;
+      }
+    } else {
+      //console.log("try read prev state", prevStorageKey);
+      let prevState = null;
+      try {
+        prevState = JSON.parse(window.localStorage.getItem(prevStorageKey));
+      } catch (e) {
+        console.warn(e);
+      }
+      //console.log("got prev state", prevState);
+      if (prevState) {
+        v = prevState;
+        //window.localStorage.setItem(storageKey, JSON.stringify(v));
+      }
+    }
+    if (v) initialized.setViewport(v);
+  }, [!state, storageKey, initialized]);
+
+  const { x, y, zoom } = useViewport();
+
+  useEffect(() => {
+    console.log(x, y, zoom);
+    window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}));
+  }, [x, y, zoom]);
 
   return (<>
 		<button className="btn btn-success" onClick={_ => doAdd()}>Add</button>
@@ -144,7 +174,13 @@ const Logicore1Editor = ({
     <div className="row align-items-stretch flex-grow-1">
       <div className="col d-flex flex-column">
 			  <ReactFlowProvider>
-					<Flow {...{value, onChange}} />
+          <Flow
+            storageKey={`viewport-${revId}`}
+            prevStorageKey={
+              prevRevId ? `viewport-${prevRevId}` : null
+            }
+            {...{value, onChange}}
+          />
 			  </ReactFlowProvider>
 				{saveButton}
     	</div>
