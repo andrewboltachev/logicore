@@ -21,3 +21,7 @@ class UI1FiddleType(FiddleType):
 
 class PythonMatcherFiddleType(FiddleType):
     pass
+
+
+class Logicore1FiddleType(FiddleType):
+    pass
