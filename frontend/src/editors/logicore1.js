@@ -1,5 +1,6 @@
 // Global libs
 import _ from "lodash";
+import { v4 as uuidv4 } from "uuid";
 
 // React
 import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
@@ -37,8 +38,12 @@ import ReactFlow, {
   MiniMap,
   Controls,
   Background,
-  useNodesState,
-  useEdgesState,
+  //useNodesState,
+  //useEdgesState,
+	applyNodeChanges,
+	applyEdgeChanges,
+	useOnViewportChange,
+	ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -54,14 +59,41 @@ const initialNodes = [
 
 const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
 
-function Flow() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+function Flow({ value, onChange }) {
+  /*const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);*/
 
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+	const nodes = value?.nodes || [];
+	const edges = value?.edges || [];
 
-  return (
+	const setNodes = onPath(value, onChange, ["nodes"]).onChange;
+	const setEdges = onPath(value, onChange, ["edges"]).onChange;
+
+  const onConnect = useCallback((params) => setEdges(addEdge(params, edges)), [setEdges]);
+
+	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
+	const onEdgesChange = (changes) => onChange(update(value, {edges: {$apply: (v) => applyEdgeChanges(changes, v)}}));
+
+	const doAdd = () => {
+  	const id = "id_" + uuidv4();
+  	setNodes([...nodes, { id, position: { x: 0, y: 0 }, data: { label: '1' } }]);
+	};
+
+	const onInit = (instance) => {
+		instance.setViewport(value?.viewport || {x: 0, y: 0, zoom: 1});
+	};
+
+  useOnViewportChange({
+	  //onStart: useCallback((viewport: Viewport) => console.log('start', viewport), []),
+		//onChange: useCallback((viewport: Viewport) => console.log('change', viewport), []),
+		//onEnd: useCallback((viewport: Viewport) => console.log('end', viewport), []),
+		onEnd: useCallback((viewport: Viewport) => onChange(update(value, {viewport: {$set: viewport}})), []),
+	});
+
+  return (<>
+		<button className="btn btn-success" onClick={_ => doAdd()}>Add</button>
     <ReactFlow
+			onInit={onInit}
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}
@@ -72,7 +104,7 @@ function Flow() {
       <Controls />
       <Background />
     </ReactFlow>
-  );
+  </>);
 }
 
 const Logicore1Editor = ({
@@ -110,6 +142,14 @@ const Logicore1Editor = ({
   };*/
   return (
     <div className="row align-items-stretch flex-grow-1">
+      <div className="col d-flex flex-column">
+			  <ReactFlowProvider>
+					<Flow {...{value, onChange}} />
+			  </ReactFlowProvider>
+				{saveButton}
+    	</div>
+      <div className="col d-flex flex-column">
+    	</div>
     </div>
   );
 };
