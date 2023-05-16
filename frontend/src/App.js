@@ -1156,7 +1156,7 @@ const Fiddle = (props) => {
   );
 
   const editVal = (v) => {
-    if (v !== val) {
+    if (JSON.stringify(v) !== JSON.stringify(val)) {
       if (!dirty) setDirty(true);
       setVal(v);
     }

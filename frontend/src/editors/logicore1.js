@@ -116,7 +116,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange }) {
   const { x, y, zoom } = useViewport();
 
   useEffect(() => {
-    console.log(x, y, zoom);
+    //console.log(x, y, zoom);
     window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}));
   }, [x, y, zoom]);
 
