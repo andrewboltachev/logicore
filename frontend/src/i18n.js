@@ -2,6 +2,33 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
+const ru_tr = {
+  "Back to main website": "Назад на основной сайт",
+  "All tools": "Все инструменты",
+  Tools: "Инструменты",
+  "Tool types": "Все инструменты",
+  "View available": "Посмотреть доступные",
+  "Tool not found.": "Инструмент не найден.",
+  Save: "Сохранить",
+  Run: "Запуск",
+  "Unsaved changes exist. Apply?":
+    "Есть несохранённые изменения. Применить?",
+  Apply: "Применить",
+  Discard: "Сбросить",
+  Mine: "Мои",
+  "Edit Node": "Редактировать узел",
+  "Unknown error": "Неизвестная ошибка",
+  "not selected": "не выбрано",
+  Add: "Добавить",
+  "Add item": "Добавить элемент",
+  "Change item key": "Изменить ключ элемента",
+  Key: "Ключ",
+  "Change value": "Поменять значение",
+  Value: "Значение",
+  "Add JSON": "Добавить JSON",
+  "Save": "Сохранить",
+};
+
 i18n
   // detect user language
   // learn more: https://github.com/i18next/i18next-browser-languageDetector
@@ -18,34 +45,10 @@ i18n
     },
     resources: {
       en: {
-        translation: {},
+        translation: Object.fromEntries(Object.keys(ru_tr).map(k => ([k, k]))),
       },
       ru: {
-        translation: {
-          "Back to main website": "Назад на основной сайт",
-          "All tools": "Все инструменты",
-          Tools: "Инструменты",
-          "Tool types": "Все инструменты",
-          "View available": "Посмотреть доступные",
-          "Tool not found.": "Инструмент не найден.",
-          Save: "Сохранить",
-          Run: "Запуск",
-          "Unsaved changes exist. Apply?":
-            "Есть несохранённые изменения. Применить?",
-          Apply: "Применить",
-          Discard: "Сбросить",
-          Mine: "Мои",
-          "Edit Node": "Редактировать узел",
-          "Unknown error": "Неизвестная ошибка",
-          "not selected": "не выбрано",
-          Add: "Добавить",
-          "Add item": "Добавить элемент",
-          "Change item key": "Изменить ключ элемента",
-          Key: "Ключ",
-          "Change value": "Поменять значение",
-          Value: "Значение",
-          "Add JSON": "Добавить JSON",
-        },
+        translation: ru_tr,
       },
     },
   });

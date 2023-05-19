@@ -44,6 +44,9 @@ import ReactFlow, {
 	applyEdgeChanges,
 	useViewport,
 	ReactFlowProvider,
+  Handle, NodeProps, Position,
+  useKeyPress,
+  useOnSelectionChange,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -59,6 +62,23 @@ const initialNodes = [
 
 const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
 
+/*function Logicore1Node({ id, data }: NodeProps<NodeData>) {
+  return (
+    <div style={{ backgroundColor: 'yellow', borderRadius: 10 }}>
+      Hello
+    </div>
+  );
+}*/
+
+
+const NODE_TYPES = [
+  "FileSystem",
+  "Data",
+  "Multiplexer",
+];
+
+//const nodeTypes = {Logicore1Node};
+
 function Flow({ storageKey, prevStorageKey, value, onChange }) {
   /*const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);*/
@@ -69,14 +89,43 @@ function Flow({ storageKey, prevStorageKey, value, onChange }) {
 	const setNodes = onPath(value, onChange, ["nodes"]).onChange;
 	const setEdges = onPath(value, onChange, ["edges"]).onChange;
 
+  const [selectedNodes, setSelectedNodes] = useState([]);
+  const [selectedEdges, setSelectedEdges] = useState([]);
+
   const onConnect = useCallback((params) => setEdges(addEdge(params, edges)), [setEdges]);
 
 	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
 	const onEdgesChange = (changes) => onChange(update(value, {edges: {$apply: (v) => applyEdgeChanges(changes, v)}}));
 
-	const doAdd = () => {
+  const { runModal } = useContext(ModalContext);
+
+	const doAdd = async () => {
   	const id = "id_" + uuidv4();
-  	setNodes([...nodes, { id, position: { x: 0, y: 0 }, data: { label: '1' } }]);
+    const result = await runModal({
+      title: "Add node",
+      fields: {
+        type: "Fields",
+        fields: [
+          {
+            type: "SelectField",
+            k: "type",
+            label: "Type",
+            required: true,
+            options: NODE_TYPES.map((n) => ({value: n, label: n})),
+          },
+        ],
+      },
+      modalSize: "md",
+      value: {type: null},
+    });
+    if (!result) return;
+    const t = result.type.value;
+    setNodes([...nodes, {
+      id,
+      position: { x: 0, y: 0 },
+      //type: "Logicore1Node",
+      data: { subtype: t, label: t }
+    }]);
 	};
 
   const [state, setState] = useLocalStorage(storageKey);
@@ -120,6 +169,20 @@ function Flow({ storageKey, prevStorageKey, value, onChange }) {
     window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}));
   }, [x, y, zoom]);
 
+  const deletePressed = useKeyPress('Delete');
+
+  useEffect(() => {
+    if (!deletePressed) return;
+    setNodes(nodes.filter((o) => !_.includes(selectedNodes.map(({id}) => id), o.id)));
+    setEdges(edges.filter((o) => !_.includes(selectedEdges.map(({id}) => id), o.id)));
+  }, [deletePressed])
+
+  useOnSelectionChange({
+    onChange: ({ nodes, edges }) => {
+      setSelectedNodes(nodes);
+      setSelectedEdges(edges);
+    },
+  });
   return (<>
 		<button className="btn btn-success" onClick={_ => doAdd()}>Add</button>
     <ReactFlow
@@ -129,6 +192,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange }) {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      nodeTypes={/*nodeTypes*/ void 0}
     >
       <MiniMap />
       <Controls />
