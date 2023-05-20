@@ -116,14 +116,27 @@ const Data = ({ value, onChange }) => {
   );
 };
 
+const BackAndForth = ({ subtype, value, source, target }) => {
+  const actions = {forwards: {buttonClass: "btn-success"}, backwards: {buttonClass: "btn-warning"}};
+  return (
+      <div className="btn-group">
+        {Object.entries(actions).map(([k, v]) => (
+          <button
+            type="button" className={`btn ${v.buttonClass}`}
+            onClick={async _ => {
+              const resp = await axios.post(`/logicore-api/${subtype}/${k}/`, {
+              });
+            }}
+          >{_.capitalize(k)}</button>
+        ))}
+      </div>
+  );
+}
+
 const Files = ({ value, onChange, source }) => {
   const [files, setFiles] = useState(value || {});
   return (
     <main>
-      <div className="btn-group">
-        <button type="button" className="btn btn-success">Forward</button>
-        <button type="button" className="btn btn-warning">Backward</button>
-      </div>
       <ul style={{overflowY: "scroll", height: 500}}>
         {source?.value?.files?.map(x => (
           <li k={x}>
@@ -318,14 +331,13 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       }
     }
   }
-  let onp = null;
-  let onC = _ => _;
+  let theProps = {};
   if (lastSelectedThing) {
-    onp = {...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"])};
-    onC = vv => {
-      console.log('received vv', vv, onp.value);
-      onp.onChange(vv);
-    }
+    theProps = {
+      subtype: lastSelectedThing?.value?.data?.subtype,
+      ...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"]),
+      ...sourceAndTarget
+    };
   }
   return (<>
     <div className="row align-items-stretch flex-grow-1">
@@ -349,13 +361,12 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         </ReactFlow>
     	</div>
       <div className="col d-flex flex-column">
-        {LastSelectedThingComponent ? (
+        {LastSelectedThingComponent ? (<>
+          {lastSelectedThing.type === "Edge" ? <BackAndForth {...theProps} /> : null}
           <LastSelectedThingComponent
-            value={onp.value}
-            onChange={onC}
-            {...sourceAndTarget}
+            {...theProps}
           />
-        ) : null}
+        </>) : null}
     	</div>
     </div>
   </>);
