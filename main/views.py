@@ -1246,3 +1246,39 @@ def python_api(request, proc):
         return JsonResponse({"code": code})
 
     return JsonResponse({"error": "No such method"})
+
+
+class Element:
+    pass
+
+
+class FileSystem(Element):
+    @classmethod
+    def do(cls, params):
+        return {"files": glob.glob(f"{params['path']}/**/*.py", recursive=True)}
+
+
+class Files(Element):
+    @classmethod
+    def forwards(cls, params):
+        raise NotImplemented
+
+
+    @classmethod
+    def backwards(cls, params):
+        raise NotImplemented
+
+
+@csrf_exempt
+def logicore_api(request, subtype, action):
+    data = json.loads(request.body)
+
+    element = None
+    for el in Element.__subclasses__():
+        if el.__name__ == subtype:
+            element = el
+
+    if not element:
+        return JsonResponse({"error": "Element not found"}, status=400)
+
+    return JsonResponse(getattr(element, action)(data))

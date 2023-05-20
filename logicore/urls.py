@@ -67,6 +67,7 @@ urlpatterns = [
     path('media-upload/', main_views.media_upload), # TODO protect?
     re_path('^python-api/(?P<proc>.+)$', main_views.python_api),
     re_path('^haskell-api/(?P<path>.+)$', main_views.haskell_api),
+    re_path('^logicore-api/(?P<subtype>.+)/(?P<action>.+)/$', main_views.logicore_api),
 ] + main_urls + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + [
     re_path(r'^(?P<path>.*)$', main_views.HomeView.as_view()),
 ]

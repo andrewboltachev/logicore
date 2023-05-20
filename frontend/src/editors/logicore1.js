@@ -77,13 +77,37 @@ const NODE_TYPES = [
   "Multiplexer",
 ];
 
+const EDGE_TYPES = [
+  "Files",
+  "Grammar",
+  "Multiplexer",
+  "Selector",
+];
+
 //const nodeTypes = {Logicore1Node};
 
 const FileSystem = ({value, onChange}) => {
+  const doChange = async ({path}) => {
+    const resp = await axios.post("/logicore-api/FileSystem/do/", {path});
+    onChange({files: resp.data.files, path});
+  };
   return (
     <main>
       <GenericForm
         fields={{type: "Fields", fields: [{type: "TextField", k: "path", label: "Path", required: true}]}}
+        data={value}
+        onChange={doChange}
+        path={[]}
+      />
+    </main>
+  );
+};
+
+const Data = ({ value, onChange }) => {
+  return (
+    <main>
+      <GenericForm
+        fields={{type: "Fields", fields: [{type: "TextField", k: "data", label: "Data", required: true}]}}
         data={value}
         onChange={onChange}
         path={[]}
@@ -92,17 +116,49 @@ const FileSystem = ({value, onChange}) => {
   );
 };
 
+const Files = ({ value, onChange }) => {
+  return (
+    <main>
+      <GenericForm
+        fields={{type: "Fields", fields: [{type: "TextField", k: "files", label: "Files", required: true}]}}
+        data={value}
+        onChange={onChange}
+        path={[]}
+      />
+      </main>
+  );
+};
+
+const Grammar = ({ value, onChange }) => {
+
+};
+
+const Multiplexer = ({ value, onChange }) => {
+
+};
+
+const Selector = ({ value, onChange }) => {
+
+};
+
 const editableItems = {
   Node: {
     FileSystem,
+    Data,
+  },
+  Edge: {
+    Files,
+    Grammar,
+    Multiplexer,
+    Selector,
   },
 };
 
-const defaultValues = {
+/*const defaultValues = {
   Node: {
     FileSystem: {path: "", files: []},
   },
-};
+};*/
 
 function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   /*const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -117,7 +173,26 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [selectedEdges, setSelectedEdges] = useState([]);
 
-  const onConnect = useCallback((params) => setEdges(addEdge(params, edges)), [setEdges]);
+  const onConnect = useCallback(async (params) => {
+    const result = await runModal({
+      title: "Add edge",
+      fields: {
+        type: "Fields",
+        fields: [
+          {
+            type: "SelectField",
+            k: "subtype",
+            label: "Type",
+            required: true,
+            options: EDGE_TYPES.map((n) => ({value: n, label: n})),
+          },
+        ],
+      },
+      modalSize: "md",
+      value: {subtype: null},
+    });
+    if (result) setEdges(addEdge(update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: "Files"}}), edges));
+  }, [setEdges]);
 
 	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
 	const onEdgesChange = (changes) => onChange(update(value, {edges: {$apply: (v) => applyEdgeChanges(changes, v)}}));
@@ -212,8 +287,21 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     selectedEdges.length ? {type: "Edge", value: selectedEdges[selectedEdges.length - 1]} : null
   );
   let LastSelectedThingComponent = null;
+  const sourceAndTarget = {};
   if (lastSelectedThing) {
     LastSelectedThingComponent = (editableItems?.[lastSelectedThing?.type] || {})[lastSelectedThing?.value?.data?.subtype];
+    if (lastSelectedThing.type === "Edge") {
+      sourceAndTarget.source = onPathPlus(
+        value,
+        onChange,
+        ["nodes", {matching: x => x.id === lastSelectedThing.value.source.id}, "data", "payload"]
+      );
+      sourceAndTarget.target = onPathPlus(
+        value,
+        onChange,
+        ["nodes", {matching: x => x.id === lastSelectedThing.value.target.id}, "data", "payload"]
+      );
+    }
   }
   return (<>
     <div className="row align-items-stretch flex-grow-1">
@@ -240,6 +328,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         {LastSelectedThingComponent ? (
           <LastSelectedThingComponent
             {...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"])}
+            {...sourceAndTarget}
           />
         ) : null}
     	</div>
