@@ -125,6 +125,8 @@ const BackAndForth = ({ subtype, value, source, target }) => {
             type="button" className={`btn ${v.buttonClass}`}
             onClick={async _ => {
               const resp = await axios.post(`/logicore-api/${subtype}/${k}/`, {
+                source: source.value,
+                value: value,
               });
             }}
           >{_.capitalize(k)}</button>

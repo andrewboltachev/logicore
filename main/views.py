@@ -1261,12 +1261,40 @@ class FileSystem(Element):
 class Files(Element):
     @classmethod
     def forwards(cls, params):
-        raise NotImplemented
+        import libcst
+        from main.parser.python import serialize_dc
+
+        p = params["source"]["path"]
+        r = []
+        for path in params["value"]:
+            module = libcst.parse_module(read_file(path))
+            serialized = serialize_dc(module)
+            filename = path[len(p) + 1:]
+            r.append({
+                "type": "File",
+                "name": filename,
+                "value": serialized,
+            })
+        return r
 
 
     @classmethod
     def backwards(cls, params):
-        raise NotImplemented
+        import libcst
+        from main.parser.python import unserialize_dc
+
+        p = params["source"]["path"]
+        r = []
+        for path in params["value"]:
+            module = libcst.parse_module(read_file(path))
+            serialized = serialize_dc(module)
+            filename = path[len(p) + 1:]
+            r.append({
+                "type": "File",
+                "name": filename,
+                "value": serialized,
+            })
+        return r
 
 
 @csrf_exempt
@@ -1281,4 +1309,4 @@ def logicore_api(request, subtype, action):
     if not element:
         return JsonResponse({"error": "Element not found"}, status=400)
 
-    return JsonResponse(getattr(element, action)(data))
+    return JsonResponse(getattr(element, action)(data), safe=False)
