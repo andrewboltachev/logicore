@@ -84,7 +84,7 @@ const FileSystem = ({value, onChange}) => {
     <main>
       <GenericForm
         fields={{type: "Fields", fields: [{type: "TextField", k: "path", label: "Path", required: true}]}}
-        value={value}
+        data={value}
         onChange={onChange}
         path={[]}
       />
@@ -213,10 +213,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   );
   let LastSelectedThingComponent = null;
   if (lastSelectedThing) {
-    LastSelectedThingComponent = editableItems?.[lastSelectedThing?.type][lastSelectedThing?.value?.data?.subtype];
-  }
-  if (LastSelectedThingComponent) {
-    //console.log('aaa', lastSelectedThing.type.toLowerCase() + "s");
+    LastSelectedThingComponent = (editableItems?.[lastSelectedThing?.type] || {})[lastSelectedThing?.value?.data?.subtype];
   }
   return (<>
     <div className="row align-items-stretch flex-grow-1">
@@ -242,7 +239,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       <div className="col d-flex flex-column">
         {LastSelectedThingComponent ? (
           <LastSelectedThingComponent
-            {...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.data.id === lastSelectedThing.value.data.id}])}
+            {...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"])}
           />
         ) : null}
     	</div>
@@ -284,15 +281,15 @@ const Logicore1Editor = ({
     );
   };*/
   return (
-			  <ReactFlowProvider>
-          <Flow
-            storageKey={`viewport-${revId}`}
-            prevStorageKey={
-              prevRevId ? `viewport-${prevRevId}` : null
-            }
-            {...{value, onChange, saveButton}}
-          />
-			  </ReactFlowProvider>
+	  <ReactFlowProvider>
+      <Flow
+        storageKey={`viewport-${revId}`}
+        prevStorageKey={
+          prevRevId ? `viewport-${prevRevId}` : null
+        }
+        {...{value, onChange, saveButton}}
+      />
+	  </ReactFlowProvider>
   );
 };
 
