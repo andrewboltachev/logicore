@@ -13,7 +13,7 @@ import { NotificationManager } from "react-notifications";
 
 // Local React and general modules
 import { ModalProvider, ModalContext, modalComponents } from "../runModal";
-import { onPath, ScrollArea } from "./commons";
+import { onPath, onPathPlus, ScrollArea } from "./commons";
 import { axios } from "../imports";
 import { update } from "../logicore-forms/utils";
 import { useLocalStorage } from "../utils";
@@ -79,7 +79,32 @@ const NODE_TYPES = [
 
 //const nodeTypes = {Logicore1Node};
 
-function Flow({ storageKey, prevStorageKey, value, onChange }) {
+const FileSystem = ({value, onChange}) => {
+  return (
+    <main>
+      <GenericForm
+        fields={{type: "Fields", fields: [{type: "TextField", k: "path", label: "Path", required: true}]}}
+        value={value}
+        onChange={onChange}
+        path={[]}
+      />
+    </main>
+  );
+};
+
+const editableItems = {
+  Node: {
+    FileSystem,
+  },
+};
+
+const defaultValues = {
+  Node: {
+    FileSystem: {path: "", files: []},
+  },
+};
+
+function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   /*const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);*/
 
@@ -183,21 +208,45 @@ function Flow({ storageKey, prevStorageKey, value, onChange }) {
       setSelectedEdges(edges);
     },
   });
+  const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
+    selectedEdges.length ? {type: "Edge", value: selectedEdges[selectedEdges.length - 1]} : null
+  );
+  let LastSelectedThingComponent = null;
+  if (lastSelectedThing) {
+    LastSelectedThingComponent = editableItems?.[lastSelectedThing?.type][lastSelectedThing?.value?.data?.subtype];
+  }
+  if (LastSelectedThingComponent) {
+    //console.log('aaa', lastSelectedThing.type.toLowerCase() + "s");
+  }
   return (<>
-		<button className="btn btn-success" onClick={_ => doAdd()}>Add</button>
-    <ReactFlow
-			onInit={onInit}
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      nodeTypes={/*nodeTypes*/ void 0}
-    >
-      <MiniMap />
-      <Controls />
-      <Background />
-    </ReactFlow>
+    <div className="row align-items-stretch flex-grow-1">
+      <div className="col d-flex flex-column">
+        <div className="btn-group">
+          {saveButton}
+          <button type="button" className="btn btn-success" onClick={_ => doAdd()}>Add</button>
+        </div>
+        <ReactFlow
+          onInit={onInit}
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={/*nodeTypes*/ void 0}
+        >
+          <MiniMap />
+          <Controls />
+          <Background />
+        </ReactFlow>
+    	</div>
+      <div className="col d-flex flex-column">
+        {LastSelectedThingComponent ? (
+          <LastSelectedThingComponent
+            {...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.data.id === lastSelectedThing.value.data.id}])}
+          />
+        ) : null}
+    	</div>
+    </div>
   </>);
 }
 
@@ -235,22 +284,15 @@ const Logicore1Editor = ({
     );
   };*/
   return (
-    <div className="row align-items-stretch flex-grow-1">
-      <div className="col d-flex flex-column">
 			  <ReactFlowProvider>
           <Flow
             storageKey={`viewport-${revId}`}
             prevStorageKey={
               prevRevId ? `viewport-${prevRevId}` : null
             }
-            {...{value, onChange}}
+            {...{value, onChange, saveButton}}
           />
 			  </ReactFlowProvider>
-				{saveButton}
-    	</div>
-      <div className="col d-flex flex-column">
-    	</div>
-    </div>
   );
 };
 

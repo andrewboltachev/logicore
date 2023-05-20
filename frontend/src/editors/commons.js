@@ -39,6 +39,20 @@ export const onPath = (value, onChange, path, f) => {
   };
 };
 
+export const onPathPlus = (value, onChange, path, f) => {
+  const handler = f || _.identity;
+  let result = null;
+  const getter = (struct, variables) => {
+    result = struct;
+  }
+  modifyHelper(path, value, getter, {});
+  return {
+    value: result,
+    onChange: (newValue) => 1,
+    //onChange: (newValue) => onChange(setByPath(value, path, handler(newValue))),
+  };
+};
+
 export const ScrollArea = ({ storageKey, prevStorageKey, children }) => {
   const innerRef = useRef(null);
   const draggable = useDraggable(innerRef);
