@@ -126,8 +126,10 @@ const BackAndForth = ({ subtype, value, source, target }) => {
             onClick={async _ => {
               const resp = await axios.post(`/logicore-api/${subtype}/${k}/`, {
                 source: source.value,
+                target: target.value,
                 value: value,
               });
+              target.onChange({...target.value, ...resp.data});
             }}
           >{_.capitalize(k)}</button>
         ))}
@@ -144,7 +146,7 @@ const Files = ({ value, onChange, source }) => {
           <li k={x}>
             <input type="checkbox" id={`select-file-${x}`} checked={files[x]} onChange={_ => setFiles(update(files, {$toggle: [x]}))}/>
             {" "}
-            <label for={`select-file-${x}`}>
+            <label htmlFor={`select-file-${x}`}>
               {x.substr(source.value.path.length + 1)}
             </label>
             </li>

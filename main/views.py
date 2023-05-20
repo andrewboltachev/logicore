@@ -501,6 +501,11 @@ def read_file(filename):
         return f.read()
 
 
+def write_file(filename, text):
+    with open(filename, "w") as f:
+        return f.write(text)
+
+
 def default_json(x):
     if isinstance(x, Generator):
         return [i for i in x]
@@ -1275,26 +1280,18 @@ class Files(Element):
                 "name": filename,
                 "value": serialized,
             })
-        return r
+        return {"data": r}
 
 
     @classmethod
     def backwards(cls, params):
-        import libcst
         from main.parser.python import unserialize_dc
 
         p = params["source"]["path"]
-        r = []
-        for path in params["value"]:
-            module = libcst.parse_module(read_file(path))
-            serialized = serialize_dc(module)
-            filename = path[len(p) + 1:]
-            r.append({
-                "type": "File",
-                "name": filename,
-                "value": serialized,
-            })
-        return r
+        for file in params["target"]["data"]:
+            path = p + "/" + file["name"]
+            write_file(path, unserialize_dc(file["value"]).code)
+        return {}
 
 
 @csrf_exempt
