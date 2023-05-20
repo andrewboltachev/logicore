@@ -116,15 +116,31 @@ const Data = ({ value, onChange }) => {
   );
 };
 
-const Files = ({ value, onChange }) => {
+const Files = ({ value, onChange, source }) => {
+  const [files, setFiles] = useState(value || {});
   return (
     <main>
-      <GenericForm
+      <div className="btn-group">
+        <button type="button" className="btn btn-success">Forward</button>
+        <button type="button" className="btn btn-warning">Backward</button>
+      </div>
+      <ul style={{overflowY: "scroll", height: 500}}>
+        {source?.value?.files?.map(x => (
+          <li k={x}>
+            <input type="checkbox" id={`select-file-${x}`} checked={files[x]} onChange={_ => setFiles(update(files, {$toggle: [x]}))}/>
+            {" "}
+            <label for={`select-file-${x}`}>
+              {x.substr(source.value.path.length + 1)}
+            </label>
+            </li>
+        ))}</ul>
+      {/*<GenericForm
         fields={{type: "Fields", fields: [{type: "TextField", k: "files", label: "Files", required: true}]}}
         data={value}
         onChange={onChange}
         path={[]}
-      />
+      />*/}
+        <button type="button" className="btn btn-success" onClick={_ => onChange(files)}>Save</button>
       </main>
   );
 };
@@ -291,16 +307,24 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   if (lastSelectedThing) {
     LastSelectedThingComponent = (editableItems?.[lastSelectedThing?.type] || {})[lastSelectedThing?.value?.data?.subtype];
     if (lastSelectedThing.type === "Edge") {
-      sourceAndTarget.source = onPathPlus(
-        value,
-        onChange,
-        ["nodes", {matching: x => x.id === lastSelectedThing.value.source.id}, "data", "payload"]
-      );
-      sourceAndTarget.target = onPathPlus(
-        value,
-        onChange,
-        ["nodes", {matching: x => x.id === lastSelectedThing.value.target.id}, "data", "payload"]
-      );
+      for (const k of ["source", "target"]) {
+        sourceAndTarget[k] = onPathPlus(
+          value,
+          onChange,
+          ["nodes", {matching: x => {
+            return x.id === lastSelectedThing.value[k];
+          }}, "data", "payload"]
+        );
+      }
+    }
+  }
+  let onp = null;
+  let onC = _ => _;
+  if (lastSelectedThing) {
+    onp = {...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"])};
+    onC = vv => {
+      console.log('received vv', vv, onp.value);
+      onp.onChange(vv);
     }
   }
   return (<>
@@ -327,7 +351,8 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       <div className="col d-flex flex-column">
         {LastSelectedThingComponent ? (
           <LastSelectedThingComponent
-            {...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"])}
+            value={onp.value}
+            onChange={onC}
             {...sourceAndTarget}
           />
         ) : null}
