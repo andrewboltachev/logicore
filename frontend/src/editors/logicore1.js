@@ -224,7 +224,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       modalSize: "md",
       value: {subtype: null},
     });
-    if (result) setEdges(addEdge(update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: "Files"}}), edges));
+    if (result) setEdges(addEdge(update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}), edges));
   }, [setEdges]);
 
 	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
