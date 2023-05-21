@@ -111,6 +111,17 @@ G1 = {
 }
 
 
+@dataclass
+class Selector(Arrow):
+    key: Any
+
+    def forwards(self):
+        self.target.data = self.source.data[key]
+
+    def backwards(self):
+        self.source.data[key] = self.target.data
+
+
 class Command(BaseCommand):
     help = "Hello world"
 
@@ -140,6 +151,8 @@ libcst/_nodes/internal.py"""
         r1 = Data()
         g1 = Grammar(source=d1, target=r1, grammar=G1)
         g1.forwards()
+        f1 = Data()
+        funnel_selector1 = Selector(source=r1, target=f1, key="funnel")
         #files.backwards()
-        print(r1.dump())
+        print(f1.dump())
         self.stdout.write(self.style.SUCCESS("Hello world"))
