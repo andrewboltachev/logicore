@@ -60,7 +60,6 @@ class Files(Arrow):
         for file in self.target.data:
             path = p + "/" + file["name"]
             write_file(path, unserialize_dc(file["value"]).code)
-        return {}
 
 
 class Data(Vertex):
@@ -83,30 +82,10 @@ class Grammar(Arrow):
     grammar: Any  # aha, Any...
 
     def forwards(self):
-        p = self.source.path
-        r = []
-        for path in self.source.do():
-            if path[len(p) + 1 :] not in self.files:
-                continue
-            print("read", path)
-            module = libcst.parse_module(read_file(path))
-            serialized = serialize_dc(module)
-            filename = path[len(p) + 1 :]
-            r.append(
-                {
-                    "type": "File",
-                    "name": filename,
-                    "value": serialized,
-                }
-            )
-        self.target.data = r
+        pass
 
     def backwards(self):
-        p = self.source.path
-        for file in self.target.data:
-            path = p + "/" + file["name"]
-            write_file(path, unserialize_dc(file["value"]).code)
-        return {}
+        pass
 
 
 class Command(BaseCommand):
@@ -135,5 +114,6 @@ libcst/_nodes/internal.py"""
             ),
         )
         files.forwards()
-        print(d1.dump())
+        #files.backwards()
+        #print(d1.dump())
         self.stdout.write(self.style.SUCCESS("Hello world"))
