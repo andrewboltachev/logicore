@@ -116,10 +116,10 @@ class Selector(Arrow):
     key: Any
 
     def forwards(self):
-        self.target.data = self.source.data[key]
+        self.target.data = self.source.data[self.key]
 
     def backwards(self):
-        self.source.data[key] = self.target.data
+        self.source.data[self.key] = self.target.data
 
 
 class Command(BaseCommand):
@@ -153,6 +153,6 @@ libcst/_nodes/internal.py"""
         g1.forwards()
         f1 = Data()
         funnel_selector1 = Selector(source=r1, target=f1, key="funnel")
-        #files.backwards()
+        funnel_selector1.forwards()
         print(f1.dump())
         self.stdout.write(self.style.SUCCESS("Hello world"))
