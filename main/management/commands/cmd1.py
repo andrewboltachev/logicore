@@ -1,3 +1,4 @@
+import requests
 import json
 from django.core.management.base import BaseCommand, CommandError
 from main import models
@@ -7,6 +8,23 @@ import glob
 from libcst_to_react.get_me_nodes import read_file, write_file
 from main.parser.python import serialize_dc, unserialize_dc
 import libcst
+
+
+class HaskellAPI:
+    def __getattribute__(self, attr):
+        def f(**params):
+            resp = requests.post(f"http://localhost:3042/{attr}", json=params)
+            if resp.status_code != 200:
+                raise Exception(f"Error code {resp.status_code}")
+            data = resp.json()
+            error = data.get("error")
+            if error:
+                raise Exception(f"Error: {error}")
+            return data
+        return f
+
+
+HASKELL = HaskellAPI()
 
 
 @dataclass
@@ -78,14 +96,19 @@ def l2l(lines):
     return [l for l in [l.strip() for l in lines.split("\n")] if l]
 
 
+@dataclass
 class Grammar(Arrow):
     grammar: Any  # aha, Any...
 
     def forwards(self):
-        pass
+        self.target.data = HASKELL.matchPatternWithFunnel(pattern=self.grammar, value=self.source.data)
 
     def backwards(self):
         pass
+
+G1 = {
+    "tag": "MatchFunnel",
+}
 
 
 class Command(BaseCommand):
@@ -114,6 +137,9 @@ libcst/_nodes/internal.py"""
             ),
         )
         files.forwards()
+        r1 = Data()
+        g1 = Grammar(source=d1, target=r1, grammar=G1)
+        g1.forwards()
         #files.backwards()
-        #print(d1.dump())
+        print(r1.dump())
         self.stdout.write(self.style.SUCCESS("Hello world"))
