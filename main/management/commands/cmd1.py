@@ -347,5 +347,5 @@ libcst/_nodes/internal.py"""
         f1 = Data()
         funnel_selector1 = Selector(source=r1, target=f1, key="funnel")
         funnel_selector1.forwards()
-        print(f1.dump_funnel(True))
+        print(f1.dump_funnel_code(True))
         self.stdout.write(self.style.SUCCESS("Hello world"))
