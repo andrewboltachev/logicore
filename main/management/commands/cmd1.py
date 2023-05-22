@@ -201,7 +201,77 @@ G1 = {
                                                             "contents": {
                                                                 "tag": "Char",
                                                                 "contents": {
-                                                                    "tag": "MatchFunnel"
+                                                                    "tag": "MatchOr",
+                                                                    "contents": {
+                                                                        "a": {
+                                                                            "tag": "MatchObjectWithDefaults",
+                                                                            "contents": [
+                                                                                {
+                                                                                    "type": {
+                                                                                        "tag": "MatchStringExact",
+                                                                                        "contents": "ClassDef",
+                                                                                    },
+                                                                                    "name": {
+                                                                                        "tag": "MatchFunnel"
+                                                                                    },
+                                                                                    "body": {
+                                                                                        "tag": "MatchAny",
+                                                                                    }
+                                                                                },
+                                                                                {
+                                                                                    "bases": {
+                                                                                        "tag": "MatchAny"
+                                                                                    },
+                                                                                    "keywords": {
+                                                                                        "tag": "MatchAny"
+                                                                                    },
+                                                                                    "decorators": {
+                                                                                        "tag": "MatchAny"
+                                                                                    },
+                                                                                    "lpar": "MaybeSentinel.DEFAULT",
+                                                                                    "rpar": "MaybeSentinel.DEFAULT",
+                                                                                    "leading_lines": [],
+                                                                                    "lines_after_decorators": [],
+                                                                                    "whitespace_after_class": {
+                                                                                        "value": " ",
+                                                                                        "type": "SimpleWhitespace",
+                                                                                    },
+                                                                                    "whitespace_after_name": {
+                                                                                        "value": "",
+                                                                                        "type": "SimpleWhitespace",
+                                                                                    },
+                                                                                    "whitespace_before_colon": {
+                                                                                        "value": "",
+                                                                                        "type": "SimpleWhitespace",
+                                                                                    },
+                                                                                 },
+                                                                             ],
+                                                                         },
+                                                                        #"b": {
+                                                                        #     "tag": "MatchIfThen",
+                                                                        #     "contents": [
+                                                                        #         {
+                                                                        #             "tag": "MatchObjectPartial",
+                                                                        #             "contents": {
+                                                                        #                 "type": {
+                                                                        #                     "tag": "KeyReq",
+                                                                        #                     "contents": {
+                                                                        #                        "tag": "MatchStringExact",
+                                                                        #                        "contents": "ClassDef",
+                                                                        #                    },
+                                                                        #                },
+                                                                        #            },
+                                                                        #        },
+                                                                        #        "foo",
+                                                                        #        {
+                                                                        #            "tag": "MatchFunnelKeys"
+                                                                        #        },
+                                                                        #    ],
+                                                                        #},
+                                                                        "c": {
+                                                                            "tag": "MatchAny"
+                                                                        },
+                                                                    },
                                                                 },
                                                             },
                                                         }
@@ -277,5 +347,5 @@ libcst/_nodes/internal.py"""
         f1 = Data()
         funnel_selector1 = Selector(source=r1, target=f1, key="funnel")
         funnel_selector1.forwards()
-        print(f1.dump_funnel_code(True))
+        print(f1.dump_funnel(True))
         self.stdout.write(self.style.SUCCESS("Hello world"))
