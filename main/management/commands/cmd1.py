@@ -21,6 +21,7 @@ class HaskellAPI:
             if error:
                 raise Exception(f"Error: {error}")
             return data
+
         return f
 
 
@@ -80,12 +81,71 @@ class Files(Arrow):
             write_file(path, unserialize_dc(file["value"]).code)
 
 
+def unique(xs):
+    result = []
+    for x in xs:
+        if x in result:
+            continue
+        result.append(x)
+    return result
+
+
+def j2p(j, level=0):
+    out = ""
+    if isinstance(j, dict):
+        if j.get("type"):
+            try:
+                out = unserialize_dc(j).code
+            except Exception:
+                try:
+                    out = unserialize_dc(
+                        {
+                            "has_trailing_newline": True,
+                            "body": [j],
+                            "type": "Module",
+                            "default_indent": " " * 4,
+                            "default_newline": "\n",
+                            "encoding": "utf-8",
+                            "header": [],
+                            "footer": [],
+                        },
+                    ).code
+                except Exception:
+                    for k, v in j.items():
+                        out += f"{k}: {j2p(v, level=level + 1)}\n"
+    elif isinstance(j, list):
+        for i, e in enumerate(j):
+            out += f"{i:02d}: {j2p(e, level=level + 1)}\n"
+    else:
+        try:
+            out = str(j)
+        except:
+            out = repr(j)
+    return "\n".join([l for l in out.split("\n")])
+
+
 class Data(Vertex):
     params: dict[str, Any] | None = None
     data: Any = None
 
     def dump(self):
         return json.dumps(self.data, indent=4)
+
+    def dump_funnel(self, is_unique=False):
+        data = self.data
+        if is_unique:
+            data = unique(data)
+        for i, item in enumerate(data):
+            print(("=" * 120) + f" {i + 1}")
+            print(item)
+
+    def dump_funnel_code(self, is_unique=False):
+        data = self.data
+        if is_unique:
+            data = unique(data)
+        for i, item in enumerate(data):
+            print(("=" * 120) + f" {i + 1}")
+            print(j2p(item))
 
 
 # FileSystem "/home/andrey/Work/lc/LibCST"
@@ -101,13 +161,76 @@ class Grammar(Arrow):
     grammar: Any  # aha, Any...
 
     def forwards(self):
-        self.target.data = HASKELL.matchPatternWithFunnel(pattern=self.grammar, value=self.source.data)
+        self.target.data = HASKELL.matchPatternWithFunnel(
+            pattern=self.grammar, value=self.source.data
+        )
 
     def backwards(self):
         pass
 
+
 G1 = {
-    "tag": "MatchFunnel",
+    "tag": "MatchArrayContextFree",
+    "contents": {
+        "tag": "Seq",
+        "contents": [
+            {
+                "tag": "Star",
+                "contents": {
+                    "tag": "Char",
+                    "contents": {
+                        "tag": "MatchObjectWithDefaults",
+                        "contents": [
+                            {
+                                "type": {"tag": "MatchStringExact", "contents": "File"},
+                                "value": {
+                                    "tag": "MatchObjectWithDefaults",
+                                    "contents": [
+                                        {
+                                            "has_trailing_newline": {
+                                                "tag": "MatchBoolExact",
+                                                "contents": True,
+                                            },
+                                            "body": {
+                                                "tag": "MatchArrayContextFree",
+                                                "contents": {
+                                                    "tag": "Seq",
+                                                    "contents": [
+                                                        {
+                                                            "tag": "Star",
+                                                            "contents": {
+                                                                "tag": "Char",
+                                                                "contents": {
+                                                                    "tag": "MatchFunnel"
+                                                                },
+                                                            },
+                                                        }
+                                                    ],
+                                                },
+                                            },
+                                            "type": {
+                                                "tag": "MatchStringExact",
+                                                "contents": "Module",
+                                            },
+                                        },
+                                        {
+                                            "default_indent": " " * 4,
+                                            "default_newline": "\n",
+                                            "encoding": "utf-8",
+                                            "header": [],
+                                            "footer": [],
+                                        },
+                                    ],
+                                },
+                                "name": {"tag": "MatchStringAny"},
+                            },
+                            {},
+                        ],
+                    },
+                },
+            },
+        ],
+    },
 }
 
 
@@ -154,5 +277,5 @@ libcst/_nodes/internal.py"""
         f1 = Data()
         funnel_selector1 = Selector(source=r1, target=f1, key="funnel")
         funnel_selector1.forwards()
-        print(f1.dump())
+        print(f1.dump_funnel_code(True))
         self.stdout.write(self.style.SUCCESS("Hello world"))
