@@ -121,7 +121,7 @@ def j2p(j, level=0):
             out = str(j)
         except:
             out = repr(j)
-    return "\n".join([l for l in out.split("\n")])
+    return "\n".join([(" " * 2 * level) + l for l in out.split("\n")])
 
 
 class Data(Vertex):
