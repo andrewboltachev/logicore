@@ -28,6 +28,49 @@ export default [
         contents: [
           {
             param: {
+              type: "ConT",
+              value: "MatchPattern",
+            },
+            target: {
+              type: "ConT",
+              value: "KeyMap",
+            },
+            type: "AppT",
+          },
+          {
+            param: {
+              type: "ConT",
+              value: "Value",
+            },
+            target: {
+              type: "ConT",
+              value: "KeyMap",
+            },
+            type: "AppT",
+          },
+        ],
+        tag: "MatchObjectWithDefaults",
+      },
+      {
+        contents: [
+          {
+            param: {
+              type: "ConT",
+              value: "MatchPattern",
+            },
+            target: {
+              type: "ConT",
+              value: "KeyMap",
+            },
+            type: "AppT",
+          },
+        ],
+        tag: "MatchObjectOnly",
+      },
+      {
+        contents: [
+          {
+            param: {
               param: {
                 type: "ConT",
                 value: "MatchPattern",
@@ -62,6 +105,15 @@ export default [
           },
         ],
         tag: "MatchArrayContextFree",
+      },
+      {
+        contents: [
+          {
+            type: "ConT",
+            value: "MatchPattern",
+          },
+        ],
+        tag: "MatchArrayOnly",
       },
       {
         contents: [
@@ -111,6 +163,19 @@ export default [
         tag: "MatchAny",
       },
       {
+        contents: [],
+        tag: "MatchIgnore",
+      },
+      {
+        contents: [
+          {
+            type: "ConT",
+            value: "Value",
+          },
+        ],
+        tag: "MatchDefault",
+      },
+      {
         contents: [
           {
             param: {
@@ -125,6 +190,22 @@ export default [
           },
         ],
         tag: "MatchOr",
+      },
+      {
+        contents: [
+          {
+            param: {
+              type: "ConT",
+              value: "MatchPattern",
+            },
+            target: {
+              type: "ConT",
+              value: "KeyMap",
+            },
+            type: "AppT",
+          },
+        ],
+        tag: "MatchArrayOr",
       },
       {
         contents: [
@@ -246,6 +327,71 @@ export default [
               value: "MatchResult",
             },
             target: {
+              type: "ConT",
+              value: "KeyMap",
+            },
+            type: "AppT",
+          },
+          {
+            param: {
+              type: "ConT",
+              value: "Value",
+            },
+            target: {
+              type: "ConT",
+              value: "KeyMap",
+            },
+            type: "AppT",
+          },
+          {
+            param: {
+              type: "ConT",
+              value: "Value",
+            },
+            target: {
+              type: "ConT",
+              value: "KeyMap",
+            },
+            type: "AppT",
+          },
+        ],
+        tag: "MatchObjectWithDefaultsResult",
+      },
+      {
+        contents: [
+          {
+            param: {
+              type: "ConT",
+              value: "MatchResult",
+            },
+            target: {
+              type: "ConT",
+              value: "KeyMap",
+            },
+            type: "AppT",
+          },
+          {
+            param: {
+              type: "ConT",
+              value: "Value",
+            },
+            target: {
+              type: "ConT",
+              value: "KeyMap",
+            },
+            type: "AppT",
+          },
+        ],
+        tag: "MatchObjectOnlyResult",
+      },
+      {
+        contents: [
+          {
+            param: {
+              type: "ConT",
+              value: "MatchResult",
+            },
+            target: {
               param: {
                 type: "ConT",
                 value: "MatchPattern",
@@ -260,6 +406,25 @@ export default [
           },
         ],
         tag: "MatchArrayContextFreeResult",
+      },
+      {
+        contents: [
+          {
+            type: "ConT",
+            value: "MatchPattern",
+          },
+          {
+            param: {
+              type: "ConT",
+              value: "MatchResult",
+            },
+            target: {
+              type: "ListT",
+            },
+            type: "AppT",
+          },
+        ],
+        tag: "MatchArrayOnlyResult",
       },
       {
         contents: [
@@ -327,6 +492,24 @@ export default [
           },
         ],
         tag: "MatchAnyResult",
+      },
+      {
+        contents: [
+          {
+            type: "ConT",
+            value: "Value",
+          },
+        ],
+        tag: "MatchIgnoreResult",
+      },
+      {
+        contents: [
+          {
+            type: "ConT",
+            value: "Value",
+          },
+        ],
+        tag: "MatchDefaultResult",
       },
       {
         contents: [
@@ -433,7 +616,7 @@ export default [
         contents: [
           {
             type: "VarT",
-            value: "a_6989586621679294232",
+            value: "a_6989586621682287267",
           },
         ],
         tag: "Char",
@@ -444,7 +627,7 @@ export default [
             param: {
               param: {
                 type: "VarT",
-                value: "a_6989586621679294232",
+                value: "a_6989586621682287267",
               },
               target: {
                 type: "ConT",
@@ -466,7 +649,7 @@ export default [
             param: {
               param: {
                 type: "VarT",
-                value: "a_6989586621679294232",
+                value: "a_6989586621682287267",
               },
               target: {
                 type: "ConT",
@@ -488,7 +671,7 @@ export default [
           {
             param: {
               type: "VarT",
-              value: "a_6989586621679294232",
+              value: "a_6989586621682287267",
             },
             target: {
               type: "ConT",
@@ -504,7 +687,7 @@ export default [
           {
             param: {
               type: "VarT",
-              value: "a_6989586621679294232",
+              value: "a_6989586621682287267",
             },
             target: {
               type: "ConT",
@@ -520,7 +703,7 @@ export default [
           {
             param: {
               type: "VarT",
-              value: "a_6989586621679294232",
+              value: "a_6989586621682287267",
             },
             target: {
               type: "ConT",
@@ -533,7 +716,7 @@ export default [
       },
     ],
     value: "ContextFreeGrammar",
-    vars: ["a_6989586621679294232"],
+    vars: ["a_6989586621682287267"],
   },
   {
     contents: [
@@ -541,7 +724,7 @@ export default [
         contents: [
           {
             type: "VarT",
-            value: "r_6989586621679296208",
+            value: "r_6989586621682289341",
           },
         ],
         tag: "CharNode",
@@ -552,12 +735,12 @@ export default [
             param: {
               param: {
                 type: "VarT",
-                value: "r_6989586621679296208",
+                value: "r_6989586621682289341",
               },
               target: {
                 param: {
                   type: "VarT",
-                  value: "g_6989586621679296207",
+                  value: "g_6989586621682289340",
                 },
                 target: {
                   type: "ConT",
@@ -580,7 +763,7 @@ export default [
           {
             param: {
               type: "VarT",
-              value: "g_6989586621679296207",
+              value: "g_6989586621682289340",
             },
             target: {
               type: "ConT",
@@ -597,12 +780,12 @@ export default [
             param: {
               param: {
                 type: "VarT",
-                value: "r_6989586621679296208",
+                value: "r_6989586621682289341",
               },
               target: {
                 param: {
                   type: "VarT",
-                  value: "g_6989586621679296207",
+                  value: "g_6989586621682289340",
                 },
                 target: {
                   type: "ConT",
@@ -626,12 +809,51 @@ export default [
             param: {
               param: {
                 type: "VarT",
-                value: "r_6989586621679296208",
+                value: "r_6989586621682289341",
               },
               target: {
                 param: {
                   type: "VarT",
-                  value: "g_6989586621679296207",
+                  value: "g_6989586621682289340",
+                },
+                target: {
+                  type: "ConT",
+                  value: "ContextFreeGrammarResult",
+                },
+                type: "AppT",
+              },
+              type: "AppT",
+            },
+            target: {
+              type: "ListT",
+            },
+            type: "AppT",
+          },
+          {
+            param: {
+              type: "ConT",
+              value: "Int",
+            },
+            target: {
+              type: "ListT",
+            },
+            type: "AppT",
+          },
+        ],
+        tag: "StarNodeIndexed",
+      },
+      {
+        contents: [
+          {
+            param: {
+              param: {
+                type: "VarT",
+                value: "r_6989586621682289341",
+              },
+              target: {
+                param: {
+                  type: "VarT",
+                  value: "g_6989586621682289340",
                 },
                 target: {
                   type: "ConT",
@@ -655,7 +877,46 @@ export default [
             param: {
               param: {
                 type: "VarT",
-                value: "g_6989586621679296207",
+                value: "r_6989586621682289341",
+              },
+              target: {
+                param: {
+                  type: "VarT",
+                  value: "g_6989586621682289340",
+                },
+                target: {
+                  type: "ConT",
+                  value: "ContextFreeGrammarResult",
+                },
+                type: "AppT",
+              },
+              type: "AppT",
+            },
+            target: {
+              type: "ListT",
+            },
+            type: "AppT",
+          },
+          {
+            param: {
+              type: "ConT",
+              value: "Int",
+            },
+            target: {
+              type: "ListT",
+            },
+            type: "AppT",
+          },
+        ],
+        tag: "PlusNodeIndexed",
+      },
+      {
+        contents: [
+          {
+            param: {
+              param: {
+                type: "VarT",
+                value: "g_6989586621682289340",
               },
               target: {
                 type: "ConT",
@@ -676,12 +937,12 @@ export default [
           {
             param: {
               type: "VarT",
-              value: "r_6989586621679296208",
+              value: "r_6989586621682289341",
             },
             target: {
               param: {
                 type: "VarT",
-                value: "g_6989586621679296207",
+                value: "g_6989586621682289340",
               },
               target: {
                 type: "ConT",
@@ -699,12 +960,12 @@ export default [
           {
             param: {
               type: "VarT",
-              value: "r_6989586621679296208",
+              value: "r_6989586621682289341",
             },
             target: {
               param: {
                 type: "VarT",
-                value: "g_6989586621679296207",
+                value: "g_6989586621682289340",
               },
               target: {
                 type: "ConT",
@@ -722,7 +983,7 @@ export default [
           {
             param: {
               type: "VarT",
-              value: "g_6989586621679296207",
+              value: "g_6989586621682289340",
             },
             target: {
               type: "ConT",
@@ -735,7 +996,7 @@ export default [
       },
     ],
     value: "ContextFreeGrammarResult",
-    vars: ["g_6989586621679296207", "r_6989586621679296208"],
+    vars: ["g_6989586621682289340", "r_6989586621682289341"],
   },
   {
     contents: [
@@ -743,7 +1004,7 @@ export default [
         contents: [
           {
             type: "VarT",
-            value: "a_6989586621679299464",
+            value: "a_6989586621682293975",
           },
         ],
         tag: "KeyReq",
@@ -752,7 +1013,7 @@ export default [
         contents: [
           {
             type: "VarT",
-            value: "a_6989586621679299464",
+            value: "a_6989586621682293975",
           },
         ],
         tag: "KeyOpt",
@@ -768,6 +1029,6 @@ export default [
       },
     ],
     value: "ObjectKeyMatch",
-    vars: ["a_6989586621679299464"],
+    vars: ["a_6989586621682293975"],
   },
 ];
