@@ -119,3 +119,8 @@ class Fiddle(models.Model):
 
     class Meta:
         ordering = ["-modified_dt"]
+
+
+class Log(models.Model):
+    created_dt = models.DateTimeField()
+    data = models.JSONField(default=None, null=True, blank=True)

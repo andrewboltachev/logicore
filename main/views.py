@@ -1307,3 +1307,9 @@ def logicore_api(request, subtype, action):
         return JsonResponse({"error": "Element not found"}, status=400)
 
     return JsonResponse(getattr(element, action)(data), safe=False)
+
+
+@csrf_exempt
+def test_webhook_new_message(request):
+    data = json.loads(request.body)
+    models.Log.objects.create(created_dt=now(), data=data)

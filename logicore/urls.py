@@ -49,6 +49,7 @@ router.register(r'stratagem', StratagemViewSet)
 base_urls = [
     path('admin/', admin.site.urls),
     path('', main_views.HomeRedirectView.as_view()),
+    path('test-webhook-new-message/6799722d-a666-42d3-bd0b-3834157295dc/', main_views.test_webhook_new_message),
     *api_views_patterns,
     re_path(r"api/.*", main_views.Error404ApiView.as_view()),
 ]
