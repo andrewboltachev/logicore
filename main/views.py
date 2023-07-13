@@ -1222,7 +1222,9 @@ def python_api(request, proc):
         except Exception as e:
             return JsonResponse({"error": str(e)})
         if resp.status_code != 200:
-            return JsonResponse({"error": f"Haskell API returned: {resp.content.decode('utf-8')}"})
+            return JsonResponse(
+                {"error": f"Haskell API returned: {resp.content.decode('utf-8')}"}
+            )
         return JsonResponse(resp.json())
     elif proc == "step2":
         try:
@@ -1241,7 +1243,9 @@ def python_api(request, proc):
             print(e)
             return JsonResponse({"error": str(e)})
         if resp.status_code != 200:
-            return JsonResponse({"error": f"Haskell API returned: {resp.content.decode('utf-8')}"})
+            return JsonResponse(
+                {"error": f"Haskell API returned: {resp.content.decode('utf-8')}"}
+            )
         try:
             j = resp.json()
             code = unserialize_dc(j["code"]).code
@@ -1274,14 +1278,15 @@ class Files(Element):
         for path in params["value"]:
             module = libcst.parse_module(read_file(path))
             serialized = serialize_dc(module)
-            filename = path[len(p) + 1:]
-            r.append({
-                "type": "File",
-                "name": filename,
-                "value": serialized,
-            })
+            filename = path[len(p) + 1 :]
+            r.append(
+                {
+                    "type": "File",
+                    "name": filename,
+                    "value": serialized,
+                }
+            )
         return {"data": r}
-
 
     @classmethod
     def backwards(cls, params):
@@ -1314,3 +1319,20 @@ def test_webhook_new_message(request):
     data = json.loads(request.body)
     models.Log.objects.create(created_dt=now(), data=data)
     return JsonResponse({"status": "ok"})
+
+
+class TestIframeContentView(TemplateView):
+    template_name = "test-iframe-content.html"
+
+
+def test_card_data(request):
+    return JsonResponse(
+        {
+            "type": "IFRAME",
+            "width": 200,
+            "height": 200,
+            "uri": "https://main.andrewboltachev.site/test-iframe-content/",
+            "label": "Edit",
+            "associatedObjectProperties": [],
+        }
+    )
