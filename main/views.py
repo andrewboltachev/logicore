@@ -1313,3 +1313,4 @@ def logicore_api(request, subtype, action):
 def test_webhook_new_message(request):
     data = json.loads(request.body)
     models.Log.objects.create(created_dt=now(), data=data)
+    return JsonResponse({"status": "ok"})
