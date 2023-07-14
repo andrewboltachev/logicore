@@ -11,6 +11,7 @@
       if (window.localStorage.getItem('FLAG_1')) {
         window.localStorage.deleteItem('FLAG_1');
       } else {
+        window.localStorage.setItem('FLAG_1', 'yes');
         function popupWindow(url, title, w, h) {
           var left = (screen.width/2)-(w/2);
           var top = (screen.height/2)-(h/2);
@@ -19,7 +20,6 @@
         function openTheChat() {
           popupWindow('https://my.textback.io/messaging.html#!/messaging/all/68988530', null, 900, 500);
           setTimeout(function() {
-            window.localStorage.setItem('FLAG_1', 'yes');
             window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
           }, 5000); // test
         }
