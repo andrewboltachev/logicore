@@ -8,7 +8,6 @@
   <body>
     <h1>Loading...</h1>
     <script>
-      console.log(JSON.stringify(location));
       function popupWindow(url, title, w, h) {
         var left = (screen.width/2)-(w/2);
         var top = (screen.height/2)-(h/2);
@@ -19,6 +18,9 @@
         setTimeout(function() {
           window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
         }, 5000); // test
+        setTimeout(function() {
+          alert('aaaa');
+        }, 10000); // test
       }
       openTheChat();
       //document.addEventListener("DOMContentLoaded", openTheChat);
