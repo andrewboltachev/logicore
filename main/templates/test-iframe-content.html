@@ -14,7 +14,8 @@
         var top = (screen.height/2)-(h/2);
         return window.open(url, title, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width='+w+', height='+h+', top='+top+', left='+left);
       }
-      function openTheChat() {
+      function openTheChat(e) {
+        console.log(e);
         if (wasOpen) return;
         wasOpen = true;
         popupWindow('https://my.textback.io/messaging.html#!/messaging/all/68988530', null, 900, 500);
