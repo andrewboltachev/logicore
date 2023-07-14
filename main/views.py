@@ -1327,7 +1327,7 @@ class TestIframeContentView(TemplateView):
     def get(self, request, *args, **kwargs):
         resp = super().get(request, *args, **kwargs)
         resp["Content-Security-Policy"] = "default-src 'self' *.hubspot.com"
-        resp["X-Frame-Options"] = "ALLOW-FROM *.hubspot.com"
+        resp["X-Frame-Options"] = "ALLOW-FROM app.hubspot.com"
         return resp
 
 
