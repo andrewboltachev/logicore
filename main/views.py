@@ -1338,8 +1338,9 @@ def test_card_data(request):
                 "width": 200,
                 "height": 200,
                 "uri": "https://main.andrewboltachev.site/test-iframe-content/",
-                "label": "Edit",
+                "label": "View WhatsApp Chat",
                 "associatedObjectProperties": ["phone", "mobilephone"],
             },
+            "results": [],
         }
     )
