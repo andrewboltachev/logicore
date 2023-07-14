@@ -8,10 +8,13 @@
   <body>
     <h1>Loading...</h1>
     <script>
+      function openTheChat() {
         window.open('https://my.textback.io/messaging.html#!/messaging/all/68988530', null, 'width=900,height=500')
         setTimeout(function() {
-          window.postMessage({"action": "DONE"}, "*");
+          window.parent.postMessage({"action": "DONE"}, "*");
         }, 5000); // test
+      }
+      document.addEventListener("DOMContentLoaded", openTheChat);
     </script>
   </body>
 </html>
