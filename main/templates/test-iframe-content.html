@@ -9,7 +9,7 @@
     <h1>Loading...</h1>
     <script>
       if (window.localStorage.getItem('FLAG_1')) {
-        window.localStorage.deleteItem('FLAG_1');
+        window.localStorage.removeItem('FLAG_1');
       } else {
         window.localStorage.setItem('FLAG_1', 'yes');
         function popupWindow(url, title, w, h) {
