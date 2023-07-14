@@ -8,8 +8,13 @@
   <body>
     <h1>Loading...</h1>
     <script>
+      function popupWindow(url, title, w, h) {
+        var left = (screen.width/2)-(w/2);
+        var top = (screen.height/2)-(h/2);
+        return window.open(url, title, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width='+w+', height='+h+', top='+top+', left='+left);
+      }
       function openTheChat() {
-        window.open('https://my.textback.io/messaging.html#!/messaging/all/68988530', null, 'width=900,height=500')
+        popupWindow('https://my.textback.io/messaging.html#!/messaging/all/68988530', null, 900, 500);
         setTimeout(function() {
           window.parent.postMessage({"action": "DONE"}, "*");
         }, 5000); // test
