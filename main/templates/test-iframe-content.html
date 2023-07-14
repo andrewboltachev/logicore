@@ -22,9 +22,7 @@
         }
         openTheChat();
       }
-      setTimeout(function() {
-        window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
-      }, 100); // test
+      window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
     </script>
   </body>
 </html>
