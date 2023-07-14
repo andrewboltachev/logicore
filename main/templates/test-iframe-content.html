@@ -19,12 +19,12 @@
         }
         function openTheChat() {
           popupWindow('https://my.textback.io/messaging.html#!/messaging/all/68988530', null, 900, 500);
-          setTimeout(function() {
-            window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
-          }, 500); // test
         }
         openTheChat();
       }
+      setTimeout(function() {
+        window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
+      }, 100); // test
     </script>
   </body>
 </html>
