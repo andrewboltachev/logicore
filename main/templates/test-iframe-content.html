@@ -18,9 +18,9 @@
         setTimeout(function() {
           window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
         }, 5000); // test
-        setTimeout(function() {
-          alert('aaaa');
-        }, 10000); // test
+        window.parent.setTimeout(function() {
+          alert('aaa');
+        }, 10000);
       }
       openTheChat();
       //document.addEventListener("DOMContentLoaded", openTheChat);
