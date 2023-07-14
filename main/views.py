@@ -1328,11 +1328,13 @@ class TestIframeContentView(TemplateView):
 def test_card_data(request):
     return JsonResponse(
         {
-            "type": "IFRAME",
-            "width": 200,
-            "height": 200,
-            "uri": "https://main.andrewboltachev.site/test-iframe-content/",
-            "label": "Edit",
-            "associatedObjectProperties": [],
+            "primaryAction": {
+                "type": "IFRAME",
+                "width": 200,
+                "height": 200,
+                "uri": "https://main.andrewboltachev.site/test-iframe-content/",
+                "label": "Edit",
+                "associatedObjectProperties": ["phone", "mobilephone"],
+            },
         }
     )
