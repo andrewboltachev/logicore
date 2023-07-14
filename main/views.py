@@ -1333,7 +1333,7 @@ class TestIframeContentView(TemplateView):
 def test_card_data(request):
     return JsonResponse(
         {
-            "primaryAction": {
+            "secondaryAction": {
                 "type": "IFRAME",
                 "width": 200,
                 "height": 200,
