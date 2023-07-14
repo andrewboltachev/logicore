@@ -8,22 +8,23 @@
   <body>
     <h1>Loading...</h1>
     <script>
-      function popupWindow(url, title, w, h) {
-        var left = (screen.width/2)-(w/2);
-        var top = (screen.height/2)-(h/2);
-        return window.open(url, title, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width='+w+', height='+h+', top='+top+', left='+left);
+      if (window.localStorage.getItem('FLAG_1')) {
+        window.localStorage.deleteItem('FLAG_1');
+      } else {
+        function popupWindow(url, title, w, h) {
+          var left = (screen.width/2)-(w/2);
+          var top = (screen.height/2)-(h/2);
+          return window.open(url, title, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width='+w+', height='+h+', top='+top+', left='+left);
+        }
+        function openTheChat() {
+          popupWindow('https://my.textback.io/messaging.html#!/messaging/all/68988530', null, 900, 500);
+          setTimeout(function() {
+            window.localStorage.setItem('FLAG_1', 'yes');
+            window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
+          }, 5000); // test
+        }
+        openTheChat();
       }
-      function openTheChat() {
-        popupWindow('https://my.textback.io/messaging.html#!/messaging/all/68988530', null, 900, 500);
-        setTimeout(function() {
-          window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
-        }, 5000); // test
-        window.parent.setTimeout(function() {
-          alert('aaa');
-        }, 10000);
-      }
-      openTheChat();
-      //document.addEventListener("DOMContentLoaded", openTheChat);
     </script>
   </body>
 </html>
