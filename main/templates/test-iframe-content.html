@@ -20,7 +20,7 @@
         wasOpen = true;
         popupWindow('https://my.textback.io/messaging.html#!/messaging/all/68988530', null, 900, 500);
         setTimeout(function() {
-          window.parent.postMessage({"action": "DONE"}, "*");
+          window.parent.postMessage(JSON.stringify({"action": "DONE"}), "*");
         }, 5000); // test
       }
       document.addEventListener("DOMContentLoaded", openTheChat);
