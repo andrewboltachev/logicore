@@ -1324,6 +1324,11 @@ def test_webhook_new_message(request):
 class TestIframeContentView(TemplateView):
     template_name = "test-iframe-content.html"
 
+    def get(self, request, *args, **kwargs):
+        resp = super().get(request, *args, **kwargs)
+        resp["Content-Security-Policy"] = "default-src 'self' *.hubspot.com"
+        return resp
+
 
 def test_card_data(request):
     return JsonResponse(
