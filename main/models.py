@@ -124,3 +124,4 @@ class Fiddle(models.Model):
 class Log(models.Model):
     created_dt = models.DateTimeField()
     data = models.JSONField(default=None, null=True, blank=True)
+    data2 = models.JSONField(default=None, null=True, blank=True)
