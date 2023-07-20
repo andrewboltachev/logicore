@@ -1317,7 +1317,7 @@ def logicore_api(request, subtype, action):
 @csrf_exempt
 def test_webhook_new_message(request):
     data = json.loads(request.body)
-    models.Log.objects.create(created_dt=now(), data=data, data2=request.headers)
+    models.Log.objects.create(created_dt=now(), data=data, data2=dict(request.headers))
     return JsonResponse({"status": "ok"})
 
 
