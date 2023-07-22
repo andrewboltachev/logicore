@@ -1036,7 +1036,7 @@ class FiddleTypeMixin:
             ]
             fiddles = models.Fiddle.objects.filter(pk__in=owned)
             fiddles.update(user=self.request.user)
-            request.session.set("FIDDLES_OWNED", "")
+            request.session["FIDDLES_OWNED"] = ""
         return super().dispatch(request, *args, **kwargs)
 
 
