@@ -722,6 +722,7 @@ const standardNodeEditors = {
   // String Scientific Bool
   TextNodeEditor,
   ScientificNodeEditor,
+  IntNodeEditor: ScientificNodeEditor,
   BoolNodeEditor,
 };
 
