@@ -970,6 +970,10 @@ const standardSchema = [
   },
   {
     contents: [],
+    value: "Int",
+  },
+  {
+    contents: [],
     value: "Bool",
   },
   {
