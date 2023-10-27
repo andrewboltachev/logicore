@@ -497,7 +497,7 @@ const ScientificNodeEditor = ({
               val: String(currentValue),
             },
           });
-		console.log('path', path);
+          console.log('path', path);
           if (result) onChange(setByPath(value, path, Number(result.val)));
         }}
       >
