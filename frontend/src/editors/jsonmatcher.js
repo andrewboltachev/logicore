@@ -479,7 +479,7 @@ const ScientificNodeEditor = ({
         href="#"
         onClick={async (e) => {
           e.preventDefault();
-          const result = runModal({
+          const result = await runModal({
             title: t("Change value"),
             fields: {
               type: "Fields",
@@ -494,10 +494,11 @@ const ScientificNodeEditor = ({
             },
             modalSize: "md",
             value: {
-              val: currentValue,
+              val: String(currentValue),
             },
           });
-          if (result) onChange(setByPath(value, path, result.val));
+		console.log('path', path);
+          if (result) onChange(setByPath(value, path, Number(result.val)));
         }}
       >
         <span className="text-primary">{currentValue || 0}</span>
