@@ -34,7 +34,7 @@ const FormModal = (config) => {
     setErrors(error);
     if (!definitionIsInvalid(config?.fields, error, value)) {
       // ok
-      console.log("run cb");
+      console.log("run cb", value);
       resolve(value);
       //onReset(path);
     } else {

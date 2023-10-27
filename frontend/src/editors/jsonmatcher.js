@@ -409,7 +409,7 @@ const TextNodeEditor = ({
         onClick={async (e) => {
           e.preventDefault();
           const result = await runModal({
-            title: t("Change value"),
+            title: t("Change value 1"),
             fields: {
               type: "Fields",
               fields: [
@@ -479,8 +479,9 @@ const ScientificNodeEditor = ({
         href="#"
         onClick={async (e) => {
           e.preventDefault();
+		console.log("launch with value", value, currentValue);
           const result = await runModal({
-            title: t("Change value"),
+            title: t("Change value 2"),
             fields: {
               type: "Fields",
               fields: [
@@ -497,7 +498,7 @@ const ScientificNodeEditor = ({
               val: String(currentValue),
             },
           });
-          console.log('path', path);
+          //console.log('path', path);
           if (result) onChange(setByPath(value, path, Number(result.val)));
         }}
       >
@@ -686,8 +687,8 @@ const ValueNodeEditor = ({
         href="#"
         onClick={async (e) => {
           e.preventDefault();
-          const result = runModal({
-            title: t("Change value"),
+          const result = await runModal({
+            title: t("Change value 3"),
             fields: {
               type: "Fields",
               fields: [
