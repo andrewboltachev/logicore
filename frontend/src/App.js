@@ -88,7 +88,6 @@ import "./i18n";
 
 // Editors - the main part of the system
 import JSON_MATCHER from "./editors/jsonmatcher";
-import UI1 from "./editors/ui1";
 import PYTHON_MATCHER from "./editors/pythonmatcher";
 import LOGICORE1 from "./editors/logicore1";
 
@@ -1082,7 +1081,6 @@ const PageNotFound = () => {
 
 const fiddleTypes = {
   JSON_MATCHER,
-  UI1,
   PYTHON_MATCHER,
   LOGICORE1,
 };
