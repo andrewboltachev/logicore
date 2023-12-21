@@ -33,6 +33,17 @@ import {
 } from "../logicore-forms";
 
 
+const Editor = (props) => {
+  return (
+    <div className="">
+      <div className="row">
+        <div className="col-md-3">1</div>
+        <div className="col-md-9">2</div>
+      </div>
+    </div>
+  );
+}
+
 export default {
-  Editor: () => "hello",
+  Editor,
 };
