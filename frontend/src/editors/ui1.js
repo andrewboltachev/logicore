@@ -32,12 +32,18 @@ import {
   modifyHelper,
 } from "../logicore-forms";
 
+/*
+Data type:
+
+ */
 
 const Editor = (props) => {
   return (
       <div className="row align-items-stretch flex-grow-1">
         <div className="col-md-3 d-flex flex-column bg-light">
           111
+    <input value={props.value} onChange={e => props.onChange(e.target.value)} />
+          {props.saveButton}
         </div>
         <div className="col-md-9 d-flex flex-column">2</div>
       </div>
