@@ -35,12 +35,12 @@ import {
 
 const Editor = (props) => {
   return (
-    <div className="">
-      <div className="row">
-        <div className="col-md-3">1</div>
-        <div className="col-md-9">2</div>
+      <div className="row align-items-stretch flex-grow-1">
+        <div className="col-md-3 d-flex flex-column bg-light">
+          111
+        </div>
+        <div className="col-md-9 d-flex flex-column">2</div>
       </div>
-    </div>
   );
 }
 
