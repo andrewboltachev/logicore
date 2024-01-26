@@ -122,6 +122,7 @@ const BackAndForth = ({ subtype, value, source, target }) => {
       <div className="btn-group">
         {Object.entries(actions).map(([k, v]) => (
           <button
+            key={k}
             type="button" className={`btn ${v.buttonClass}`}
             onClick={async _ => {
               const resp = await axios.post(`/logicore-api/${subtype}/${k}/`, {
@@ -326,7 +327,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
 
             <Dropdown.Menu>
               {NODE_TYPES.map((n) => (
-                <Dropdown.Item href="#" onClick={(e) => {
+                <Dropdown.Item key={n} href="#" onClick={(e) => {
   	              const id = "id_" + uuidv4();
                   e.preventDefault();
                   setNodes([...nodes, {
