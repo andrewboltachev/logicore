@@ -7,7 +7,7 @@ import React, { useState, useContext, useRef, useEffect, useCallback } from "rea
 
 // React modules
 import { useTranslation, Trans } from "react-i18next";
-import { Button, Modal } from "react-bootstrap";
+import {Button, Dropdown, Modal} from "react-bootstrap";
 import { useDraggable } from "react-use-draggable-scroll";
 import { NotificationManager } from "react-notifications";
 
@@ -232,35 +232,6 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
 
   const { runModal } = useContext(ModalContext);
 
-	const doAdd = async () => {
-  	const id = "id_" + uuidv4();
-    const result = await runModal({
-      title: "Add node",
-      fields: {
-        type: "Fields",
-        fields: [
-          {
-            type: "SelectField",
-            k: "type",
-            label: "Type",
-            required: true,
-            options: NODE_TYPES.map((n) => ({value: n, label: n})),
-          },
-        ],
-      },
-      modalSize: "md",
-      value: {type: null},
-    });
-    if (!result) return;
-    const t = result.type.value;
-    setNodes([...nodes, {
-      id,
-      position: { x: 0, y: 0 },
-      //type: "Logicore1Node",
-      data: { subtype: t, label: t }
-    }]);
-	};
-
   const [state, setState] = useLocalStorage(storageKey);
 
   const [initialized, setInitialized] = useState(null);
@@ -348,7 +319,25 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       <div className="col d-flex flex-column">
         <div className="btn-group">
           {saveButton}
-          <button type="button" className="btn btn-success" onClick={_ => doAdd()}>Add</button>
+          <Dropdown>
+            <Dropdown.Toggle variant="success" id="dropdown-basic">
+              Add
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu>
+              {NODE_TYPES.map((n) => (
+                <Dropdown.Item href="#" onClick={(e) => {
+  	              const id = "id_" + uuidv4();
+                  e.preventDefault();
+                  setNodes([...nodes, {
+                    id,
+                    position: { x: 0, y: 0 },
+                    data: { subtype: n, label: n }
+                  }]);
+                }}>{n}</Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
         </div>
         <ReactFlow
           onInit={onInit}
