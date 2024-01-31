@@ -52,6 +52,7 @@ import ReactFlow, {
   BaseEdge,
   EdgeLabelRenderer,
   MarkerType,
+  useOnViewportChange,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -280,8 +281,6 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
 
   const { runModal } = useContext(ModalContext);
 
-  const [state, setState] = useLocalStorage(storageKey);
-
   const [initialized, setInitialized] = useState(null);
 
   const onInit = (instance) => {
@@ -291,8 +290,9 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   useEffect(() => {
     if (!storageKey) return;
     if (!initialized) return;
-    //console.log('state', state);
     let v = {x: 0, y: 0, zoom: 1};
+    const state = JSON.parse(window.localStorage.getItem(storageKey))
+    console.log('state from storageKey', state);
     if (state) {
       if (state) {
         v = state;
@@ -312,14 +312,12 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       }
     }
     if (v) initialized.setViewport(v);
-  }, [!state, storageKey, initialized]);
+  }, [storageKey, initialized]);
 
-  const { x, y, zoom } = useViewport();
+  useOnViewportChange({
+    onChange: ({x, y, zoom}: Viewport) => window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}))
+  });
 
-  useEffect(() => {
-    //console.log(x, y, zoom);
-    window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}));
-  }, [x, y, zoom]);
 
   const deletePressed = useKeyPress('Delete');
 
@@ -329,12 +327,12 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     setEdges(edges.filter((o) => !_.includes(selectedEdges.map(({id}) => id), o.id)));
   }, [deletePressed])
 
-  useOnSelectionChange({
+  /*useOnSelectionChange({
     onChange: ({ nodes, edges }) => {
       setSelectedNodes(nodes);
       setSelectedEdges(edges);
     },
-  });
+  });*/
   const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
     selectedEdges.length ? {type: "Edge", value: selectedEdges[selectedEdges.length - 1]} : null
   );
