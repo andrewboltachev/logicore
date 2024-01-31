@@ -40,13 +40,18 @@ import ReactFlow, {
   Background,
   //useNodesState,
   //useEdgesState,
-	applyNodeChanges,
-	applyEdgeChanges,
-	useViewport,
-	ReactFlowProvider,
+  applyNodeChanges,
+  applyEdgeChanges,
+  useViewport,
+  ReactFlowProvider,
   Handle, NodeProps, Position,
   useKeyPress,
   useOnSelectionChange,
+  useReactFlow,
+  getStraightPath,
+  BaseEdge,
+  EdgeLabelRenderer,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -71,11 +76,14 @@ const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
 }*/
 
 
-const NODE_TYPES = [
-  "FileSystem",
-  "Data",
-  "Multiplexer",
-];
+const NODE_TYPES = {
+  FileSystem: {},
+  Data: {},
+  Multiplexer: {},
+  MatchObjectOnly: {
+    type: 'MatchNode',
+  },
+};
 
 const EDGE_TYPES = [
   "Files",
@@ -194,15 +202,39 @@ const editableItems = {
   },
 };*/
 
+
+function MatchNode({ data, isConnectable }) {
+  const onChange = useCallback((evt) => {
+    console.log(evt.target.value);
+  }, []);
+
+  return (
+    <div style={{width: 50, height: 50, borderRadius: 50, border: "2px solid black", display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      <Handle type="target" position={Position.Top} isConnectable={isConnectable} />
+      <div>{'[]'}</div>
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="a"
+        isConnectable={isConnectable}
+      />
+      <Handle type="source" position={Position.Bottom} id="b" isConnectable={isConnectable} />
+    </div>
+  );
+}
+
+
+const nodeTypes = { MatchNode };
+
 function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   /*const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);*/
 
-	const nodes = value?.nodes || [];
-	const edges = value?.edges || [];
+  const nodes = value?.nodes || [];
+  const edges = value?.edges || [];
 
-	const setNodes = onPath(value, onChange, ["nodes"]).onChange;
-	const setEdges = onPath(value, onChange, ["edges"]).onChange;
+  const setNodes = onPath(value, onChange, ["nodes"]).onChange;
+  const setEdges = onPath(value, onChange, ["edges"]).onChange;
 
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [selectedEdges, setSelectedEdges] = useState([]);
@@ -225,11 +257,26 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       modalSize: "md",
       value: {subtype: null},
     });
-    if (result) setEdges(addEdge(update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}), edges));
+    if (result) setEdges(addEdge(
+      {
+        ...update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}),
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 30,
+          height: 120,
+          color: '#000000',
+        },
+        //style: {
+        //  strokeWidth: 2,
+        //  stroke: '#000000',
+        //},
+      },
+      edges
+    ));
   }, [setEdges]);
 
-	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
-	const onEdgesChange = (changes) => onChange(update(value, {edges: {$apply: (v) => applyEdgeChanges(changes, v)}}));
+  const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
+  const onEdgesChange = (changes) => onChange(update(value, {edges: {$apply: (v) => applyEdgeChanges(changes, v)}}));
 
   const { runModal } = useContext(ModalContext);
 
@@ -237,9 +284,9 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
 
   const [initialized, setInitialized] = useState(null);
 
-	const onInit = (instance) => {
+  const onInit = (instance) => {
     setInitialized(instance);
-	};
+  };
 
   useEffect(() => {
     if (!storageKey) return;
@@ -326,14 +373,15 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
             </Dropdown.Toggle>
 
             <Dropdown.Menu>
-              {NODE_TYPES.map((n) => (
+              {Object.entries(NODE_TYPES).map(([n, v]) => (
                 <Dropdown.Item key={n} href="#" onClick={(e) => {
-  	              const id = "id_" + uuidv4();
+                  const id = "id_" + uuidv4();
                   e.preventDefault();
                   setNodes([...nodes, {
                     id,
                     position: { x: 0, y: 0 },
-                    data: { subtype: n, label: n }
+                    data: { subtype: n, label: n },
+                    ...v,
                   }]);
                 }}>{n}</Dropdown.Item>
               ))}
@@ -347,13 +395,13 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          nodeTypes={/*nodeTypes*/ void 0}
+          nodeTypes={nodeTypes}
         >
           <MiniMap />
           <Controls />
           <Background />
         </ReactFlow>
-    	</div>
+      </div>
       <div className="col d-flex flex-column">
         {LastSelectedThingComponent ? (<>
           {lastSelectedThing.type === "Edge" ? <BackAndForth {...theProps} /> : null}
@@ -361,7 +409,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
             {...theProps}
           />
         </>) : null}
-    	</div>
+      </div>
     </div>
   </>);
 }
@@ -400,7 +448,7 @@ const Logicore1Editor = ({
     );
   };*/
   return (
-	  <ReactFlowProvider>
+    <ReactFlowProvider>
       <Flow
         storageKey={`viewport-${revId}`}
         prevStorageKey={
@@ -408,7 +456,7 @@ const Logicore1Editor = ({
         }
         {...{value, onChange, saveButton}}
       />
-	  </ReactFlowProvider>
+    </ReactFlowProvider>
   );
 };
 
