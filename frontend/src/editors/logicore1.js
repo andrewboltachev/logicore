@@ -61,148 +61,26 @@ import "./logicore1.scss";
 
 const eV = (e) => e.target.value || "";
 
-const initialNodes = [
-  { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
-  { id: '2', position: { x: 0, y: 100 }, data: { label: '2' } },
-];
 
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
-
-/*function Logicore1Node({ id, data }: NodeProps<NodeData>) {
-  return (
-    <div style={{ backgroundColor: 'yellow', borderRadius: 10 }}>
-      Hello
-    </div>
-  );
-}*/
-
-
-const NODE_TYPES = {
-  FileSystem: {},
-  Data: {},
-  Multiplexer: {},
-  MatchObjectOnly: {
-    type: 'MatchNode',
+const NODE_CLASSES = [
+  {
+    label: 'General',
+    options: [
+    ],
   },
-};
-
-const EDGE_TYPES = [
-  "Files",
-  "Grammar",
-  "Multiplexer",
-  "Selector",
+  {
+    label: 'MatchPattern',
+    options: [
+    ],
+  },
 ];
-
-//const nodeTypes = {Logicore1Node};
-
-const FileSystem = ({value, onChange}) => {
-  const doChange = async ({path}) => {
-    const resp = await axios.post("/logicore-api/FileSystem/do/", {path});
-    onChange({files: resp.data.files, path});
-  };
-  return (
-    <main>
-      <GenericForm
-        fields={{type: "Fields", fields: [{type: "TextField", k: "path", label: "Path", required: true}]}}
-        data={value}
-        onChange={doChange}
-        path={[]}
-      />
-    </main>
-  );
-};
-
-const Data = ({ value, onChange }) => {
-  return (
-    <main>
-      <GenericForm
-        fields={{type: "Fields", fields: [{type: "TextField", k: "data", label: "Data", required: true}]}}
-        data={value}
-        onChange={onChange}
-        path={[]}
-      />
-    </main>
-  );
-};
-
-const BackAndForth = ({ subtype, value, source, target }) => {
-  const actions = {forwards: {buttonClass: "btn-success"}, backwards: {buttonClass: "btn-warning"}};
-  return (
-      <div className="btn-group">
-        {Object.entries(actions).map(([k, v]) => (
-          <button
-            key={k}
-            type="button" className={`btn ${v.buttonClass}`}
-            onClick={async _ => {
-              const resp = await axios.post(`/logicore-api/${subtype}/${k}/`, {
-                source: source.value,
-                target: target.value,
-                value: value,
-              });
-              target.onChange({...target.value, ...resp.data});
-            }}
-          >{_.capitalize(k)}</button>
-        ))}
-      </div>
-  );
-}
-
-const Files = ({ value, onChange, source }) => {
-  const [files, setFiles] = useState(value || {});
-  return (
-    <main>
-      <ul style={{overflowY: "scroll", height: 500}}>
-        {source?.value?.files?.map(x => (
-          <li k={x}>
-            <input type="checkbox" id={`select-file-${x}`} checked={files[x]} onChange={_ => setFiles(update(files, {$toggle: [x]}))}/>
-            {" "}
-            <label htmlFor={`select-file-${x}`}>
-              {x.substr(source.value.path.length + 1)}
-            </label>
-            </li>
-        ))}</ul>
-      {/*<GenericForm
-        fields={{type: "Fields", fields: [{type: "TextField", k: "files", label: "Files", required: true}]}}
-        data={value}
-        onChange={onChange}
-        path={[]}
-      />*/}
-        <button type="button" className="btn btn-success" onClick={_ => onChange(files)}>Save</button>
-      </main>
-  );
-};
-
-const Grammar = ({ value, onChange }) => {
-
-};
-
-const Multiplexer = ({ value, onChange }) => {
-
-};
-
-const Selector = ({ value, onChange }) => {
-
-};
 
 const editableItems = {
   Node: {
-    FileSystem,
-    Data,
   },
   Edge: {
-    Files,
-    Grammar,
-    Multiplexer,
-    Selector,
   },
 };
-
-/*const defaultValues = {
-  Node: {
-    FileSystem: {path: "", files: []},
-  },
-};*/
-
 
 function MatchNode({ data, isConnectable }) {
   const onChange = useCallback((evt) => {
@@ -225,12 +103,7 @@ function MatchNode({ data, isConnectable }) {
 }
 
 
-const nodeTypes = { MatchNode };
-
 function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
-  /*const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);*/
-
   const nodes = value?.nodes || [];
   const edges = value?.edges || [];
 
@@ -241,7 +114,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const [selectedEdges, setSelectedEdges] = useState([]);
 
   const onConnect = useCallback(async (params) => {
-    const result = await runModal({
+    /*const result = await runModal({
       title: "Add edge",
       fields: {
         type: "Fields",
@@ -258,7 +131,8 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       modalSize: "md",
       value: {subtype: null},
     });
-    if (result) setEdges(addEdge(
+    if (result)
+    setEdges(addEdge(
       {
         ...update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}),
         markerEnd: {
@@ -273,7 +147,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         //},
       },
       edges
-    ));
+    ));*/
   }, [setEdges]);
 
   const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
@@ -362,26 +236,32 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   }
   return (<>
     <div className="row align-items-stretch flex-grow-1">
-      <div className="col d-flex flex-column">
+      <div className="col-md-7 d-flex flex-column">
         <div className="btn-group">
           {saveButton}
           <Dropdown>
             <Dropdown.Toggle variant="success" id="dropdown-basic">
               Add
             </Dropdown.Toggle>
-
             <Dropdown.Menu>
-              {Object.entries(NODE_TYPES).map(([n, v]) => (
-                <Dropdown.Item key={n} href="#" onClick={(e) => {
-                  const id = "id_" + uuidv4();
-                  e.preventDefault();
-                  setNodes([...nodes, {
-                    id,
-                    position: { x: 0, y: 0 },
-                    data: { subtype: n, label: n },
-                    ...v,
-                  }]);
-                }}>{n}</Dropdown.Item>
+              {NODE_CLASSES.map(({ label, options }) => (
+                <>
+                  {options.map(({ k, label, value }) => (
+                    <Dropdown.Item key={label} href="#" onClick={(e) => {
+                      const id = "id_" + uuidv4();
+                      e.preventDefault();
+                      setNodes([...nodes, {
+                        id,
+                        position: { x: 0, y: 0 },
+                        data: { subtype: k, label: k },
+                        //...v,
+                      }]);
+                    }}>
+                      {n}
+                    </Dropdown.Item>
+                  ))}
+                  <Dropdown.Divider />
+                </>
               ))}
             </Dropdown.Menu>
           </Dropdown>
@@ -400,13 +280,20 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           <Background />
         </ReactFlow>
       </div>
-      <div className="col d-flex flex-column">
-        {LastSelectedThingComponent ? (<>
-          {lastSelectedThing.type === "Edge" ? <BackAndForth {...theProps} /> : null}
-          <LastSelectedThingComponent
-            {...theProps}
-          />
-        </>) : null}
+      <div className="col-md-5 d-flex flex-column">
+        <div className="flex-grow-1">
+          hello
+          {LastSelectedThingComponent ? (<>
+            {lastSelectedThing.type === "Edge" ? <BackAndForth {...theProps} /> : null}
+            <LastSelectedThingComponent
+              {...theProps}
+            />
+          </>) : null}
+        </div>
+        <hr />
+        <div className="flex-grow-1">
+          world
+        </div>
       </div>
     </div>
   </>);
