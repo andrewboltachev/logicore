@@ -58,20 +58,91 @@ import 'reactflow/dist/style.css';
 
 // Module-local
 import "./logicore1.scss";
+import d2 from "./d2.json";
 
 const eV = (e) => e.target.value || "";
 
+const nodeLabelsAndParamNames = {
+  'MatchObjectOnly': {
+    label: '{o}',
+    paramNames: ['name1'],
+  },
+  'MatchArray': {
+    label: '[*]',
+    paramNames: ['name1'],
+  },
+  'MatchStringExact': {
+    label: '"!"',
+    paramNames: ['name1'],
+  },
+  'MatchNumberExact': {
+    label: '1!',
+    paramNames: ['name1'],
+  },
+  'MatchBoolExact': {
+    label: 't|f!',
+    paramNames: ['name1'],
+  },
+  'MatchNull': {
+    label: 'null',
+    paramNames: ['name1'],
+  },
+  'MatchStringAny': {
+    label: '""?',
+    paramNames: ['name1'],
+  },
+  'MatchNumberAny': {
+    label: '1?',
+    paramNames: ['name1'],
+  },
+  'MatchBoolAny': {
+    label: 't|f?',
+    paramNames: ['name1'],
+  },
+  'MatchAny': {
+    label: '∀',
+    paramNames: ['name1'],
+  },
+  'MatchOr': {
+    label: '||',
+    paramNames: ['name1'],
+  },
+  'MatchIfThen': {
+    label: 'if',
+    paramNames: ['name1'],
+  },
+  'MatchFunnel': {
+    label: 'f',
+    paramNames: ['name1'],
+  },
+  'MatchFunnelKeys': {
+    label: 'fk',
+    paramNames: ['name1'],
+  },
+};
+
+
+const nodesMap = Object.fromEntries(d2[0].contents.map(({tag, ...item}) => {
+  return [tag, item];
+}));
 
 const NODE_CLASSES = [
   {
     label: 'General',
     options: [
+      {
+        type: 'SourceNode',
+        value: 'Source',
+        label: 'Source',
+      },
     ],
   },
   {
+    type: 'MatchNode',
     label: 'MatchPattern',
-    options: [
-    ],
+    options: Object.entries(nodeLabelsAndParamNames).map(([value, { label }]) => {
+      return { value, label };
+    }),
   },
 ];
 
@@ -82,7 +153,7 @@ const editableItems = {
   },
 };
 
-function MatchNode({ data, isConnectable }) {
+function SourceNode({ data, isConnectable }) {
   const onChange = useCallback((evt) => {
     console.log(evt.target.value);
   }, []);
@@ -101,6 +172,28 @@ function MatchNode({ data, isConnectable }) {
     </div>
   );
 }
+
+function MatchNode({ data, isConnectable }) {
+  const onChange = useCallback((evt) => {
+    console.log(evt.target.value);
+  }, []);
+
+  return (
+    <div style={{width: 50, height: 50, borderRadius: 50, border: "2px solid black", display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+      <div>{'[]'}hahaha</div>
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="a"
+        isConnectable={isConnectable}
+      />
+      <Handle type="source" position={Position.Right} id="b" isConnectable={isConnectable} />
+    </div>
+  );
+}
+
+const nodeTypes = { SourceNode, MatchNode };
 
 
 function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
@@ -201,12 +294,12 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     setEdges(edges.filter((o) => !_.includes(selectedEdges.map(({id}) => id), o.id)));
   }, [deletePressed])
 
-  /*useOnSelectionChange({
+  useOnSelectionChange({
     onChange: ({ nodes, edges }) => {
       setSelectedNodes(nodes);
       setSelectedEdges(edges);
     },
-  });*/
+  });
   const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
     selectedEdges.length ? {type: "Edge", value: selectedEdges[selectedEdges.length - 1]} : null
   );
@@ -244,24 +337,26 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
               Add
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {NODE_CLASSES.map(({ label, options }) => (
-                <>
-                  {options.map(({ k, label, value }) => (
-                    <Dropdown.Item key={label} href="#" onClick={(e) => {
-                      const id = "id_" + uuidv4();
-                      e.preventDefault();
-                      setNodes([...nodes, {
-                        id,
-                        position: { x: 0, y: 0 },
-                        data: { subtype: k, label: k },
-                        //...v,
-                      }]);
-                    }}>
-                      {n}
-                    </Dropdown.Item>
-                  ))}
+              {NODE_CLASSES.map(({ label, options, ...parentItem }) => (
+                <React.Fragment key={label}>
+                  {options.map(({ label, value, ...item }) => {
+                    const type = item.type || parentItem.type;
+                    return (
+                      <Dropdown.Item key={label} href="#" onClick={(e) => {
+                        e.preventDefault();
+                        const id = "id_" + uuidv4();
+                        setNodes([...nodes, {
+                          id,
+                          position: { x: 0, y: 0 },
+                          data: { type, subtype: value },
+                        }]);
+                      }}>
+                        {label}
+                      </Dropdown.Item>
+                    );
+                  })}
                   <Dropdown.Divider />
-                </>
+                </React.Fragment>
               ))}
             </Dropdown.Menu>
           </Dropdown>
@@ -284,7 +379,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         <div className="flex-grow-1">
           hello
           {LastSelectedThingComponent ? (<>
-            {lastSelectedThing.type === "Edge" ? <BackAndForth {...theProps} /> : null}
+            {lastSelectedThing.type === "Edge" ? <div /> : null}
             <LastSelectedThingComponent
               {...theProps}
             />
