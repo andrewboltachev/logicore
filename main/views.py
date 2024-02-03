@@ -1274,35 +1274,3 @@ def logicore_api(request, subtype, action):
         return JsonResponse({"error": "Element not found"}, status=400)
 
     return JsonResponse(getattr(element, action)(data), safe=False)
-
-
-@csrf_exempt
-def test_webhook_new_message(request):
-    data = json.loads(request.body)
-    models.Log.objects.create(created_dt=now(), data=data, data2=dict(request.headers))
-    return JsonResponse({"status": "ok"})
-
-
-class TestIframeContentView(TemplateView):
-    template_name = "test-iframe-content.html"
-
-    def get(self, request, *args, **kwargs):
-        resp = super().get(request, *args, **kwargs)
-        resp["Content-Security-Policy"] = "frame-ancestors 'self' https://*.hubspot.com; "
-        return resp
-
-
-def test_card_data(request):
-    return JsonResponse(
-        {
-            "primaryAction": {
-                "type": "IFRAME",
-                "width": 200,
-                "height": 200,
-                "uri": "https://main.andrewboltachev.site/test-iframe-content/",
-                "label": "View WhatsApp Chat",
-                "associatedObjectProperties": ["phone", "mobilephone"],
-            },
-            "results": [],
-        }
-    )
