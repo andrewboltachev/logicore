@@ -178,7 +178,7 @@ function MatchNode({ data, selected, isConnectable }) {
     <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
       <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
       <div>{n.label}</div>
-      <Handle type="source" position={Position.Right} id="b" isConnectable={isConnectable} />
+      {/*<Handle type="source" position={Position.Right} id="b" isConnectable={isConnectable} />*/}
     </div>
   );
 }
@@ -213,11 +213,10 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       },
       modalSize: "md",
       value: {subtype: null},
-    });
-    if (result)
+    });*/
     setEdges(addEdge(
       {
-        ...update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}),
+        ...update(params, {data: {} /*data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}*/}),
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 30,
@@ -230,7 +229,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         //},
       },
       edges
-    ));*/
+    ));
   }, [setEdges]);
 
   const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
@@ -290,7 +289,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       setSelectedEdges(edges);
     },
   });
-  const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
+  /*const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
     selectedEdges.length ? {type: "Edge", value: selectedEdges[selectedEdges.length - 1]} : null
   );
   let LastSelectedThingComponent = null;
@@ -316,7 +315,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       ...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"]),
       ...sourceAndTarget
     };
-  }
+  }*/
   return (<>
     <div className="row align-items-stretch flex-grow-1">
       <div className="col-md-7 d-flex flex-column">
@@ -370,12 +369,12 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       <div className="col-md-5 d-flex flex-column">
         <div className="flex-grow-1">
           hello
-          {LastSelectedThingComponent ? (<>
+          {/*LastSelectedThingComponent ? (<>
             {lastSelectedThing.type === "Edge" ? <div /> : null}
             <LastSelectedThingComponent
               {...theProps}
             />
-          </>) : null}
+          </>) : null*/}
         </div>
         <hr />
         <div className="flex-grow-1">
