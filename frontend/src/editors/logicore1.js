@@ -153,41 +153,31 @@ const editableItems = {
   },
 };
 
-function SourceNode({ data, isConnectable }) {
+function SourceNode({ data, selected, isConnectable }) {
   const onChange = useCallback((evt) => {
     console.log(evt.target.value);
   }, []);
 
   return (
-    <div style={{width: 50, height: 50, borderRadius: 50, border: "2px solid black", display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-      <Handle type="target" position={Position.Top} isConnectable={isConnectable} />
-      <div>{'[]'}</div>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="a"
-        isConnectable={isConnectable}
-      />
-      <Handle type="source" position={Position.Bottom} id="b" isConnectable={isConnectable} />
+    <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      {/*<Handle type="target" position={Position.Left} isConnectable={isConnectable} />*/}
+      <div>{'Src'}</div>
+      <Handle type="source" position={Position.Right} id="b" isConnectable={isConnectable} />
     </div>
   );
 }
 
-function MatchNode({ data, isConnectable }) {
+function MatchNode({ data, selected, isConnectable }) {
   const onChange = useCallback((evt) => {
     console.log(evt.target.value);
   }, []);
 
+  const n = nodeLabelsAndParamNames[data.value];
+
   return (
-    <div style={{width: 50, height: 50, borderRadius: 50, border: "2px solid black", display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+    <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
       <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-      <div>{'[]'}hahaha</div>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="a"
-        isConnectable={isConnectable}
-      />
+      <div>{n.label}</div>
       <Handle type="source" position={Position.Right} id="b" isConnectable={isConnectable} />
     </div>
   );
@@ -340,15 +330,17 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
               {NODE_CLASSES.map(({ label, options, ...parentItem }) => (
                 <React.Fragment key={label}>
                   {options.map(({ label, value, ...item }) => {
-                    const type = item.type || parentItem.type;
                     return (
                       <Dropdown.Item key={label} href="#" onClick={(e) => {
                         e.preventDefault();
                         const id = "id_" + uuidv4();
+                        const type = item.type || parentItem.type;
+                        console.log('type', type);
                         setNodes([...nodes, {
                           id,
                           position: { x: 0, y: 0 },
-                          data: { type, subtype: value },
+                          type,
+                          data: { value },
                         }]);
                       }}>
                         {label}
