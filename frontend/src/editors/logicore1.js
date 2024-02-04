@@ -3,7 +3,7 @@ import _ from "lodash";
 import { v4 as uuidv4 } from "uuid";
 
 // React
-import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
+import React, {useState, useContext, useRef, useEffect, useCallback, memo, useMemo} from "react";
 
 // React modules
 import { useTranslation, Trans } from "react-i18next";
@@ -53,71 +53,60 @@ import ReactFlow, {
   EdgeLabelRenderer,
   MarkerType,
   useOnViewportChange,
+  getBezierPath,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
 // Module-local
 import "./logicore1.scss";
 import d2 from "./d2.json";
+import {BezierEdgeProps} from "reactflow";
 
 const eV = (e) => e.target.value || "";
 
 const nodeLabelsAndParamNames = {
   'MatchObjectOnly': {
     label: '{o}',
-    paramNames: ['name1'],
   },
   'MatchArray': {
     label: '[*]',
-    paramNames: ['name1'],
   },
   'MatchStringExact': {
     label: '"!"',
-    paramNames: ['name1'],
   },
   'MatchNumberExact': {
     label: '1!',
-    paramNames: ['name1'],
   },
   'MatchBoolExact': {
     label: 't|f!',
-    paramNames: ['name1'],
   },
   'MatchNull': {
     label: 'null',
-    paramNames: ['name1'],
   },
   'MatchStringAny': {
     label: '""?',
-    paramNames: ['name1'],
   },
   'MatchNumberAny': {
     label: '1?',
-    paramNames: ['name1'],
   },
   'MatchBoolAny': {
     label: 't|f?',
-    paramNames: ['name1'],
   },
   'MatchAny': {
     label: '∀',
-    paramNames: ['name1'],
   },
   'MatchOr': {
     label: '||',
-    paramNames: ['name1'],
   },
   'MatchIfThen': {
     label: 'if',
-    paramNames: ['name1'],
+    paramNames: ['cond', 'Error text', 'output'],
   },
   'MatchFunnel': {
     label: 'f',
-    paramNames: ['name1'],
   },
   'MatchFunnelKeys': {
     label: 'fk',
-    paramNames: ['name1'],
   },
 };
 
@@ -146,12 +135,43 @@ const NODE_CLASSES = [
   },
 ];
 
+
+const walk = (items, f) => {
+  f(items);
+  if (Array.isArray(items)) {
+    items.map(x => walk(x, f));
+  } else if (items && typeof items === 'object') {
+    Object.entries(items).map(([k, v]) => walk(v, f));
+  }
+}
+
+const isTypePred = (type) => (paramDef) => {
+  let result = false;
+  const f = x => {
+    if (x && !Array.isArray(x) && typeof x === 'object') {
+      if (x.type === 'ConT' && x.value === type) {
+        result = true;
+      }
+    }
+  }
+  walk(paramDef, f);
+  return result;
+};
+
 const editableItems = {
   Node: {
   },
   Edge: {
   },
 };
+
+const availableNodeLabels = (nodeDef) => {
+  if (nodeDef.type === 'SourceNode') return [null];
+  if (nodeDef.type === 'MatchNode') {
+  }
+  throw new Error(`NotImplemented ${nodeDef.data.value}`);
+};
+
 
 function SourceNode({ data, selected, isConnectable }) {
   const onChange = useCallback((evt) => {
@@ -162,7 +182,7 @@ function SourceNode({ data, selected, isConnectable }) {
     <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
       {/*<Handle type="target" position={Position.Left} isConnectable={isConnectable} />*/}
       <div>{'Src'}</div>
-      <Handle type="source" position={Position.Right} id="b" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
     </div>
   );
 }
@@ -173,17 +193,100 @@ function MatchNode({ data, selected, isConnectable }) {
   }, []);
 
   const n = nodeLabelsAndParamNames[data.value];
+  const nodeTypeDef = nodesMap[data.value];
 
   return (
     <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
       <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
       <div>{n.label}</div>
-      {/*<Handle type="source" position={Position.Right} id="b" isConnectable={isConnectable} />*/}
+      {!!nodeTypeDef.contents.filter(isTypePred('MatchPattern')).length && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
     </div>
   );
 }
 
 const nodeTypes = { SourceNode, MatchNode };
+
+
+/*const ArrowEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  //markerEnd,
+}) => {
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+  return (<>
+      <BaseEdge path={edgePath} markerEnd={markerEnd} />
+      <EdgeLabelRenderer>foo</EdgeLabelRenderer>
+  </>);
+};*/
+const identity = x => x;
+/*const ArrowEdge = identity(
+  ({
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition = Position.Bottom,
+    targetPosition = Position.Top,
+    label,
+    labelStyle,
+    labelShowBg,
+    labelBgStyle,
+    labelBgPadding,
+    labelBgBorderRadius,
+    style,
+    markerEnd,
+    markerStart,
+    pathOptions,
+    interactionWidth,
+    rfId,
+  }: BezierEdgeProps) => {
+    const [path, labelX, labelY] = getBezierPath({
+      sourceX,
+      sourceY,
+      sourcePosition,
+      targetX,
+      targetY,
+      targetPosition,
+      curvature: pathOptions?.curvature,
+    });
+    console.log('markerEnd', markerEnd);
+    return (
+      <BaseEdge
+        id={id}
+        path={path}
+        labelX={labelX}
+        labelY={labelY}
+        label={label}
+        labelStyle={labelStyle}
+        labelShowBg={labelShowBg}
+        labelBgStyle={labelBgStyle}
+        labelBgPadding={labelBgPadding}
+        labelBgBorderRadius={labelBgBorderRadius}
+        style={style}
+        markerEnd={markerEnd}
+        markerStart={markerStart}
+        interactionWidth={interactionWidth}
+      />
+    );
+  }
+);
+
+
+const edgeTypes = { ArrowEdge };*/
 
 
 function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
@@ -197,6 +300,9 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const [selectedEdges, setSelectedEdges] = useState([]);
 
   const onConnect = useCallback(async (params) => {
+    const sourceNode = nodes.find(n => n.id === params.source);
+    const targetNode = nodes.find(n => n.id === params.target);
+    console.log('availableNodeLabels', availableNodeLabels(sourceNode));
     /*const result = await runModal({
       title: "Add edge",
       fields: {
@@ -214,22 +320,26 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       modalSize: "md",
       value: {subtype: null},
     });*/
+    /*const markerEnd = {
+      type: MarkerType.ArrowClosed,
+      width: 30,
+      height: 120,
+      color: '#000000',
+    };
     setEdges(addEdge(
       {
-        ...update(params, {data: {} /*data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}*/}),
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 30,
-          height: 120,
-          color: '#000000',
-        },
+        //type: 'ArrowEdge',
+        ...params,
+        //...update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}),
+        label: 'aaa',
+        markerEnd,
         //style: {
         //  strokeWidth: 2,
         //  stroke: '#000000',
         //},
       },
       edges
-    ));
+    ));*/
   }, [setEdges]);
 
   const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
