@@ -169,34 +169,90 @@ const NODE_CLASSES = [
   },
 ];
 
-console.log('find me here', NODE_CLASSES);
 
-const isTypePred = (type) => (paramDef) => {
-  let result = false;
-  const f = x => {
-    if (x && !Array.isArray(x) && typeof x === 'object') {
-      if (x.type === 'ConT' && x.value === type) {
-        result = true;
+// ADT for hipsters
+class OutputHandleStrategy {};
+
+class SingleOutput extends OutputHandleStrategy {};
+
+class NamedOutput extends OutputHandleStrategy {
+  constructor(labels) {
+    this.labels = labels;
+  }
+};
+
+class KeysOutput extends OutputHandleStrategy {};
+
+
+class NodeFunctionality {
+  constructor(node) {
+    this.node = node;
+    const c = NODE_CLASSES.find(({ type }) => type === node.type);
+    this.c = c.options.find(({value}) => value === node.data.value);
+  }
+};
+
+class SourceNodeFunctionality extends NodeFunctionality {
+  hasOutputHandle () {
+    return true;
+  }
+
+  outputLabels (targetNode) {
+    return [null];
+  }
+};
+
+const MATCHPATTERN = { 
+    "type": "ConT",
+    "value": "MatchPattern"
+};
+
+const KEYMAP_OF_MATCHPATTERN = {
+  type: 'AppT1',
+  target: { type: 'ConT', value: 'KeyMap' },
+  params: [ { type: 'ConT', value: 'MatchPattern' } ]
+};
+
+
+class MatchNodeFunctionality extends NodeFunctionality {
+  hasOutputHandle () {
+    return !!this._getOutputHandleStrategy();
+  }
+
+  _getOutputHandleStrategy () {
+    if (this.c.typeDef.contents.length === 0) {
+      return null;
+    } else if (this.c.typeDef.contents.length === 1) {
+      if (_.isEqual(this.c.typeDef.contents[0], KEYMAP_OF_MATCHPATTERN)) {
+        return new KeysOutput();
+      } else if (_.isEqual(this.c.typeDef.contents[0], MATCHPATTERN)) {
+        return new SingleOutput();
       }
+      //console.warn('Cannot define output handle strategy for type', this.c.typeDef.contents[0]);
+      return null;
+    } else {
+      const result = [];
+      for (const [item, name] of _.zip(this.c.typeDef.contents, this.c.paramNames)) {
+        if (_.isEqual(item, MATCHPATTERN)) {
+          result.push(name);
+        } else if (item.type === 'AppT1' && !item.params.length && _.isEqual(item.target, MATCHPATTERN)) {
+          result.push(name);
+        }
+      }
+      return new KeysOutput(result);
     }
   }
-  walk(paramDef, f);
-  return result;
 };
 
-const editableItems = {
-  Node: {
-  },
-  Edge: {
-  },
+
+const nodeFunctionalityClasses = {
+  SourceNodeFunctionality,
+  MatchNodeFunctionality,
 };
 
-const allNodeLabels = (nodeDef) => {
-  if (nodeDef.type === 'SourceNode') return [null];
-  if (nodeDef.type === 'MatchNode') {
-    return [];
-  }
-  throw new Error(`NotImplemented ${nodeDef.type}`);
+const getNodeFunctionality = (node) => {
+  const cls = nodeFunctionalityClasses[`${node.type}Functionality`];
+  return new cls(node);
 };
 
 
@@ -214,20 +270,18 @@ function SourceNode({ data, selected, isConnectable }) {
   );
 }
 
-function MatchNode({ data, selected, isConnectable }) {
+function MatchNode(node) {
+  const { data, selected, isConnectable } = node;
   const onChange = useCallback((evt) => {
     console.log(evt.target.value);
   }, []);
-
-  // here
-  const nodeTypeDef = {contents: []};
-  const n = {label: ''};
+  const n = getNodeFunctionality(node);
 
   return (
     <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
       <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-      <div>{n.label}</div>
-      {!!nodeTypeDef.contents.filter(isTypePred('MatchPattern')).length && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
+      <div>{n.c.label}</div>
+      {!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
     </div>
   );
 }
@@ -330,7 +384,6 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const onConnect = useCallback(async (params) => {
     const sourceNode = nodes.find(n => n.id === params.source);
     const targetNode = nodes.find(n => n.id === params.target);
-    //console.log('allNodeLabels', allNodeLabels(sourceNode));
     /*const result = await runModal({
       title: "Add edge",
       fields: {
