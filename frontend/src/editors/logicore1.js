@@ -62,6 +62,37 @@ import "./logicore1.scss";
 import d2 from "./d2.json";
 import {BezierEdgeProps} from "reactflow";
 
+const walk = (value, post=_.identity, pre=_.identity) => {
+  const items = pre(value);
+  if (Array.isArray(items)) {
+    return post(items.map(x => walk(x, post, pre)));
+  } else if (items && typeof items === 'object') {
+    return post(Object.fromEntries(Object.entries(items).map(([k, v]) => [k, walk(v, post, pre)])));
+  } else {
+    return post(items);
+  }
+}
+
+const refactorAppT = (node) => {
+  if (!!node && !Array.isArray(node) && typeof node === 'object') {
+    if (node.type === 'AppT') {
+      const params = [];
+      let target = node;
+      const f = (x) => {
+        params.unshift(x.param);
+        if (x.target.type === 'AppT') {
+          f(x.target);
+        } else {
+          target = x.target;
+        }
+      };
+      f(node);
+      return {type: 'AppT1', target, params};
+    }
+  }
+  return node;
+}
+
 const eV = (e) => e.target.value || "";
 
 const nodeLabelsAndParamNames = {
@@ -110,22 +141,14 @@ const nodeLabelsAndParamNames = {
   },
 };
 
+const matchPatternDataConstructors = d2[0].contents;
+const matchPatternDataConstructorsRefactored = walk(matchPatternDataConstructors, _.identity, refactorAppT);
 
 // 0 is MatchPattern
-const d2AsMap = Object.fromEntries(d2[0].contents.map(({tag, ...item}) => {
+const d2AsMap = Object.fromEntries(matchPatternDataConstructorsRefactored.map(({tag, ...item}) => {
   return [tag, item];
 }));
 
-const walk = (value, post=_.identity, pre=_.identity) => {
-  const items = pre(value);
-  if (Array.isArray(items)) {
-    return post(items.map(x => walk(x, post)));
-  } else if (items && typeof items === 'object') {
-    return post(Object.entries(items).map(([k, v]) => walk(v, post)));
-  } else {
-    return post(items);
-  }
-}
 
 const NODE_CLASSES = [
   {
