@@ -111,16 +111,27 @@ const nodeLabelsAndParamNames = {
 };
 
 
-const nodesMap = Object.fromEntries(d2[0].contents.map(({tag, ...item}) => {
+// 0 is MatchPattern
+const d2AsMap = Object.fromEntries(d2[0].contents.map(({tag, ...item}) => {
   return [tag, item];
 }));
 
+const walk = (value, post=_.identity, pre=_.identity) => {
+  const items = pre(value);
+  if (Array.isArray(items)) {
+    return post(items.map(x => walk(x, post)));
+  } else if (items && typeof items === 'object') {
+    return post(Object.entries(items).map(([k, v]) => walk(v, post)));
+  } else {
+    return post(items);
+  }
+}
+
 const NODE_CLASSES = [
   {
-    label: 'General',
+    type: 'SourceNode',
     options: [
       {
-        type: 'SourceNode',
         value: 'Source',
         label: 'Source',
       },
@@ -128,22 +139,14 @@ const NODE_CLASSES = [
   },
   {
     type: 'MatchNode',
-    label: 'MatchPattern',
-    options: Object.entries(nodeLabelsAndParamNames).map(([value, { label }]) => {
-      return { value, label };
+    options: Object.entries(nodeLabelsAndParamNames).map(([value, ctx]) => {
+      const typeDef = d2AsMap[value];
+      return { value, ...ctx, typeDef };
     }),
   },
 ];
 
-
-const walk = (items, f) => {
-  f(items);
-  if (Array.isArray(items)) {
-    items.map(x => walk(x, f));
-  } else if (items && typeof items === 'object') {
-    Object.entries(items).map(([k, v]) => walk(v, f));
-  }
-}
+console.log('find me here', NODE_CLASSES);
 
 const isTypePred = (type) => (paramDef) => {
   let result = false;
@@ -165,11 +168,12 @@ const editableItems = {
   },
 };
 
-const availableNodeLabels = (nodeDef) => {
+const allNodeLabels = (nodeDef) => {
   if (nodeDef.type === 'SourceNode') return [null];
   if (nodeDef.type === 'MatchNode') {
+    return [];
   }
-  throw new Error(`NotImplemented ${nodeDef.data.value}`);
+  throw new Error(`NotImplemented ${nodeDef.type}`);
 };
 
 
@@ -192,8 +196,9 @@ function MatchNode({ data, selected, isConnectable }) {
     console.log(evt.target.value);
   }, []);
 
-  const n = nodeLabelsAndParamNames[data.value];
-  const nodeTypeDef = nodesMap[data.value];
+  // here
+  const nodeTypeDef = {contents: []};
+  const n = {label: ''};
 
   return (
     <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -302,7 +307,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const onConnect = useCallback(async (params) => {
     const sourceNode = nodes.find(n => n.id === params.source);
     const targetNode = nodes.find(n => n.id === params.target);
-    console.log('availableNodeLabels', availableNodeLabels(sourceNode));
+    //console.log('allNodeLabels', allNodeLabels(sourceNode));
     /*const result = await runModal({
       title: "Add edge",
       fields: {
@@ -436,14 +441,13 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
               Add
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {NODE_CLASSES.map(({ label, options, ...parentItem }) => (
-                <React.Fragment key={label}>
+              {NODE_CLASSES.map(({ options, type, ...parentItem }) => (
+                <React.Fragment key={type}>
                   {options.map(({ label, value, ...item }) => {
                     return (
                       <Dropdown.Item key={label} href="#" onClick={(e) => {
                         e.preventDefault();
                         const id = "id_" + uuidv4();
-                        const type = item.type || parentItem.type;
                         console.log('type', type);
                         setNodes([...nodes, {
                           id,
