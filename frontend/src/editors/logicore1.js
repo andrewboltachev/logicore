@@ -173,15 +173,36 @@ const NODE_CLASSES = [
 // ADT for hipsters
 class OutputHandleStrategy {};
 
-class SingleOutput extends OutputHandleStrategy {};
+class SingleOutput extends OutputHandleStrategy {
+  canHaveOutputEdge (existingEdges) {
+    return !existingEdges.length;
+  }
+
+  askForNewEdgeLabel (existingEdges) {
+  }
+};
 
 class NamedOutput extends OutputHandleStrategy {
   constructor(labels) {
     this.labels = labels;
   }
+
+  canHaveOutputEdge (existingEdges) {
+    return existingEdges.length < this.labels.length;
+  }
+
+  askForNewEdgeLabel (existingEdges) {
+  }
 };
 
-class KeysOutput extends OutputHandleStrategy {};
+class KeysOutput extends OutputHandleStrategy {
+  canHaveOutputEdge (existingEdges) {
+    return true;
+  }
+
+  askForNewEdgeLabel (existingEdges) {
+  }
+};
 
 
 class NodeFunctionality {
@@ -197,8 +218,13 @@ class SourceNodeFunctionality extends NodeFunctionality {
     return true;
   }
 
-  outputLabels (targetNode) {
-    return [null];
+  canHaveOutputEdge (existingEdges) {
+    console.log('canHaveOutputEdge checks', existingEdges);
+    return !existingEdges.length;
+  }
+
+  askForNewEdgeLabel (existingEdges) {
+    return null;
   }
 };
 
@@ -217,6 +243,14 @@ const KEYMAP_OF_MATCHPATTERN = {
 class MatchNodeFunctionality extends NodeFunctionality {
   hasOutputHandle () {
     return !!this._getOutputHandleStrategy();
+  }
+
+  canHaveOutputEdge (existingEdges) {
+    return this._getOutputHandleStrategy().canHaveOutputEdge(existingEdges);
+  }
+
+  askForNewEdgeLabel (existingEdges) {
+    return this._getOutputHandleStrategy().askForNewEdgeLabel(existingEdges);
   }
 
   _getOutputHandleStrategy () {
@@ -370,6 +404,12 @@ const identity = x => x;
 
 const edgeTypes = { ArrowEdge };*/
 
+const markerEnd = {
+  type: MarkerType.ArrowClosed,
+  width: 30,
+  height: 120,
+  color: '#000000',
+};
 
 function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const nodes = value?.nodes || [];
@@ -384,49 +424,25 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const onConnect = useCallback(async (params) => {
     const sourceNode = nodes.find(n => n.id === params.source);
     const targetNode = nodes.find(n => n.id === params.target);
-    /*const result = await runModal({
-      title: "Add edge",
-      fields: {
-        type: "Fields",
-        fields: [
-          {
-            type: "SelectField",
-            k: "subtype",
-            label: "Type",
-            required: true,
-            options: EDGE_TYPES.map((n) => ({value: n, label: n})),
-          },
-        ],
-      },
-      modalSize: "md",
-      value: {subtype: null},
-    });*/
-    /*const markerEnd = {
-      type: MarkerType.ArrowClosed,
-      width: 30,
-      height: 120,
-      color: '#000000',
-    };
+    const outcomingEdges = edges.filter(({ source }) => source === params.source);
+    const sourceNodeFunctionality = getNodeFunctionality(sourceNode);
+    if (!sourceNodeFunctionality.canHaveOutputEdge(outcomingEdges)) return;
+    const label = sourceNodeFunctionality.askForNewEdgeLabel(outcomingEdges);
     setEdges(addEdge(
       {
-        //type: 'ArrowEdge',
         ...params,
-        //...update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}),
-        label: 'aaa',
+        label,
         markerEnd,
-        //style: {
-        //  strokeWidth: 2,
-        //  stroke: '#000000',
-        //},
       },
       edges
-    ));*/
+    ));
   }, [setEdges]);
 
   const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
   const onEdgesChange = (changes) => onChange(update(value, {edges: {$apply: (v) => applyEdgeChanges(changes, v)}}));
 
   const { runModal } = useContext(ModalContext);
+  window.runModal = runModal;
 
   const [initialized, setInitialized] = useState(null);
 
