@@ -73,6 +73,14 @@ const walk = (value, post=_.identity, pre=_.identity) => {
   }
 }
 
+function difference(setA, setB) {
+  const _difference = new Set(setA);
+  for (const elem of setB) {
+    _difference.delete(elem);
+  }
+  return _difference;
+}
+
 const refactorAppT = (node) => {
   if (!!node && !Array.isArray(node) && typeof node === 'object') {
     if (node.type === 'AppT') {
@@ -131,7 +139,7 @@ const nodeLabelsAndParamNames = {
   },
   'MatchIfThen': {
     label: 'if',
-    paramNames: ['cond', 'Error text', 'output'],
+    paramNames: ['cond', 'Error text', 'out'],
   },
   'MatchFunnel': {
     label: 'f',
@@ -184,6 +192,7 @@ class SingleOutput extends OutputHandleStrategy {
 
 class NamedOutput extends OutputHandleStrategy {
   constructor(labels) {
+    super();
     this.labels = labels;
   }
 
@@ -192,6 +201,7 @@ class NamedOutput extends OutputHandleStrategy {
   }
 
   askForNewEdgeLabel (existingEdges) {
+    return Array.from(difference(this.labels, existingEdges)).join(",");
   }
 };
 
@@ -273,7 +283,7 @@ class MatchNodeFunctionality extends NodeFunctionality {
           result.push(name);
         }
       }
-      return new KeysOutput(result);
+      return new NamedOutput(result);
     }
   }
 };
