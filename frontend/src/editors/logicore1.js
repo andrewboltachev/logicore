@@ -186,7 +186,7 @@ class SingleOutput extends OutputHandleStrategy {
     return !existingEdges.length;
   }
 
-  askForNewEdgeLabel (existingEdges) {
+  async askForNewEdgeLabel (existingEdges) {
   }
 };
 
@@ -200,8 +200,27 @@ class NamedOutput extends OutputHandleStrategy {
     return existingEdges.length < this.labels.length;
   }
 
-  askForNewEdgeLabel (existingEdges) {
-    return Array.from(difference(this.labels, existingEdges)).join(",");
+  async askForNewEdgeLabel (existingEdges) {
+    const result = await window.runModal({
+      title: "Add edge",
+      fields: {
+        type: "Fields",
+        fields: [
+          {
+            type: "SelectField",
+            k: "name",
+            label: "Type",
+            required: true,
+            options: this.labels.map((n) => ({value: n, label: n, disabled: _.includes(existingEdges.map(({ label }) => label), n)})),
+          },
+        ],
+      },
+      modalSize: "md",
+      value: {name: null},
+    });
+    if (result) {
+      return result.name.value;
+    }
   }
 };
 
@@ -210,7 +229,7 @@ class KeysOutput extends OutputHandleStrategy {
     return true;
   }
 
-  askForNewEdgeLabel (existingEdges) {
+  async askForNewEdgeLabel (existingEdges) {
   }
 };
 
@@ -233,8 +252,27 @@ class SourceNodeFunctionality extends NodeFunctionality {
     return !existingEdges.length;
   }
 
-  askForNewEdgeLabel (existingEdges) {
-    return null;
+  async askForNewEdgeLabel (existingEdges) {
+    const result = await window.runModal({
+      title: "Add edge",
+      fields: {
+        type: "Fields",
+        fields: [
+          {
+            type: "SelectField",
+            k: "name",
+            label: "Type",
+            required: true,
+            options: this.labels.map((n) => ({value: n, label: n, disabled: _.includes(existingEdges.map(({ label }) => label), n)})),
+          },
+        ],
+      },
+      modalSize: "md",
+      value: {name: null},
+    });
+    if (result) {
+      return result.label;
+    }
   }
 };
 
@@ -437,7 +475,9 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     const outcomingEdges = edges.filter(({ source }) => source === params.source);
     const sourceNodeFunctionality = getNodeFunctionality(sourceNode);
     if (!sourceNodeFunctionality.canHaveOutputEdge(outcomingEdges)) return;
-    const label = sourceNodeFunctionality.askForNewEdgeLabel(outcomingEdges);
+    const label = await sourceNodeFunctionality.askForNewEdgeLabel(outcomingEdges);
+    console.log('returned label', label);
+    if (label === void 0) return; // undefined doesn't pass, null passes
     setEdges(addEdge(
       {
         ...params,
