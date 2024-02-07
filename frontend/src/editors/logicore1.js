@@ -134,18 +134,15 @@ const nodeLabelsAndParamNames = {
   'MatchAny': {
     label: '∀',
   },
+  'MatchNone': {
+    label: '∅',
+  },
   'MatchOr': {
     label: '||',
   },
   'MatchIfThen': {
     label: 'if',
     paramNames: ['cond', 'Error text', 'out'],
-  },
-  'MatchFunnel': {
-    label: 'f',
-  },
-  'MatchFunnelKeys': {
-    label: 'fk',
   },
 };
 
@@ -496,6 +493,8 @@ const markerEnd = {
 };
 
 function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
+  const { t } = useTranslation();
+
   const nodes = value?.nodes || [];
   const edges = value?.edges || [];
 
@@ -510,21 +509,21 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     const targetNode = nodes.find(n => n.id === params.target);
     const outcomingEdges = edges.filter(({ source }) => source === params.source);
     if (edgesAreConnected(edges, params.target, params.source)) {
-      console.info('Cannot create cycle');
+      NotificationManager.warning("", t("Cannot create cycle"), 2000);
       return;
     }
     if (outcomingEdges.filter(({ target }) => target === params.target).length) {
-      console.info('Cannot create with the same source and target (that\'s thin category after all)');
+      NotificationManager.warning("", t('Cannot create with the same source and target (that\'s thin category after all)'), 2000);
       return;
     }
     const sourceNodeFunctionality = getNodeFunctionality(sourceNode);
     if (!sourceNodeFunctionality.canHaveOutputEdge(outcomingEdges)) {
-      console.info('Cannot have output edge');
+      NotificationManager.warning("", t('Cannot have output edge'), 2000);
       return;
     }
     const label = await sourceNodeFunctionality.askForNewEdgeLabel(outcomingEdges);
     if (label === void 0) { // undefined doesn't pass, null passes
-      console.info('No label provided');
+      NotificationManager.warning("", t('No label provided'), 2000);
       return;
     }
     setEdges(addEdge(
