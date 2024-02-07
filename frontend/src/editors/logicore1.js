@@ -158,6 +158,18 @@ const d2AsMap = Object.fromEntries(matchPatternDataConstructorsRefactored.map(({
 }));
 
 
+const edgesAreConnected = (edges, { id: idFrom }, { id: idTo }) => {
+  const current = idTo;
+  while (current) {
+    if (current === idFrom) return true;
+    const currentV = edges.filter(({ target }) => target === idTo);
+    console.log('visiting', currentV);
+    current = currentV.source;
+  }
+  return false;
+};
+
+
 const NODE_CLASSES = [
   {
     type: 'SourceNode',
@@ -187,6 +199,7 @@ class SingleOutput extends OutputHandleStrategy {
   }
 
   async askForNewEdgeLabel (existingEdges) {
+    return null;
   }
 };
 
@@ -497,6 +510,10 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     const sourceNode = nodes.find(n => n.id === params.source);
     const targetNode = nodes.find(n => n.id === params.target);
     const outcomingEdges = edges.filter(({ source }) => source === params.source);
+    if (edgesAreConnected(edges, params.target, params.source)) {
+      console.info('Cannot create cycle');
+      return;
+    }
     if (outcomingEdges.filter(({ target }) => target === params.target).length) {
       console.info('Cannot create with the same source and target (that\'s thin category after all)');
       return;
@@ -507,7 +524,6 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       return;
     }
     const label = await sourceNodeFunctionality.askForNewEdgeLabel(outcomingEdges);
-    console.log('returned label', label);
     if (label === void 0) { // undefined doesn't pass, null passes
       console.info('No label provided');
       return;
