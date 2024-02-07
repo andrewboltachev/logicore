@@ -158,13 +158,12 @@ const d2AsMap = Object.fromEntries(matchPatternDataConstructorsRefactored.map(({
 }));
 
 
-const edgesAreConnected = (edges, { id: idFrom }, { id: idTo }) => {
-  const current = idTo;
+const edgesAreConnected = (edges, idFrom, idTo) => {
+  let current = idTo;
   while (current) {
     if (current === idFrom) return true;
-    const currentV = edges.filter(({ target }) => target === idTo);
-    console.log('visiting', currentV);
-    current = currentV.source;
+    const edge = edges.find(({ target }) => target === current);
+    current = edge?.source;
   }
   return false;
 };
