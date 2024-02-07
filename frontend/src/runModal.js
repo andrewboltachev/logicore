@@ -22,7 +22,7 @@ import {
 import { Button, Modal } from "react-bootstrap";
 
 const FormModal = (config) => {
-  const { resolve } = config;
+  const { resolve, validate } = config;
   const [value, onChange] = useState(config.value);
   const [errors, setErrors] = useState(null);
   const context = config?.context || {};
@@ -31,8 +31,20 @@ const FormModal = (config) => {
   };
   const handleSubmit = () => {
     const error = validateDefinition(config?.fields, value);
-    setErrors(error);
-    if (!definitionIsInvalid(config?.fields, error, value)) {
+    let outerError = null;
+    let isError = false;
+    if (definitionIsInvalid(config?.fields, error, value)) {
+      setErrors(error);
+      isError = true;
+    } else if (validate) {
+      outerError = validate(value);
+      if (outerError) {
+        setErrors(outerError);
+        isError = true;
+      }
+    }
+    console.log({error, isError, validate, value, outerError});
+    if (!isError) {
       // ok
       console.log("run cb", value);
       resolve(value);

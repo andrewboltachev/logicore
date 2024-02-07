@@ -209,7 +209,7 @@ class NamedOutput extends OutputHandleStrategy {
           {
             type: "SelectField",
             k: "name",
-            label: "Type",
+            label: "Key",
             required: true,
             options: this.labels.map((n) => ({value: n, label: n, disabled: _.includes(existingEdges.map(({ label }) => label), n)})),
           },
@@ -230,6 +230,30 @@ class KeysOutput extends OutputHandleStrategy {
   }
 
   async askForNewEdgeLabel (existingEdges) {
+    const result = await window.runModal({
+      title: "Add edge",
+      fields: {
+        type: "Fields",
+        fields: [
+          {
+            type: "TextField",
+            k: "name",
+            label: "Key",
+            required: true,
+          },
+        ],
+      },
+      modalSize: "md",
+      value: {name: null},
+      validate: ({ name }) => {
+        if (_.includes(existingEdges.map(({ label }) => label), name)) {
+          return {name: "Edge with this key already exists"};
+        }
+      },
+    });
+    if (result) {
+      return result.name;
+    }
   }
 };
 
@@ -473,11 +497,21 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     const sourceNode = nodes.find(n => n.id === params.source);
     const targetNode = nodes.find(n => n.id === params.target);
     const outcomingEdges = edges.filter(({ source }) => source === params.source);
+    if (outcomingEdges.filter(({ target }) => target === params.target).length) {
+      console.info('Cannot create with the same source and target (that\'s thin category after all)');
+      return;
+    }
     const sourceNodeFunctionality = getNodeFunctionality(sourceNode);
-    if (!sourceNodeFunctionality.canHaveOutputEdge(outcomingEdges)) return;
+    if (!sourceNodeFunctionality.canHaveOutputEdge(outcomingEdges)) {
+      console.info('Cannot have output edge');
+      return;
+    }
     const label = await sourceNodeFunctionality.askForNewEdgeLabel(outcomingEdges);
     console.log('returned label', label);
-    if (label === void 0) return; // undefined doesn't pass, null passes
+    if (label === void 0) { // undefined doesn't pass, null passes
+      console.info('No label provided');
+      return;
+    }
     setEdges(addEdge(
       {
         ...params,
