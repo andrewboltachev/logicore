@@ -627,13 +627,16 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
 
   useEffect(() => {
     if (!deletePressed) return;
-    setNodes(nodes.filter((o) => !_.includes(selectedNodes.map(({id}) => id), o.id)));
-    setEdges(edges.filter((o) => !_.includes([
-      ...selectedNodes.map(({source}) => source),
-      ...selectedNodes.map(({target}) => target),
-      ...selectedEdges.map(({id}) => id),
-    ], o.id)));
-  }, [deletePressed])
+    const newNodes = nodes.filter((o) => !_.includes(selectedNodes.map(({id}) => id), o.id));
+    const newNodesIds = newNodes.map(({id}) => id);
+    setNodes(newNodes);
+    setEdges(
+      edges
+      .filter((o) => !_.includes(selectedEdges.map(({id}) => id), o.id))
+      .filter((o) => _.includes(newNodesIds, o.source))
+      .filter((o) => _.includes(newNodesIds, o.target))
+    );
+  }, [deletePressed, nodes, edges])
 
   useOnSelectionChange({
     onChange: ({ nodes, edges }) => {
