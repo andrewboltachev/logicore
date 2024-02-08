@@ -708,7 +708,7 @@ const DefaultContainer = ({ children }) => <div>{children}</div>;
 
 // Form with validation
 export const GenericForm = (props) => {
-  const { serverErrors, data, onChange, externalInterceptor, serverContext } = props;
+  const { serverErrors, data, onChange, externalInterceptor, serverContext, validate } = props;
   const [fields, setFields] = useState(props.fields);
 
   const [state, setState] = useState(data || {});
@@ -727,9 +727,20 @@ export const GenericForm = (props) => {
   let SubmitButtonWidget = null;
   if (props.submitButtonWidget) SubmitButtonWidget = submitButtonWidgets[props.submitButtonWidget];
   const onSubmit = (onChange) => {
-    const errors = validateDefinition(fields, state);
-    setErrors(errors, null);
-    if (!definitionIsInvalid(fields, errors, state)) {
+    const error = validateDefinition(fields, state);
+    let outerError = null;
+    let isError = false;
+    if (definitionIsInvalid(fields, error, state)) {
+      setErrors(error, null);
+      isError = true;
+    } else if (validate) {
+      outerError = validate(state);
+      if (outerError) {
+        setErrors(outerError);
+        isError = true;
+      }
+    }
+    if (!isError) {
       // ok
       onChange(state, setErrors);
     } else {
@@ -738,7 +749,6 @@ export const GenericForm = (props) => {
           "Please fix the errors below",
           "Error"
         );
-        console.log('!!!', errors);
         setTimeout(() => {
           try {
             document

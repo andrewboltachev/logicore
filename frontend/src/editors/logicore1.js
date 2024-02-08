@@ -217,7 +217,7 @@ class NamedOutput extends OutputHandleStrategy {
         fields: [
           {
             type: "SelectField",
-            k: "name",
+            k: "label",
             label: "Key",
             required: true,
             options: this.labels.map((n) => ({value: n, label: n, disabled: _.includes(existingEdges.map(({ label }) => label), n)})),
@@ -225,11 +225,17 @@ class NamedOutput extends OutputHandleStrategy {
         ],
       },
       modalSize: "md",
-      value: {name: null},
+      value: {label: null},
     });
     if (result) {
-      return result.name.value;
+      return result.label.value;
     }
+  }
+};
+
+const validateKeyAlreadyExists = (existingEdges) => ({ label }) => {
+  if (_.includes(existingEdges.map(({ label }) => label), label)) {
+    return {label: "Edge with this key already exists"};
   }
 };
 
@@ -246,22 +252,18 @@ class KeysOutput extends OutputHandleStrategy {
         fields: [
           {
             type: "TextField",
-            k: "name",
+            k: "label",
             label: "Key",
             required: true,
           },
         ],
       },
       modalSize: "md",
-      value: {name: null},
-      validate: ({ name }) => {
-        if (_.includes(existingEdges.map(({ label }) => label), name)) {
-          return {name: "Edge with this key already exists"};
-        }
-      },
+      value: {label: null},
+      validate: validateKeyAlreadyExists(existingEdges),
     });
     if (result) {
-      return result.name;
+      return result.label;
     }
   }
 };
@@ -287,32 +289,13 @@ class SourceNodeFunctionality extends NodeFunctionality {
   }
 
   canHaveOutputEdge (existingEdges) {
-    console.log('canHaveOutputEdge checks', existingEdges);
     return !existingEdges.length;
   }
 
   async askForNewEdgeLabel (existingEdges) {
-    const result = await window.runModal({
-      title: "Add edge",
-      fields: {
-        type: "Fields",
-        fields: [
-          {
-            type: "SelectField",
-            k: "name",
-            label: "Type",
-            required: true,
-            options: this.labels.map((n) => ({value: n, label: n, disabled: _.includes(existingEdges.map(({ label }) => label), n)})),
-          },
-        ],
-      },
-      modalSize: "md",
-      value: {name: null},
-    });
-    if (result) {
-      return result.label;
-    }
+    return true;
   }
+
   getComponentForNode () {
     //return SourceNodeComponent;
   }
@@ -329,14 +312,29 @@ const KEYMAP_OF_MATCHPATTERN = {
   params: [ { type: 'ConT', value: 'MatchPattern' } ]
 };
 
-const KeysEdgeComponent = ({ value, onChange }) => {
+const KeysEdgeComponent = ({ edges, value, onChange }) => {
+  if (!value) return <div />; // TODO
+  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
   return <div>
     <h2>Edit arrow</h2>
-    <h2>Edit arrow</h2>
-    <h2>Edit arrow</h2>
-    <h2>Edit arrow</h2>
-    <h2>Edit arrow</h2>
     <div>
+      <GenericForm
+        notifyOnError
+        data={{ label: value.label }}
+        onChange={({ label }) => onChange({...value, label})}
+        fields={{
+          type: "Fields",
+          fields: [
+            {
+              type: "TextField",
+              k: "label",
+              label: "Key",
+              required: true,
+            }
+          ],
+        }}
+        validate={validateKeyAlreadyExists(siblingEdges)}
+      />
     </div>
   </div>;
 }
@@ -639,7 +637,6 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           LastSelectedThingComponent = fnc.getComponentForNode();
           pathBase = "nodes";
         }
-        console.log('the value', value);
         return {
           LastSelectedThingComponent,
           lastSelectedComponentProps: {
