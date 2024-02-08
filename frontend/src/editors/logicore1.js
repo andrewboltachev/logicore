@@ -273,7 +273,13 @@ class NodeFunctionality {
     const c = NODE_CLASSES.find(({ type }) => type === node.type);
     this.c = c.options.find(({value}) => value === node.data.value);
   }
+
+  getComponentForEdge () {}
+  getComponentForNode () {}
 };
+
+const SourceNodeComponent = ({ nodes, edges, setNodes, setEdges, selected }) => {
+}
 
 class SourceNodeFunctionality extends NodeFunctionality {
   hasOutputHandle () {
@@ -307,6 +313,9 @@ class SourceNodeFunctionality extends NodeFunctionality {
       return result.label;
     }
   }
+  getComponentForNode () {
+    //return SourceNodeComponent;
+  }
 };
 
 const MATCHPATTERN = { 
@@ -319,6 +328,18 @@ const KEYMAP_OF_MATCHPATTERN = {
   target: { type: 'ConT', value: 'KeyMap' },
   params: [ { type: 'ConT', value: 'MatchPattern' } ]
 };
+
+const KeysEdgeComponent = ({ value, onChange }) => {
+  return <div>
+    <h2>Edit arrow</h2>
+    <h2>Edit arrow</h2>
+    <h2>Edit arrow</h2>
+    <h2>Edit arrow</h2>
+    <h2>Edit arrow</h2>
+    <div>
+    </div>
+  </div>;
+}
 
 
 class MatchNodeFunctionality extends NodeFunctionality {
@@ -355,6 +376,12 @@ class MatchNodeFunctionality extends NodeFunctionality {
         }
       }
       return new NamedOutput(result);
+    }
+  }
+
+  getComponentForEdge (arg) {
+    if (this._getOutputHandleStrategy() instanceof KeysOutput) {
+      return KeysEdgeComponent;
     }
   }
 };
@@ -594,33 +621,36 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       setSelectedEdges(edges);
     },
   });
-  /*const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
+  const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
     selectedEdges.length ? {type: "Edge", value: selectedEdges[selectedEdges.length - 1]} : null
   );
-  let LastSelectedThingComponent = null;
-  const sourceAndTarget = {};
-  if (lastSelectedThing) {
-    LastSelectedThingComponent = (editableItems?.[lastSelectedThing?.type] || {})[lastSelectedThing?.value?.data?.subtype];
-    if (lastSelectedThing.type === "Edge") {
-      for (const k of ["source", "target"]) {
-        sourceAndTarget[k] = onPathPlus(
-          value,
-          onChange,
-          ["nodes", {matching: x => {
-            return x.id === lastSelectedThing.value[k];
-          }}, "data", "payload"]
-        );
+  const { LastSelectedThingComponent, lastSelectedComponentProps } = useMemo(
+    () => {
+      if (!lastSelectedThing) return {};
+      let LastSelectedThingComponent = null, pathBase = null;
+      if (lastSelectedThing) {
+        if (lastSelectedThing.type === 'Edge') {
+          const fnc = getNodeFunctionality(nodes.find(({ id }) => id === lastSelectedThing.value.source));
+          LastSelectedThingComponent = fnc.getComponentForEdge(lastSelectedThing.value);
+          pathBase = "edges";
+        }
+        if (lastSelectedThing.type === 'Node') {
+          const fnc = getNodeFunctionality(lastSelectedThing.value);
+          LastSelectedThingComponent = fnc.getComponentForNode();
+          pathBase = "nodes";
+        }
+        console.log('the value', value);
+        return {
+          LastSelectedThingComponent,
+          lastSelectedComponentProps: {
+            nodes,
+            edges,
+            ...onPathPlus(value, onChange, [pathBase, {matching: ({id}) => id === lastSelectedThing.value.id}]),
+          }
+        };
       }
-    }
-  }
-  let theProps = {};
-  if (lastSelectedThing) {
-    theProps = {
-      subtype: lastSelectedThing?.value?.data?.subtype,
-      ...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"]),
-      ...sourceAndTarget
-    };
-  }*/
+    }, [lastSelectedThing?.value.id, value, onChange]
+  );
   return (<>
     <div className="row align-items-stretch flex-grow-1">
       <div className="col-md-7 d-flex flex-column">
@@ -670,18 +700,12 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           <Background />
         </ReactFlow>
       </div>
-      <div className="col-md-5 d-flex flex-column">
-        <div className="flex-grow-1">
-          hello
-          {/*LastSelectedThingComponent ? (<>
-            {lastSelectedThing.type === "Edge" ? <div /> : null}
-            <LastSelectedThingComponent
-              {...theProps}
-            />
-          </>) : null*/}
+      <div className="col-md-5 d-grid" style={{gridTemplateRows: "1fr auto 1fr"}}>
+        <div>
+          {LastSelectedThingComponent && <LastSelectedThingComponent {...lastSelectedComponentProps} />}
         </div>
         <hr />
-        <div className="flex-grow-1">
+        <div>
           world
         </div>
       </div>
