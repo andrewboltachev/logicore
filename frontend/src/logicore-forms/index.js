@@ -228,7 +228,7 @@ const NumberField = ({
     </FieldLabel>
   );
 };
-NumberField.isEmpty = (x) => !x;
+NumberField.isEmpty = (x) => !x && (x !== 0);
 Object.assign(formComponents, {
   NumberField,
 });

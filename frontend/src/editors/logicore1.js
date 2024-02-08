@@ -366,7 +366,7 @@ const MatchExactComponent = ({ fieldClass, required }) => ({ edges, value, onCha
 
 const exactComponents = Object.fromEntries(Object.entries({
   "String": {fieldClass: "TextareaField", required: false},
-  "Number": {fieldClass: "NumberField", required: false},
+  "Number": {fieldClass: "NumberField", required: true},
   "Bool": {fieldClass: "BooleanField", required: false},
 }).map(([k, v]) => [k, MatchExactComponent(v)]));
 
@@ -445,25 +445,13 @@ function MatchNode(node) {
   const { data, selected, isConnectable } = node;
   const n = getNodeFunctionality(node);
 
-  if (node.data.value === 'MatchStringExact') {
+  if (new Set(['MatchStringExact', 'MatchNumberExact', 'MatchBoolExact']).has(node.data.value)) {
     return (
-      <div style={{width: 150, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      <div style={{minWidth: 50, maxWidth: 200, padding: "0 10px", width: 'auto', height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-        <code>"{node.data.state}"</code>
-      </div>
-    );
-  } else if (node.data.value === 'MatchNumberExact') {
-    return (
-      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-        <code>{node.data.state}</code>
-      </div>
-    );
-  } else if (node.data.value === 'MatchBoolExact') {
-    return (
-      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-        <code>{node.data.state ? 'true' : 'false'}</code>
+        {node.data.value === 'MatchStringExact' && <code className="text-truncate">{node.data.state}</code>}
+        {node.data.value === 'MatchNumberExact' && <code className="text-truncate" style={{color: 'blue'}}>{node.data.state}</code>}
+        {node.data.value === 'MatchBoolExact' && <code style={{color: 'blue'}}>{node.data.state ? 'true' : 'false'}</code>}
       </div>
     );
   } else {
