@@ -31,6 +31,7 @@ import {
   getByPath,
   setByPath,
   modifyHelper,
+  formValidators,
 } from "../logicore-forms";
 
 import ReactFlow, {
@@ -286,6 +287,15 @@ class NodeFunctionality {
 
 class SourceType {}
 
+formValidators.isValidJSON = (x) => {
+  try {
+    JSON.parse(x);
+  } catch (e) {
+    return e.message;
+  }
+  return null;
+};
+
 class SimpleValueSourceType extends SourceType {
   static value = 'simple_value';
   static label = 'Simple Value';
@@ -297,6 +307,7 @@ class SimpleValueSourceType extends SourceType {
         'type': 'TextareaField',
         'label': 'Data',
         'required': true,
+        'validators': [{type: 'isValidJSON'}],
       }
     ]
   }
