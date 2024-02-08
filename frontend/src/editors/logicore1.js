@@ -112,12 +112,15 @@ const nodeLabelsAndParamNames = {
   },
   'MatchStringExact': {
     label: '"!"',
+    defaultValue: "",
   },
   'MatchNumberExact': {
     label: '1!',
+    defaultValue: 0,
   },
   'MatchBoolExact': {
     label: 't|f!',
+    defaultValue: false,
   },
   'MatchNull': {
     label: 'null',
@@ -319,7 +322,6 @@ const KeysEdgeComponent = ({ edges, value, onChange }) => {
     <h2>Edit arrow</h2>
     <div>
       <GenericForm
-        notifyOnError
         data={{ label: value.label }}
         onChange={({ label }) => onChange({...value, label, selected: false})}
         fields={{
@@ -397,10 +399,6 @@ const getNodeFunctionality = (node) => {
 
 
 function SourceNode({ data, selected, isConnectable }) {
-  const onChange = useCallback((evt) => {
-    console.log(evt.target.value);
-  }, []);
-
   return (
     <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
       {/*<Handle type="target" position={Position.Left} isConnectable={isConnectable} />*/}
@@ -412,18 +410,38 @@ function SourceNode({ data, selected, isConnectable }) {
 
 function MatchNode(node) {
   const { data, selected, isConnectable } = node;
-  const onChange = useCallback((evt) => {
-    console.log(evt.target.value);
-  }, []);
   const n = getNodeFunctionality(node);
 
-  return (
-    <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-      <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-      <div>{n.c.label}</div>
-      {!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
-    </div>
-  );
+  if (node.data.value === 'MatchStringExact') {
+    return (
+      <div style={{width: 150, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+        <code>"{node.data.state}"</code>
+      </div>
+    );
+  } else if (node.data.value === 'MatchNumberExact') {
+    return (
+      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+        <code>{node.data.state}</code>
+      </div>
+    );
+  } else if (node.data.value === 'MatchBoolExact') {
+    return (
+      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+        <code>{node.data.state ? 'true' : 'false'}</code>
+      </div>
+    );
+  } else {
+    return (
+      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+        <div>{n.c.label}</div>
+        {!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
+      </div>
+    );
+  }
 }
 
 const nodeTypes = { SourceNode, MatchNode };
@@ -610,7 +628,11 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   useEffect(() => {
     if (!deletePressed) return;
     setNodes(nodes.filter((o) => !_.includes(selectedNodes.map(({id}) => id), o.id)));
-    setEdges(edges.filter((o) => !_.includes(selectedEdges.map(({id}) => id), o.id)));
+    setEdges(edges.filter((o) => !_.includes([
+      ...selectedNodes.map(({source}) => source),
+      ...selectedNodes.map(({target}) => target),
+      ...selectedEdges.map(({id}) => id),
+    ], o.id)));
   }, [deletePressed])
 
   useOnSelectionChange({
@@ -646,7 +668,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           }
         };
       }
-    }, [lastSelectedThing?.value.id, value, onChange]
+    }, [lastSelectedThing?.value.id, value, onChange, edges, nodes]
   );
   return (<>
     <div className="row align-items-stretch flex-grow-1">
@@ -658,7 +680,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
               Add
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {NODE_CLASSES.map(({ options, type, ...parentItem }) => (
+              {NODE_CLASSES.map(({ options, type, defaultValue, ...parentItem }) => (
                 <React.Fragment key={type}>
                   {options.map(({ label, value, ...item }) => {
                     return (
@@ -670,7 +692,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
                           id,
                           position: { x: 0, y: 0 },
                           type,
-                          data: { value },
+                          data: { value, state: defaultValue },
                         }]);
                       }}>
                         {label}
