@@ -339,10 +339,9 @@ const KeysEdgeComponent = ({ edges, value, onChange }) => {
   </div>;
 }
 
-const MatchStringExactComponent = ({ edges, value, onChange }) => {
+const MatchExactComponent = ({ fieldClass, required }) => ({ edges, value, onChange }) => {
   if (!value) return <div />; // TODO
   const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
-  console.log('vaaaaaaaaaaaaalue', value);
   return <div>
     <h2>Edit arrow</h2>
     <div>
@@ -353,10 +352,10 @@ const MatchStringExactComponent = ({ edges, value, onChange }) => {
           type: "Fields",
           fields: [
             {
-              type: "TextareaField",
+              type: fieldClass,
               k: "state",
               label: "Value",
-              required: false,
+              required,
             }
           ],
         }}
@@ -365,62 +364,11 @@ const MatchStringExactComponent = ({ edges, value, onChange }) => {
   </div>;
 }
 
-
-
-const MatchNumberExactComponent = ({ edges, value, onChange }) => {
-  if (!value) return <div />; // TODO
-  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
-  return <div>
-    <h2>Edit arrow</h2>
-    <div>
-      <GenericForm
-        data={{ label: value.label }}
-        onChange={({ label }) => onChange({...value, label, selected: false})}
-        fields={{
-          type: "Fields",
-          fields: [
-            {
-              type: "TextField",
-              k: "label",
-              label: "Key",
-              required: true,
-            }
-          ],
-        }}
-        validate={validateKeyAlreadyExists(siblingEdges)}
-      />
-    </div>
-  </div>;
-}
-
-
-
-const MatchBoolExactComponent = ({ edges, value, onChange }) => {
-  if (!value) return <div />; // TODO
-  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
-  return <div>
-    <h2>Edit arrow</h2>
-    <div>
-      <GenericForm
-        data={{ label: value.label }}
-        onChange={({ label }) => onChange({...value, label, selected: false})}
-        fields={{
-          type: "Fields",
-          fields: [
-            {
-              type: "TextField",
-              k: "label",
-              label: "Key",
-              required: true,
-            }
-          ],
-        }}
-        validate={validateKeyAlreadyExists(siblingEdges)}
-      />
-    </div>
-  </div>;
-}
-
+const exactComponents = Object.fromEntries(Object.entries({
+  "String": {fieldClass: "TextareaField", required: false},
+  "Number": {fieldClass: "NumberField", required: false},
+  "Bool": {fieldClass: "BooleanField", required: false},
+}).map(([k, v]) => [k, MatchExactComponent(v)]));
 
 
 class MatchNodeFunctionality extends NodeFunctionality {
@@ -467,11 +415,7 @@ class MatchNodeFunctionality extends NodeFunctionality {
   }
 
   getComponentForNode () {
-    return {
-      MatchStringExactComponent,
-      MatchNumberExactComponent,
-      MatchBoolExactComponent,
-    }[`${this.node.data.value}Component`];
+    return exactComponents[this.node.data.value.replace("Match", "").replace("Exact", "")];
   }
 };
 
