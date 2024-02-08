@@ -195,7 +195,6 @@ const DefinedField = ({
   }
   // TODO
   let newCurrent = definition.current;
-  console.log('DefinedField', value);
   return (<>
     <FormComponent
       context={{...context, ...definition.context}}
