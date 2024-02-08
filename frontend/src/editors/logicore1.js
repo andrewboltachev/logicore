@@ -322,6 +322,7 @@ const SourceNodeComponent = ({ value, onChange }) => {
     <h2>Edit source</h2>
     <div>
       <GenericForm
+        key={value.id}
         data={value.data.state}
         onChange={(state) => onChange({...value, data: {...value.data, state}, selected: false })}
         fields={{
@@ -385,6 +386,7 @@ const KeysEdgeComponent = ({ edges, value, onChange }) => {
     <h2>Edit arrow</h2>
     <div>
       <GenericForm
+        key={value.id}
         data={{ label: value.label }}
         onChange={({ label }) => onChange({...value, label, selected: false})}
         fields={{
@@ -411,6 +413,7 @@ const MatchExactComponent = ({ fieldClass, required }) => ({ edges, value, onCha
     <h2>Edit node</h2>
     <div>
       <GenericForm
+        key={value.id}
         data={{ state: value.data.state }}
         onChange={({ state }) => onChange({...value, data: {...value.data, state}, selected: false })}
         fields={{
