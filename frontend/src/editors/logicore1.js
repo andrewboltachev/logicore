@@ -299,9 +299,7 @@ class SourceNodeFunctionality extends NodeFunctionality {
     return true;
   }
 
-  getComponentForNode () {
-    //return SourceNodeComponent;
-  }
+  getComponentForNode () {}
 };
 
 const MATCHPATTERN = { 
@@ -340,6 +338,89 @@ const KeysEdgeComponent = ({ edges, value, onChange }) => {
     </div>
   </div>;
 }
+
+const MatchStringExactComponent = ({ edges, value, onChange }) => {
+  if (!value) return <div />; // TODO
+  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
+  console.log('vaaaaaaaaaaaaalue', value);
+  return <div>
+    <h2>Edit arrow</h2>
+    <div>
+      <GenericForm
+        data={{ state: value.data.state }}
+        onChange={({ state }) => onChange({...value, data: {...value.data, state}, selected: false })}
+        fields={{
+          type: "Fields",
+          fields: [
+            {
+              type: "TextareaField",
+              k: "state",
+              label: "Value",
+              required: false,
+            }
+          ],
+        }}
+      />
+    </div>
+  </div>;
+}
+
+
+
+const MatchNumberExactComponent = ({ edges, value, onChange }) => {
+  if (!value) return <div />; // TODO
+  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
+  return <div>
+    <h2>Edit arrow</h2>
+    <div>
+      <GenericForm
+        data={{ label: value.label }}
+        onChange={({ label }) => onChange({...value, label, selected: false})}
+        fields={{
+          type: "Fields",
+          fields: [
+            {
+              type: "TextField",
+              k: "label",
+              label: "Key",
+              required: true,
+            }
+          ],
+        }}
+        validate={validateKeyAlreadyExists(siblingEdges)}
+      />
+    </div>
+  </div>;
+}
+
+
+
+const MatchBoolExactComponent = ({ edges, value, onChange }) => {
+  if (!value) return <div />; // TODO
+  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
+  return <div>
+    <h2>Edit arrow</h2>
+    <div>
+      <GenericForm
+        data={{ label: value.label }}
+        onChange={({ label }) => onChange({...value, label, selected: false})}
+        fields={{
+          type: "Fields",
+          fields: [
+            {
+              type: "TextField",
+              k: "label",
+              label: "Key",
+              required: true,
+            }
+          ],
+        }}
+        validate={validateKeyAlreadyExists(siblingEdges)}
+      />
+    </div>
+  </div>;
+}
+
 
 
 class MatchNodeFunctionality extends NodeFunctionality {
@@ -383,6 +464,14 @@ class MatchNodeFunctionality extends NodeFunctionality {
     if (this._getOutputHandleStrategy() instanceof KeysOutput) {
       return KeysEdgeComponent;
     }
+  }
+
+  getComponentForNode () {
+    return {
+      MatchStringExactComponent,
+      MatchNumberExactComponent,
+      MatchBoolExactComponent,
+    }[`${this.node.data.value}Component`];
   }
 };
 
@@ -683,9 +772,9 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
               Add
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {NODE_CLASSES.map(({ options, type, defaultValue, ...parentItem }) => (
+              {NODE_CLASSES.map(({ options, type, ...parentItem }) => (
                 <React.Fragment key={type}>
-                  {options.map(({ label, value, ...item }) => {
+                  {options.map(({ label, value, defaultValue, ...item }) => {
                     return (
                       <Dropdown.Item key={label} href="#" onClick={(e) => {
                         e.preventDefault();
