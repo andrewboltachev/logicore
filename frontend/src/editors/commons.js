@@ -50,7 +50,6 @@ export const onPathPlus = (value, onChange, path, f) => {
     value: result,
     onChange: (newValue) => {
       const v = modifyHelper(path, value, _ => handler(newValue), {});
-      console.log('got newValue', newValue, v);
       onChange(v);
     },
   };

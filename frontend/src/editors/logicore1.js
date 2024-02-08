@@ -321,7 +321,7 @@ const KeysEdgeComponent = ({ edges, value, onChange }) => {
       <GenericForm
         notifyOnError
         data={{ label: value.label }}
-        onChange={({ label }) => onChange({...value, label})}
+        onChange={({ label }) => onChange({...value, label, selected: false})}
         fields={{
           type: "Fields",
           fields: [
