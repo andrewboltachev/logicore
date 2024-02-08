@@ -283,7 +283,59 @@ class NodeFunctionality {
   getComponentForNode () {}
 };
 
-const SourceNodeComponent = ({ nodes, edges, setNodes, setEdges, selected }) => {
+
+class SourceType {}
+
+class SimpleValueSourceType extends SourceType {
+  static value = 'simple_value';
+  static label = 'Simple Value';
+  static fields = {
+    type: 'Fields',
+    fields: [
+      {
+        'k': 'data',
+        'type': 'TextareaField',
+        'label': 'Data',
+        'required': true,
+      }
+    ]
+  }
+}
+
+const sourceTypes = [ SimpleValueSourceType ];
+
+
+const SourceNodeComponent = ({ value, onChange }) => {
+  if (!value) return <div />; // TODO
+  return <div>
+    <h2>Edit source</h2>
+    <div>
+      <GenericForm
+        data={value.data.state}
+        onChange={(state) => onChange({...value, data: {...value.data, state}, selected: false })}
+        fields={{
+          type: "Fields",
+          fields: [
+            {
+              type: 'SelectField',
+              k: "type",
+              label: "Value",
+              required: false,
+              options: sourceTypes.map(({ value, label }) => ({ value, label })),
+            },
+            {
+              type: 'DefinedField',
+              k: "params",
+              label: "Value",
+              required: false,
+              master_field: 'type',
+              definitions: Object.fromEntries(sourceTypes.map(({ value, fields }) => ([ value, fields ]))),
+            },
+          ],
+        }}
+      />
+    </div>
+  </div>;
 }
 
 class SourceNodeFunctionality extends NodeFunctionality {
@@ -299,7 +351,9 @@ class SourceNodeFunctionality extends NodeFunctionality {
     return true;
   }
 
-  getComponentForNode () {}
+  getComponentForNode () {
+    return SourceNodeComponent;
+  }
 };
 
 const MATCHPATTERN = { 
@@ -343,7 +397,7 @@ const MatchExactComponent = ({ fieldClass, required }) => ({ edges, value, onCha
   if (!value) return <div />; // TODO
   const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
   return <div>
-    <h2>Edit arrow</h2>
+    <h2>Edit node</h2>
     <div>
       <GenericForm
         data={{ state: value.data.state }}

@@ -110,7 +110,7 @@ const Fields = (fieldsProps) => {
     let imposed_value = void 0; // TODO use undefined
     const master_field_getter = child.master_field_getter || (x => x?.value);
     if (child.type === 'DefinedField' && child.master_field) {
-      console.log('CURRENT FOR', (value?.[child?.master_field] || {}).value);
+      //console.log('CURRENT FOR', (value?.[child?.master_field] || {}).value);
       additionalProps.current =  child.definitions[
         master_field_getter((value?.[child?.master_field] || {}))
       ] || {type: 'Fields', fields: []}; // TODO assumption
@@ -195,6 +195,7 @@ const DefinedField = ({
   }
   // TODO
   let newCurrent = definition.current;
+  console.log('DefinedField', value);
   return (<>
     <FormComponent
       context={{...context, ...definition.context}}
