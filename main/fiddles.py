@@ -25,3 +25,7 @@ class PythonMatcherFiddleType(FiddleType):
 
 class Logicore1FiddleType(FiddleType):
     pass
+
+
+class Logicore2FiddleType(FiddleType):
+    pass

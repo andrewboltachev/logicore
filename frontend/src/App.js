@@ -90,6 +90,7 @@ import "./i18n";
 import JSON_MATCHER from "./editors/jsonmatcher";
 import PYTHON_MATCHER from "./editors/pythonmatcher";
 import LOGICORE1 from "./editors/logicore1";
+import LOGICORE2 from "./editors/logicore2";
 import UI1 from "./editors/ui1";
 
 const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url);
@@ -1084,6 +1085,7 @@ const fiddleTypes = {
   JSON_MATCHER,
   PYTHON_MATCHER,
   LOGICORE1,
+  LOGICORE2,
   UI1,
 };
 
