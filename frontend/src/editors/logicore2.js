@@ -3,11 +3,11 @@ import _ from "lodash";
 import { v4 as uuidv4 } from "uuid";
 
 // React
-import React, {useState, useContext, useRef, useEffect, useCallback, memo, useMemo} from "react";
+import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
 
 // React modules
 import { useTranslation, Trans } from "react-i18next";
-import {Button, Dropdown, Modal} from "react-bootstrap";
+import { Button, Modal } from "react-bootstrap";
 import { useDraggable } from "react-use-draggable-scroll";
 import { NotificationManager } from "react-notifications";
 
@@ -31,7 +31,6 @@ import {
   getByPath,
   setByPath,
   modifyHelper,
-  formValidators,
 } from "../logicore-forms";
 
 import ReactFlow, {
@@ -41,651 +40,240 @@ import ReactFlow, {
   Background,
   //useNodesState,
   //useEdgesState,
-  applyNodeChanges,
-  applyEdgeChanges,
-  useViewport,
-  ReactFlowProvider,
+	applyNodeChanges,
+	applyEdgeChanges,
+	useViewport,
+	ReactFlowProvider,
   Handle, NodeProps, Position,
   useKeyPress,
   useOnSelectionChange,
-  useReactFlow,
-  getStraightPath,
-  BaseEdge,
-  EdgeLabelRenderer,
-  MarkerType,
-  useOnViewportChange,
-  getBezierPath,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
 // Module-local
 import "./logicore2.scss";
-import d2 from "./d2.json";
-import {BezierEdgeProps} from "reactflow";
-
-const walk = (value, post=_.identity, pre=_.identity) => {
-  const items = pre(value);
-  if (Array.isArray(items)) {
-    return post(items.map(x => walk(x, post, pre)));
-  } else if (items && typeof items === 'object') {
-    return post(Object.fromEntries(Object.entries(items).map(([k, v]) => [k, walk(v, post, pre)])));
-  } else {
-    return post(items);
-  }
-}
-
-function difference(setA, setB) {
-  const _difference = new Set(setA);
-  for (const elem of setB) {
-    _difference.delete(elem);
-  }
-  return _difference;
-}
-
-const refactorAppT = (node) => {
-  if (!!node && !Array.isArray(node) && typeof node === 'object') {
-    if (node.type === 'AppT') {
-      const params = [];
-      let target = node;
-      const f = (x) => {
-        params.unshift(x.param);
-        if (x.target.type === 'AppT') {
-          f(x.target);
-        } else {
-          target = x.target;
-        }
-      };
-      f(node);
-      return {type: 'AppT1', target, params};
-    }
-  }
-  return node;
-}
 
 const eV = (e) => e.target.value || "";
 
-const nodeLabelsAndParamNames = {
-  'MatchObjectOnly': {
-    label: '{o}',
-  },
-  'MatchArray': {
-    label: '[*]',
-  },
-  'MatchStringExact': {
-    label: '"!"',
-    defaultValue: "",
-  },
-  'MatchNumberExact': {
-    label: '1!',
-    defaultValue: 0,
-  },
-  'MatchBoolExact': {
-    label: 't|f!',
-    defaultValue: false,
-  },
-  'MatchNull': {
-    label: 'null',
-  },
-  'MatchStringAny': {
-    label: '""?',
-  },
-  'MatchNumberAny': {
-    label: '1?',
-  },
-  'MatchBoolAny': {
-    label: 't|f?',
-  },
-  'MatchAny': {
-    label: '∀',
-  },
-  'MatchNone': {
-    label: '∅',
-  },
-  'MatchOr': {
-    label: '||',
-  },
-  'MatchIfThen': {
-    label: 'if',
-    paramNames: ['cond', 'Error text', 'out'],
-  },
-};
-
-const matchPatternDataConstructors = d2[0].contents;
-const matchPatternDataConstructorsRefactored = walk(matchPatternDataConstructors, _.identity, refactorAppT);
-
-// 0 is MatchPattern
-const d2AsMap = Object.fromEntries(matchPatternDataConstructorsRefactored.map(({tag, ...item}) => {
-  return [tag, item];
-}));
-
-
-const edgesAreConnected = (edges, idFrom, idTo) => {
-  let current = idTo;
-  while (current) {
-    if (current === idFrom) return true;
-    const edge = edges.find(({ target }) => target === current);
-    current = edge?.source;
-  }
-  return false;
-};
-
-
-const NODE_CLASSES = [
-  {
-    type: 'SourceNode',
-    options: [
-      {
-        value: 'Source',
-        label: 'Source',
-      },
-    ],
-  },
-  {
-    type: 'MatchNode',
-    options: Object.entries(nodeLabelsAndParamNames).map(([value, ctx]) => {
-      const typeDef = d2AsMap[value];
-      return { value, ...ctx, typeDef };
-    }),
-  },
+const initialNodes = [
+  { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
+  { id: '2', position: { x: 0, y: 100 }, data: { label: '2' } },
 ];
 
+const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
 
-// ADT for hipsters
-class OutputHandleStrategy {};
+/*function Logicore2Node({ id, data }: NodeProps<NodeData>) {
+  return (
+    <div style={{ backgroundColor: 'yellow', borderRadius: 10 }}>
+      Hello
+    </div>
+  );
+}*/
 
-class SingleOutput extends OutputHandleStrategy {
-  canHaveOutputEdge (existingEdges) {
-    return !existingEdges.length;
-  }
 
-  async askForNewEdgeLabel (existingEdges) {
-    return null;
-  }
+const NODE_TYPES = [
+  "FileSystem",
+  "Data",
+  "Multiplexer",
+];
+
+const EDGE_TYPES = [
+  "Files",
+  "Grammar",
+  "Multiplexer",
+  "Selector",
+];
+
+//const nodeTypes = {Logicore2Node};
+
+const FileSystem = ({value, onChange}) => {
+  const doChange = async ({path}) => {
+    const resp = await axios.post("/logicore-api/FileSystem/do/", {path});
+    onChange({files: resp.data.files, path});
+  };
+  return (
+    <main>
+      <GenericForm
+        fields={{type: "Fields", fields: [{type: "TextField", k: "path", label: "Path", required: true}]}}
+        data={value}
+        onChange={doChange}
+        path={[]}
+      />
+    </main>
+  );
 };
 
-class NamedOutput extends OutputHandleStrategy {
-  constructor(labels) {
-    super();
-    this.labels = labels;
-  }
+const Data = ({ value, onChange }) => {
+  return (
+    <main>
+      <GenericForm
+        fields={{type: "Fields", fields: [{type: "TextField", k: "data", label: "Data", required: true}]}}
+        data={value}
+        onChange={onChange}
+        path={[]}
+      />
+    </main>
+  );
+};
 
-  canHaveOutputEdge (existingEdges) {
-    return existingEdges.length < this.labels.length;
-  }
+const BackAndForth = ({ subtype, value, source, target }) => {
+  const actions = {forwards: {buttonClass: "btn-success"}, backwards: {buttonClass: "btn-warning"}};
+  return (
+      <div className="btn-group">
+        {Object.entries(actions).map(([k, v]) => (
+          <button
+            type="button" className={`btn ${v.buttonClass}`}
+            onClick={async _ => {
+              const resp = await axios.post(`/logicore-api/${subtype}/${k}/`, {
+                source: source.value,
+                target: target.value,
+                value: value,
+              });
+              target.onChange({...target.value, ...resp.data});
+            }}
+          >{_.capitalize(k)}</button>
+        ))}
+      </div>
+  );
+}
 
-  async askForNewEdgeLabel (existingEdges) {
-    const result = await window.runModal({
+const Files = ({ value, onChange, source }) => {
+  const [files, setFiles] = useState(value || {});
+  return (
+    <main>
+      <ul style={{overflowY: "scroll", height: 500}}>
+        {source?.value?.files?.map(x => (
+          <li k={x}>
+            <input type="checkbox" id={`select-file-${x}`} checked={files[x]} onChange={_ => setFiles(update(files, {$toggle: [x]}))}/>
+            {" "}
+            <label htmlFor={`select-file-${x}`}>
+              {x.substr(source.value.path.length + 1)}
+            </label>
+            </li>
+        ))}</ul>
+      {/*<GenericForm
+        fields={{type: "Fields", fields: [{type: "TextField", k: "files", label: "Files", required: true}]}}
+        data={value}
+        onChange={onChange}
+        path={[]}
+      />*/}
+        <button type="button" className="btn btn-success" onClick={_ => onChange(files)}>Save</button>
+      </main>
+  );
+};
+
+const Grammar = ({ value, onChange }) => {
+
+};
+
+const Multiplexer = ({ value, onChange }) => {
+
+};
+
+const Selector = ({ value, onChange }) => {
+
+};
+
+const editableItems = {
+  Node: {
+    FileSystem,
+    Data,
+  },
+  Edge: {
+    Files,
+    Grammar,
+    Multiplexer,
+    Selector,
+  },
+};
+
+/*const defaultValues = {
+  Node: {
+    FileSystem: {path: "", files: []},
+  },
+};*/
+
+function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
+  /*const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);*/
+
+	const nodes = value?.nodes || [];
+	const edges = value?.edges || [];
+
+	const setNodes = onPath(value, onChange, ["nodes"]).onChange;
+	const setEdges = onPath(value, onChange, ["edges"]).onChange;
+
+  const [selectedNodes, setSelectedNodes] = useState([]);
+  const [selectedEdges, setSelectedEdges] = useState([]);
+
+  const onConnect = useCallback(async (params) => {
+    const result = await runModal({
       title: "Add edge",
       fields: {
         type: "Fields",
         fields: [
           {
             type: "SelectField",
-            k: "label",
-            label: "Key",
+            k: "subtype",
+            label: "Type",
             required: true,
-            options: this.labels.map((n) => ({value: n, label: n, disabled: _.includes(existingEdges.map(({ label }) => label), n)})),
+            options: EDGE_TYPES.map((n) => ({value: n, label: n})),
           },
         ],
       },
       modalSize: "md",
-      value: {label: null},
+      value: {subtype: null},
     });
-    if (result) {
-      return result.label.value;
-    }
-  }
-};
+    if (result) setEdges(addEdge(update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}), edges));
+  }, [setEdges]);
 
-const validateKeyAlreadyExists = (existingEdges) => ({ label }) => {
-  if (_.includes(existingEdges.map(({ label }) => label), label)) {
-    return {label: "Edge with this key already exists"};
-  }
-};
+	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
+	const onEdgesChange = (changes) => onChange(update(value, {edges: {$apply: (v) => applyEdgeChanges(changes, v)}}));
 
-class KeysOutput extends OutputHandleStrategy {
-  canHaveOutputEdge (existingEdges) {
-    return true;
-  }
+  const { runModal } = useContext(ModalContext);
 
-  async askForNewEdgeLabel (existingEdges) {
-    const result = await window.runModal({
-      title: "Add edge",
+	const doAdd = async () => {
+  	const id = "id_" + uuidv4();
+    const result = await runModal({
+      title: "Add node",
       fields: {
         type: "Fields",
         fields: [
           {
-            type: "TextField",
-            k: "label",
-            label: "Key",
+            type: "SelectField",
+            k: "type",
+            label: "Type",
             required: true,
+            options: NODE_TYPES.map((n) => ({value: n, label: n})),
           },
         ],
       },
       modalSize: "md",
-      value: {label: null},
-      validate: validateKeyAlreadyExists(existingEdges),
+      value: {type: null},
     });
-    if (result) {
-      return result.label;
-    }
-  }
-};
+    if (!result) return;
+    const t = result.type.value;
+    setNodes([...nodes, {
+      id,
+      position: { x: 0, y: 0 },
+      //type: "Logicore2Node",
+      data: { subtype: t, label: t }
+    }]);
+	};
 
-
-class NodeFunctionality {
-  constructor(node) {
-    this.node = node;
-    const c = NODE_CLASSES.find(({ type }) => type === node.type);
-    this.c = c.options.find(({value}) => value === node.data.value);
-  }
-
-  getComponentForEdge () {}
-  getComponentForNode () {}
-};
-
-
-class SourceType {}
-
-formValidators.isValidJSON = (x) => {
-  try {
-    JSON.parse(x);
-  } catch (e) {
-    return e.message;
-  }
-  return null;
-};
-
-class SimpleValueSourceType extends SourceType {
-  static value = 'simple_value';
-  static label = 'Simple Value';
-  static fields = {
-    type: 'Fields',
-    fields: [
-      {
-        'k': 'data',
-        'type': 'TextareaField',
-        'label': 'Data',
-        'required': true,
-        'validators': [{type: 'isValidJSON'}],
-      }
-    ]
-  }
-}
-
-const sourceTypes = [ SimpleValueSourceType ];
-
-
-const SourceNodeComponent = ({ value, onChange }) => {
-  if (!value) return <div />; // TODO
-  return <div>
-    <h2>Edit source</h2>
-    <div>
-      <GenericForm
-        key={value.id}
-        data={value.data.state}
-        onChange={(state) => onChange({...value, data: {...value.data, state}, selected: false })}
-        fields={{
-          type: "Fields",
-          fields: [
-            {
-              type: 'SelectField',
-              k: "type",
-              label: "Value",
-              required: false,
-              options: sourceTypes.map(({ value, label }) => ({ value, label })),
-            },
-            {
-              type: 'DefinedField',
-              k: "params",
-              label: "Value",
-              required: false,
-              master_field: 'type',
-              definitions: Object.fromEntries(sourceTypes.map(({ value, fields }) => ([ value, fields ]))),
-            },
-          ],
-        }}
-      />
-    </div>
-  </div>;
-}
-
-class SourceNodeFunctionality extends NodeFunctionality {
-  hasOutputHandle () {
-    return true;
-  }
-
-  canHaveOutputEdge (existingEdges) {
-    return !existingEdges.length;
-  }
-
-  async askForNewEdgeLabel (existingEdges) {
-    return true;
-  }
-
-  getComponentForNode () {
-    return SourceNodeComponent;
-  }
-};
-
-const MATCHPATTERN = { 
-    "type": "ConT",
-    "value": "MatchPattern"
-};
-
-const KEYMAP_OF_MATCHPATTERN = {
-  type: 'AppT1',
-  target: { type: 'ConT', value: 'KeyMap' },
-  params: [ { type: 'ConT', value: 'MatchPattern' } ]
-};
-
-const KeysEdgeComponent = ({ edges, value, onChange }) => {
-  if (!value) return <div />; // TODO
-  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
-  return <div>
-    <h2>Edit arrow</h2>
-    <div>
-      <GenericForm
-        key={value.id}
-        data={{ label: value.label }}
-        onChange={({ label }) => onChange({...value, label, selected: false})}
-        fields={{
-          type: "Fields",
-          fields: [
-            {
-              type: "TextField",
-              k: "label",
-              label: "Key",
-              required: true,
-            }
-          ],
-        }}
-        validate={validateKeyAlreadyExists(siblingEdges)}
-      />
-    </div>
-  </div>;
-}
-
-const MatchExactComponent = ({ fieldClass, required }) => ({ edges, value, onChange }) => {
-  if (!value) return <div />; // TODO
-  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
-  return <div>
-    <h2>Edit node</h2>
-    <div>
-      <GenericForm
-        key={value.id}
-        data={{ state: value.data.state }}
-        onChange={({ state }) => onChange({...value, data: {...value.data, state}, selected: false })}
-        fields={{
-          type: "Fields",
-          fields: [
-            {
-              type: fieldClass,
-              k: "state",
-              label: "Value",
-              required,
-            }
-          ],
-        }}
-      />
-    </div>
-  </div>;
-}
-
-const exactComponents = Object.fromEntries(Object.entries({
-  "String": {fieldClass: "TextareaField", required: false},
-  "Number": {fieldClass: "NumberField", required: true},
-  "Bool": {fieldClass: "BooleanField", required: false},
-}).map(([k, v]) => [k, MatchExactComponent(v)]));
-
-
-class MatchNodeFunctionality extends NodeFunctionality {
-  hasOutputHandle () {
-    return !!this._getOutputHandleStrategy();
-  }
-
-  canHaveOutputEdge (existingEdges) {
-    return this._getOutputHandleStrategy().canHaveOutputEdge(existingEdges);
-  }
-
-  askForNewEdgeLabel (existingEdges) {
-    return this._getOutputHandleStrategy().askForNewEdgeLabel(existingEdges);
-  }
-
-  _getOutputHandleStrategy () {
-    if (this.c.typeDef.contents.length === 0) {
-      return null;
-    } else if (this.c.typeDef.contents.length === 1) {
-      if (_.isEqual(this.c.typeDef.contents[0], KEYMAP_OF_MATCHPATTERN)) {
-        return new KeysOutput();
-      } else if (_.isEqual(this.c.typeDef.contents[0], MATCHPATTERN)) {
-        return new SingleOutput();
-      }
-      //console.warn('Cannot define output handle strategy for type', this.c.typeDef.contents[0]);
-      return null;
-    } else {
-      const result = [];
-      for (const [item, name] of _.zip(this.c.typeDef.contents, this.c.paramNames)) {
-        if (_.isEqual(item, MATCHPATTERN)) {
-          result.push(name);
-        } else if (item.type === 'AppT1' && !item.params.length && _.isEqual(item.target, MATCHPATTERN)) {
-          result.push(name);
-        }
-      }
-      return new NamedOutput(result);
-    }
-  }
-
-  getComponentForEdge (arg) {
-    if (this._getOutputHandleStrategy() instanceof KeysOutput) {
-      return KeysEdgeComponent;
-    }
-  }
-
-  getComponentForNode () {
-    return exactComponents[this.node.data.value.replace("Match", "").replace("Exact", "")];
-  }
-};
-
-
-const nodeFunctionalityClasses = {
-  SourceNodeFunctionality,
-  MatchNodeFunctionality,
-};
-
-const getNodeFunctionality = (node) => {
-  const cls = nodeFunctionalityClasses[`${node.type}Functionality`];
-  return new cls(node);
-};
-
-
-function SourceNode({ data, selected, isConnectable }) {
-  return (
-    <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-      {/*<Handle type="target" position={Position.Left} isConnectable={isConnectable} />*/}
-      <div>{'Src'}</div>
-      <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
-    </div>
-  );
-}
-
-function MatchNode(node) {
-  const { data, selected, isConnectable } = node;
-  const n = getNodeFunctionality(node);
-
-  if (new Set(['MatchStringExact', 'MatchNumberExact', 'MatchBoolExact']).has(node.data.value)) {
-    return (
-      <div style={{minWidth: 50, maxWidth: 200, padding: "0 10px", width: 'auto', height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-        {node.data.value === 'MatchStringExact' && <code className="text-truncate">{node.data.state}</code>}
-        {node.data.value === 'MatchNumberExact' && <code className="text-truncate" style={{color: 'blue'}}>{node.data.state}</code>}
-        {node.data.value === 'MatchBoolExact' && <code style={{color: 'blue'}}>{node.data.state ? 'true' : 'false'}</code>}
-      </div>
-    );
-  } else {
-    return (
-      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-        <div>{n.c.label}</div>
-        {!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
-      </div>
-    );
-  }
-}
-
-const nodeTypes = { SourceNode, MatchNode };
-
-
-/*const ArrowEdge = ({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  style = {},
-  //markerEnd,
-}) => {
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  });
-  return (<>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} />
-      <EdgeLabelRenderer>foo</EdgeLabelRenderer>
-  </>);
-};*/
-const identity = x => x;
-/*const ArrowEdge = identity(
-  ({
-    id,
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition = Position.Bottom,
-    targetPosition = Position.Top,
-    label,
-    labelStyle,
-    labelShowBg,
-    labelBgStyle,
-    labelBgPadding,
-    labelBgBorderRadius,
-    style,
-    markerEnd,
-    markerStart,
-    pathOptions,
-    interactionWidth,
-    rfId,
-  }: BezierEdgeProps) => {
-    const [path, labelX, labelY] = getBezierPath({
-      sourceX,
-      sourceY,
-      sourcePosition,
-      targetX,
-      targetY,
-      targetPosition,
-      curvature: pathOptions?.curvature,
-    });
-    console.log('markerEnd', markerEnd);
-    return (
-      <BaseEdge
-        id={id}
-        path={path}
-        labelX={labelX}
-        labelY={labelY}
-        label={label}
-        labelStyle={labelStyle}
-        labelShowBg={labelShowBg}
-        labelBgStyle={labelBgStyle}
-        labelBgPadding={labelBgPadding}
-        labelBgBorderRadius={labelBgBorderRadius}
-        style={style}
-        markerEnd={markerEnd}
-        markerStart={markerStart}
-        interactionWidth={interactionWidth}
-      />
-    );
-  }
-);
-
-
-const edgeTypes = { ArrowEdge };*/
-
-const markerEnd = {
-  type: MarkerType.ArrowClosed,
-  width: 30,
-  height: 120,
-  color: '#000000',
-};
-
-function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
-  const { t } = useTranslation();
-
-  const nodes = value?.nodes || [];
-  const edges = value?.edges || [];
-
-  const setNodes = onPath(value, onChange, ["nodes"]).onChange;
-  const setEdges = onPath(value, onChange, ["edges"]).onChange;
-
-  const [selectedNodes, setSelectedNodes] = useState([]);
-  const [selectedEdges, setSelectedEdges] = useState([]);
-
-  const onConnect = useCallback(async (params) => {
-    const sourceNode = nodes.find(n => n.id === params.source);
-    const targetNode = nodes.find(n => n.id === params.target);
-    const outcomingEdges = edges.filter(({ source }) => source === params.source);
-    if (edgesAreConnected(edges, params.target, params.source)) {
-      NotificationManager.warning("", t("Cannot create cycle"), 2000);
-      return;
-    }
-    if (outcomingEdges.filter(({ target }) => target === params.target).length) {
-      NotificationManager.warning("", t('Cannot create with the same source and target (that\'s thin category after all)'), 2000);
-      return;
-    }
-    const sourceNodeFunctionality = getNodeFunctionality(sourceNode);
-    if (!sourceNodeFunctionality.canHaveOutputEdge(outcomingEdges)) {
-      NotificationManager.warning("", t('Cannot have output edge'), 2000);
-      return;
-    }
-    const label = await sourceNodeFunctionality.askForNewEdgeLabel(outcomingEdges);
-    if (label === void 0) { // undefined doesn't pass, null passes
-      NotificationManager.warning("", t('No label provided'), 2000);
-      return;
-    }
-    setEdges(addEdge(
-      {
-        ...params,
-        label,
-        markerEnd,
-      },
-      edges
-    ));
-  }, [setEdges]);
-
-  const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
-  const onEdgesChange = (changes) => onChange(update(value, {edges: {$apply: (v) => applyEdgeChanges(changes, v)}}));
-
-  const { runModal } = useContext(ModalContext);
-  window.runModal = runModal;
+  const [state, setState] = useLocalStorage(storageKey);
 
   const [initialized, setInitialized] = useState(null);
 
-  const onInit = (instance) => {
+	const onInit = (instance) => {
     setInitialized(instance);
-  };
+	};
 
   useEffect(() => {
     if (!storageKey) return;
     if (!initialized) return;
+    //console.log('state', state);
     let v = {x: 0, y: 0, zoom: 1};
-    const state = JSON.parse(window.localStorage.getItem(storageKey))
-    console.log('state from storageKey', state);
     if (state) {
       if (state) {
         v = state;
@@ -705,27 +293,22 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       }
     }
     if (v) initialized.setViewport(v);
-  }, [storageKey, initialized]);
+  }, [!state, storageKey, initialized]);
 
-  useOnViewportChange({
-    onChange: ({x, y, zoom}: Viewport) => window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}))
-  });
+  const { x, y, zoom } = useViewport();
 
+  useEffect(() => {
+    //console.log(x, y, zoom);
+    window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}));
+  }, [x, y, zoom]);
 
   const deletePressed = useKeyPress('Delete');
 
   useEffect(() => {
     if (!deletePressed) return;
-    const newNodes = nodes.filter((o) => !_.includes(selectedNodes.map(({id}) => id), o.id));
-    const newNodesIds = newNodes.map(({id}) => id);
-    setNodes(newNodes);
-    setEdges(
-      edges
-      .filter((o) => !_.includes(selectedEdges.map(({id}) => id), o.id))
-      .filter((o) => _.includes(newNodesIds, o.source))
-      .filter((o) => _.includes(newNodesIds, o.target))
-    );
-  }, [deletePressed, nodes, edges])
+    setNodes(nodes.filter((o) => !_.includes(selectedNodes.map(({id}) => id), o.id)));
+    setEdges(edges.filter((o) => !_.includes(selectedEdges.map(({id}) => id), o.id)));
+  }, [deletePressed])
 
   useOnSelectionChange({
     onChange: ({ nodes, edges }) => {
@@ -736,66 +319,36 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
     selectedEdges.length ? {type: "Edge", value: selectedEdges[selectedEdges.length - 1]} : null
   );
-  const { LastSelectedThingComponent, lastSelectedComponentProps } = useMemo(
-    () => {
-      if (!lastSelectedThing) return {};
-      let LastSelectedThingComponent = null, pathBase = null;
-      if (lastSelectedThing) {
-        if (lastSelectedThing.type === 'Edge') {
-          const fnc = getNodeFunctionality(nodes.find(({ id }) => id === lastSelectedThing.value.source));
-          LastSelectedThingComponent = fnc.getComponentForEdge(lastSelectedThing.value);
-          pathBase = "edges";
-        }
-        if (lastSelectedThing.type === 'Node') {
-          const fnc = getNodeFunctionality(lastSelectedThing.value);
-          LastSelectedThingComponent = fnc.getComponentForNode();
-          pathBase = "nodes";
-        }
-        return {
-          LastSelectedThingComponent,
-          lastSelectedComponentProps: {
-            nodes,
-            edges,
-            ...onPathPlus(value, onChange, [pathBase, {matching: ({id}) => id === lastSelectedThing.value.id}]),
-          }
-        };
+  let LastSelectedThingComponent = null;
+  const sourceAndTarget = {};
+  if (lastSelectedThing) {
+    LastSelectedThingComponent = (editableItems?.[lastSelectedThing?.type] || {})[lastSelectedThing?.value?.data?.subtype];
+    if (lastSelectedThing.type === "Edge") {
+      for (const k of ["source", "target"]) {
+        sourceAndTarget[k] = onPathPlus(
+          value,
+          onChange,
+          ["nodes", {matching: x => {
+            return x.id === lastSelectedThing.value[k];
+          }}, "data", "payload"]
+        );
       }
-    }, [lastSelectedThing?.value.id, value, onChange, edges, nodes]
-  );
+    }
+  }
+  let theProps = {};
+  if (lastSelectedThing) {
+    theProps = {
+      subtype: lastSelectedThing?.value?.data?.subtype,
+      ...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"]),
+      ...sourceAndTarget
+    };
+  }
   return (<>
     <div className="row align-items-stretch flex-grow-1">
-      <div className="col-md-7 d-flex flex-column">
+      <div className="col d-flex flex-column">
         <div className="btn-group">
           {saveButton}
-          <Dropdown>
-            <Dropdown.Toggle variant="success" id="dropdown-basic">
-              Add
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              {NODE_CLASSES.map(({ options, type, ...parentItem }) => (
-                <React.Fragment key={type}>
-                  {options.map(({ label, value, defaultValue, ...item }) => {
-                    return (
-                      <Dropdown.Item key={label} href="#" onClick={(e) => {
-                        e.preventDefault();
-                        const id = "id_" + uuidv4();
-                        console.log('type', type);
-                        setNodes([...nodes, {
-                          id,
-                          position: { x: 0, y: 0 },
-                          type,
-                          data: { value, state: defaultValue },
-                        }]);
-                      }}>
-                        {label}
-                      </Dropdown.Item>
-                    );
-                  })}
-                  <Dropdown.Divider />
-                </React.Fragment>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+          <button type="button" className="btn btn-success" onClick={_ => doAdd()}>Add</button>
         </div>
         <ReactFlow
           onInit={onInit}
@@ -804,22 +357,21 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          nodeTypes={nodeTypes}
+          nodeTypes={/*nodeTypes*/ void 0}
         >
           <MiniMap />
           <Controls />
           <Background />
         </ReactFlow>
-      </div>
-      <div className="col-md-5 d-grid" style={{gridTemplateRows: "1fr auto 1fr"}}>
-        <div>
-          {LastSelectedThingComponent && <LastSelectedThingComponent {...lastSelectedComponentProps} />}
-        </div>
-        <hr />
-        <div>
-          world
-        </div>
-      </div>
+    	</div>
+      <div className="col d-flex flex-column">
+        {LastSelectedThingComponent ? (<>
+          {lastSelectedThing.type === "Edge" ? <BackAndForth {...theProps} /> : null}
+          <LastSelectedThingComponent
+            {...theProps}
+          />
+        </>) : null}
+    	</div>
     </div>
   </>);
 }
@@ -858,7 +410,7 @@ const Logicore2Editor = ({
     );
   };*/
   return (
-    <ReactFlowProvider>
+	  <ReactFlowProvider>
       <Flow
         storageKey={`viewport-${revId}`}
         prevStorageKey={
@@ -866,7 +418,7 @@ const Logicore2Editor = ({
         }
         {...{value, onChange, saveButton}}
       />
-    </ReactFlowProvider>
+	  </ReactFlowProvider>
   );
 };
 
