@@ -53,194 +53,138 @@ import 'reactflow/dist/style.css';
 // Module-local
 import "./logicore2.scss";
 
-const eV = (e) => e.target.value || "";
+import d2 from "./d2.json";
+import {BezierEdgeProps} from "reactflow";
 
-function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
-	const nodes = value?.nodes || [];
-	const edges = value?.edges || [];
+import GraphEditor from "./GraphEditor";
 
-	const setNodes = onPath(value, onChange, ["nodes"]).onChange;
-	const setEdges = onPath(value, onChange, ["edges"]).onChange;
 
-  const [selectedNodes, setSelectedNodes] = useState([]);
-  const [selectedEdges, setSelectedEdges] = useState([]);
+const walk = (value, post=_.identity, pre=_.identity) => {
+  const items = pre(value);
+  if (Array.isArray(items)) {
+    return post(items.map(x => walk(x, post, pre)));
+  } else if (items && typeof items === 'object') {
+    return post(Object.fromEntries(Object.entries(items).map(([k, v]) => [k, walk(v, post, pre)])));
+  } else {
+    return post(items);
+  }
+}
 
-  const onConnect = useCallback(async (params) => {
-    /*const result = await runModal({
-      title: "Add edge",
-      fields: {
-        type: "Fields",
-        fields: [
-          {
-            type: "SelectField",
-            k: "subtype",
-            label: "Type",
-            required: true,
-            options: EDGE_TYPES.map((n) => ({value: n, label: n})),
-          },
-        ],
-      },
-      modalSize: "md",
-      value: {subtype: null},
-    });
-    if (result) setEdges(addEdge(update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}), edges));*/
-  }, [setEdges]);
+function difference(setA, setB) {
+  const _difference = new Set(setA);
+  for (const elem of setB) {
+    _difference.delete(elem);
+  }
+  return _difference;
+}
 
-	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
-	const onEdgesChange = (changes) => onChange(update(value, {edges: {$apply: (v) => applyEdgeChanges(changes, v)}}));
-
-  const { runModal } = useContext(ModalContext);
-
-	const doAdd = async () => {
-  	/*const id = "id_" + uuidv4();
-    const result = await runModal({
-      title: "Add node",
-      fields: {
-        type: "Fields",
-        fields: [
-          {
-            type: "SelectField",
-            k: "type",
-            label: "Type",
-            required: true,
-            options: NODE_TYPES.map((n) => ({value: n, label: n})),
-          },
-        ],
-      },
-      modalSize: "md",
-      value: {type: null},
-    });
-    if (!result) return;
-    const t = result.type.value;
-    setNodes([...nodes, {
-      id,
-      position: { x: 0, y: 0 },
-      //type: "Logicore2Node",
-      data: { subtype: t, label: t }
-    }]);*/
-	};
-
-  const [state, setState] = useLocalStorage(storageKey);
-
-  const [initialized, setInitialized] = useState(null);
-
-	const onInit = (instance) => {
-    setInitialized(instance);
-	};
-
-  useEffect(() => {
-    if (!storageKey) return;
-    if (!initialized) return;
-    //console.log('state', state);
-    let v = {x: 0, y: 0, zoom: 1};
-    if (state) {
-      if (state) {
-        v = state;
-      }
-    } else {
-      //console.log("try read prev state", prevStorageKey);
-      let prevState = null;
-      try {
-        prevState = JSON.parse(window.localStorage.getItem(prevStorageKey));
-      } catch (e) {
-        console.warn(e);
-      }
-      //console.log("got prev state", prevState);
-      if (prevState) {
-        v = prevState;
-        //window.localStorage.setItem(storageKey, JSON.stringify(v));
-      }
-    }
-    if (v) initialized.setViewport(v);
-  }, [!state, storageKey, initialized]);
-
-  const { x, y, zoom } = useViewport();
-
-  useEffect(() => {
-    //console.log(x, y, zoom);
-    window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}));
-  }, [x, y, zoom]);
-
-  const deletePressed = useKeyPress('Delete');
-
-  useEffect(() => {
-    if (!deletePressed) return;
-    setNodes(nodes.filter((o) => !_.includes(selectedNodes.map(({id}) => id), o.id)));
-    setEdges(edges.filter((o) => !_.includes(selectedEdges.map(({id}) => id), o.id)));
-  }, [deletePressed])
-
-  useOnSelectionChange({
-    onChange: ({ nodes, edges }) => {
-      setSelectedNodes(nodes);
-      setSelectedEdges(edges);
-    },
-  });
-  /*const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
-    selectedEdges.length ? {type: "Edge", value: selectedEdges[selectedEdges.length - 1]} : null
-  );
-  let LastSelectedThingComponent = null;
-  const sourceAndTarget = {};
-  if (lastSelectedThing) {
-    LastSelectedThingComponent = (editableItems?.[lastSelectedThing?.type] || {})[lastSelectedThing?.value?.data?.subtype];
-    if (lastSelectedThing.type === "Edge") {
-      for (const k of ["source", "target"]) {
-        sourceAndTarget[k] = onPathPlus(
-          value,
-          onChange,
-          ["nodes", {matching: x => {
-            return x.id === lastSelectedThing.value[k];
-          }}, "data", "payload"]
-        );
-      }
+const refactorAppT = (node) => {
+  if (!!node && !Array.isArray(node) && typeof node === 'object') {
+    if (node.type === 'AppT') {
+      const params = [];
+      let target = node;
+      const f = (x) => {
+        params.unshift(x.param);
+        if (x.target.type === 'AppT') {
+          f(x.target);
+        } else {
+          target = x.target;
+        }
+      };
+      f(node);
+      return {type: 'AppT1', target, params};
     }
   }
-  let theProps = {};
-  if (lastSelectedThing) {
-    theProps = {
-      subtype: lastSelectedThing?.value?.data?.subtype,
-      ...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"]),
-      ...sourceAndTarget
-    };
-  }*/
-  return (<>
-    <div className="row align-items-stretch flex-grow-1">
-      <div className="col d-flex flex-column">
-        <div className="btn-group">
-          {saveButton}
-          {/*<button type="button" className="btn btn-success mt-2" onClick={_ => doAdd()}>Add</button>*/}
-          <Dropdown>
-            <Dropdown.Toggle variant="success" id="dropdown-basic" className="mt-2">
-              Add
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-            </Dropdown.Menu>
-          </Dropdown>
-        </div>
-        <ReactFlow
-          onInit={onInit}
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={/*nodeTypes*/ void 0}
-        >
-          <MiniMap />
-          <Controls />
-          <Background />
-        </ReactFlow>
-    	</div>
-      <div className="col d-flex flex-column">
-        {/*LastSelectedThingComponent && (<>
-          {lastSelectedThing.type === "Edge" ? <BackAndForth {...theProps} /> : null}
-          <LastSelectedThingComponent
-            {...theProps}
-          />
-        </>)*/}
-    	</div>
-    </div>
-  </>);
+  return node;
 }
+
+const nodeLabelsAndParamNames = {
+  'MatchObjectOnly': {
+    label: '{o}',
+  },
+  'MatchArray': {
+    label: '[*]',
+  },
+  'MatchStringExact': {
+    label: '"!"',
+    defaultValue: "",
+  },
+  'MatchNumberExact': {
+    label: '1!',
+    defaultValue: 0,
+  },
+  'MatchBoolExact': {
+    label: 't|f!',
+    defaultValue: false,
+  },
+  'MatchNull': {
+    label: 'null',
+  },
+  'MatchStringAny': {
+    label: '""?',
+  },
+  'MatchNumberAny': {
+    label: '1?',
+  },
+  'MatchBoolAny': {
+    label: 't|f?',
+  },
+  'MatchAny': {
+    label: '∀',
+  },
+  'MatchNone': {
+    label: '∅',
+  },
+  'MatchOr': {
+    label: '||',
+  },
+  'MatchIfThen': {
+    label: 'if',
+    paramNames: ['cond', 'Error text', 'out'],
+  },
+};
+
+const matchPatternDataConstructors = d2[0].contents;
+const matchPatternDataConstructorsRefactored = walk(matchPatternDataConstructors, _.identity, refactorAppT);
+
+// 0 is MatchPattern
+const d2AsMap = Object.fromEntries(matchPatternDataConstructorsRefactored.map(({tag, ...item}) => {
+  return [tag, item];
+}));
+
+
+const edgesAreConnected = (edges, idFrom, idTo) => {
+  let current = idTo;
+  while (current) {
+    if (current === idFrom) return true;
+    const edge = edges.find(({ target }) => target === current);
+    current = edge?.source;
+  }
+  return false;
+};
+
+
+const GraphDef = {
+  nodeClasses: [
+    {
+      type: 'SourceNode',
+      options: [
+        {
+          value: 'Source',
+          label: 'Source',
+        },
+      ],
+    },
+    {
+      type: 'MatchNode',
+      options: Object.entries(nodeLabelsAndParamNames).map(([value, ctx]) => {
+        const typeDef = d2AsMap[value];
+        return { value, ...ctx, typeDef };
+      }),
+    }
+  ],
+};
+
 
 const Logicore2Editor = ({
   revId,
@@ -253,12 +197,14 @@ const Logicore2Editor = ({
   const { runModal } = useContext(ModalContext);
   return (
 	  <ReactFlowProvider>
-      <Flow
+      <GraphEditor
+        definition={GraphDef}
         storageKey={`viewport-${revId}`}
         prevStorageKey={
           prevRevId ? `viewport-${prevRevId}` : null
         }
-        {...{value, onChange, saveButton}}
+        {...{value, onChange}}
+        beforeContent={saveButton}
       />
 	  </ReactFlowProvider>
   );
