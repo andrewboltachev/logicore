@@ -7,7 +7,7 @@ import React, { useState, useContext, useRef, useEffect, useCallback } from "rea
 
 // React modules
 import { useTranslation, Trans } from "react-i18next";
-import { Button, Modal } from "react-bootstrap";
+import { Button, Modal, Dropdown } from "react-bootstrap";
 import { useDraggable } from "react-use-draggable-scroll";
 import { NotificationManager } from "react-notifications";
 
@@ -207,7 +207,14 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       <div className="col d-flex flex-column">
         <div className="btn-group">
           {saveButton}
-          <button type="button" className="btn btn-success" onClick={_ => doAdd()}>Add</button>
+          {/*<button type="button" className="btn btn-success mt-2" onClick={_ => doAdd()}>Add</button>*/}
+          <Dropdown>
+            <Dropdown.Toggle variant="success" id="dropdown-basic" className="mt-2">
+              Add
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+            </Dropdown.Menu>
+          </Dropdown>
         </div>
         <ReactFlow
           onInit={onInit}
