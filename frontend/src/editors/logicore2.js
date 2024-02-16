@@ -164,6 +164,41 @@ const edgesAreConnected = (edges, idFrom, idTo) => {
 };
 
 
+
+function SourceNode({ data, selected, isConnectable }) {
+  return (
+    <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      {/*<Handle type="target" position={Position.Left} isConnectable={isConnectable} />*/}
+      <div>{'Src'}</div>
+      <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
+    </div>
+  );
+}
+
+function MatchNode(node) {
+  const { data, selected, isConnectable } = node;
+  const n = getNodeFunctionality(node);
+
+  if (new Set(['MatchStringExact', 'MatchNumberExact', 'MatchBoolExact']).has(node.data.value)) {
+    return (
+      <div style={{minWidth: 50, maxWidth: 200, padding: "0 10px", width: 'auto', height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+        {node.data.value === 'MatchStringExact' && <code className="text-truncate">{node.data.state}</code>}
+        {node.data.value === 'MatchNumberExact' && <code className="text-truncate" style={{color: 'blue'}}>{node.data.state}</code>}
+        {node.data.value === 'MatchBoolExact' && <code style={{color: 'blue'}}>{node.data.state ? 'true' : 'false'}</code>}
+      </div>
+    );
+  } else {
+    return (
+      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+        <div>{n.c.label}</div>
+        {!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
+      </div>
+    );
+  }
+}
+
 const GraphDef = {
   nodeClasses: [
     {
@@ -174,6 +209,7 @@ const GraphDef = {
           label: 'Source',
         },
       ],
+      component: SourceNode,
     },
     {
       type: 'MatchNode',
@@ -181,6 +217,7 @@ const GraphDef = {
         const typeDef = d2AsMap[value];
         return { value, ...ctx, typeDef };
       }),
+      component: MatchNode,
     }
   ],
 };
