@@ -3,7 +3,7 @@ import _ from "lodash";
 import { v4 as uuidv4 } from "uuid";
 
 // React
-import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
+import React, { useState, useContext, useRef, useEffect, useMemo, useCallback } from "react";
 
 // React modules
 import { useTranslation, Trans } from "react-i18next";
@@ -51,6 +51,29 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 const eV = (e) => e.target.value || "";
+
+
+// some things here...
+const List = (...args) => {};
+const $ = {};
+
+const C1 = () => <List items={$}>
+  <Dropdown.Menu>
+    <List items={$.options}>
+      <React.Fragment key={$.type}>
+        {/*!!i && <Dropdown.Divider />*/}
+        <List items={$.options}>
+          <Dropdown.Item key={$.label} href="#" onClick={void 0}>
+            {$.label}
+          </Dropdown.Item>
+        </List>
+      </React.Fragment>
+    </List>
+  </Dropdown.Menu>
+</List>;
+
+window.C1 = C1();
+
 
 export default function GraphEditor({ storageKey, prevStorageKey, value, onChange, beforeContent, definition }) {
   // TODO: refactor out storageKey stuff
@@ -200,6 +223,10 @@ export default function GraphEditor({ storageKey, prevStorageKey, value, onChang
       ...sourceAndTarget
     };
   }*/
+  const nodeTypes = useMemo(
+    () => Object.fromEntries(definition.nodeClasses.map(({ type, component }) => [type, component])),
+    [definition?.nodeClasses]
+  );
   return (<>
     <div className="row align-items-stretch flex-grow-1">
       <div className="col d-flex flex-column">
@@ -243,7 +270,7 @@ export default function GraphEditor({ storageKey, prevStorageKey, value, onChang
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          nodeTypes={/*nodeTypes*/ void 0}
+          nodeTypes={nodeTypes}
         >
           <MiniMap />
           <Controls />

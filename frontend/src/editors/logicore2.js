@@ -175,29 +175,14 @@ function SourceNode({ data, selected, isConnectable }) {
   );
 }
 
-function MatchNode(node) {
-  const { data, selected, isConnectable } = node;
-  const n = getNodeFunctionality(node);
+const matchNodeOptions = Object.entries(nodeLabelsAndParamNames).map(([value, ctx]) => {
+  const typeDef = d2AsMap[value];
+  const { label } = ctx;
+  //...ctx, typeDef
+  return { value, label };
+});
 
-  if (new Set(['MatchStringExact', 'MatchNumberExact', 'MatchBoolExact']).has(node.data.value)) {
-    return (
-      <div style={{minWidth: 50, maxWidth: 200, padding: "0 10px", width: 'auto', height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-        {node.data.value === 'MatchStringExact' && <code className="text-truncate">{node.data.state}</code>}
-        {node.data.value === 'MatchNumberExact' && <code className="text-truncate" style={{color: 'blue'}}>{node.data.state}</code>}
-        {node.data.value === 'MatchBoolExact' && <code style={{color: 'blue'}}>{node.data.state ? 'true' : 'false'}</code>}
-      </div>
-    );
-  } else {
-    return (
-      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-        <div>{n.c.label}</div>
-        {!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
-      </div>
-    );
-  }
-}
+
 
 const GraphDef = {
   nodeClasses: [
@@ -213,11 +198,30 @@ const GraphDef = {
     },
     {
       type: 'MatchNode',
-      options: Object.entries(nodeLabelsAndParamNames).map(([value, ctx]) => {
-        const typeDef = d2AsMap[value];
-        return { value, ...ctx, typeDef };
-      }),
-      component: MatchNode,
+      options: matchNodeOptions,
+      component: (node) => {
+        const { data, selected, isConnectable, label } = node;
+        let n = matchNodeOptions.find(({ value }) => value === node.data.value);
+
+        if (new Set(['MatchStringExact', 'MatchNumberExact', 'MatchBoolExact']).has(node.data.value)) {
+          return (
+            <div style={{minWidth: 50, maxWidth: 200, padding: "0 10px", width: 'auto', height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+              <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+              {node.data.value === 'MatchStringExact' && <code className="text-truncate">{node.data.state}</code>}
+              {node.data.value === 'MatchNumberExact' && <code className="text-truncate" style={{color: 'blue'}}>{node.data.state}</code>}
+              {node.data.value === 'MatchBoolExact' && <code style={{color: 'blue'}}>{node.data.state ? 'true' : 'false'}</code>}
+            </div>
+          );
+        } else {
+          return (
+            <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+              {/*<Handle type="target" position={Position.Left} isConnectable={isConnectable} />*/}
+              <div>{n.label}</div>
+              {/*!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />*/}
+            </div>
+          );
+        }
+      },
     }
   ],
 };
