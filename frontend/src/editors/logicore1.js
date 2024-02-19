@@ -772,8 +772,9 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
               Add
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {NODE_CLASSES.map(({ options, type, ...parentItem }) => (
+              {NODE_CLASSES.map(({ options, type, ...parentItem }, i) => (
                 <React.Fragment key={type}>
+                  {!!i && <Dropdown.Divider />}
                   {options.map(({ label, value, defaultValue, ...item }) => {
                     return (
                       <Dropdown.Item key={label} href="#" onClick={(e) => {
@@ -791,7 +792,6 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
                       </Dropdown.Item>
                     );
                   })}
-                  <Dropdown.Divider />
                 </React.Fragment>
               ))}
             </Dropdown.Menu>
