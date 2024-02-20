@@ -285,7 +285,12 @@ class NodeFunctionality {
 };
 
 
-class SourceType {}
+class SourceType {
+  constructor({ state }) {
+    this.state = state;
+  }
+  async runToFunnel (pattern) {}
+}
 
 formValidators.isValidJSON = (x) => {
   try {
@@ -310,6 +315,23 @@ class SimpleValueSourceType extends SourceType {
         'validators': [{type: 'isValidJSON'}],
       }
     ]
+  }
+
+  async runToFunnel (pattern) {
+    //const { t } = useTranslation();
+    let t = _.identity;
+    let resp;
+    console.log('aaaaaaaaaaaaaaaaaaaaaaaa', this.state);
+    try {
+      resp = await axios.post("/haskell-api/matchToFunnel", {
+        pattern,
+        value: JSON.parse(this.state.params.data),
+      });
+    } catch (e) {
+      NotificationManager.warning("", t("Unknown error"));
+      console.error(e);
+      return;
+    }
   }
 }
 
@@ -439,6 +461,66 @@ const exactComponents = Object.fromEntries(Object.entries({
 }).map(([k, v]) => [k, MatchExactComponent(v)]));
 
 
+const wrapNode = (node, result) => {
+
+};
+
+const MatchNodeComponent = (props) => {
+  const { value, nodes, edges } = props;
+  if (!value) return '';
+  const ExactComponent = exactComponents[value?.data.value.replace("Match", "").replace("Exact", "")];
+  return <div style={{top: 0, right: 0, bottom: 0, left: 0, position: "absolute", gridTemplateRows: "auto 1fr auto"}} className="d-grid">
+    <div className="text-muted text-bold">{value?.data.value}</div>
+    <div className="flex-1">
+      {ExactComponent && <ExactComponent {...props} />}
+    </div>
+    <div>
+      <div className="btn-group">
+        <button type="button" className="btn btn-primary" onClick={async () => {
+          let result = {"tag": "MatchFunnel"}, node = nodes.find(({ id }) => value.id), edge = null, error = null, source = null;
+          outer: while (true) {
+            edge = edges.find(({ target }) => node.id);
+            if (!edge) {
+              error = 'No source connected';
+              break;
+            }
+            node = nodes.find(({ id }) => edge.source);
+            if (!node) {
+              error = 'Impossible error: edge without source node';
+              break;
+            }
+            switch (node.type) {
+              case 'SourceNode': {
+                source = node;
+                break outer;
+              };
+              case 'MatchNode': {
+                [result, error] = wrapNode(node, result);
+                break;
+              };
+              default: {
+                error = `Unknown node type found: ${node.type}`;
+                break outer;
+              }
+            }
+          }
+          if (error) {
+            NotificationManager.error("", error, 5000);
+            return;
+          }
+          const SourceType = sourceTypes.find(({ value }) => value === source.data.state.type.value);
+          const sourceType = new SourceType(source.data);
+          await sourceType.runToFunnel(result);
+        }}>
+          <i className="fas fa-angle-double-down" />{" "}
+          Funnel
+        </button>
+      </div>
+    </div>
+  </div>;
+};
+
+
 class MatchNodeFunctionality extends NodeFunctionality {
   hasOutputHandle () {
     return !!this._getOutputHandleStrategy();
@@ -483,7 +565,7 @@ class MatchNodeFunctionality extends NodeFunctionality {
   }
 
   getComponentForNode () {
-    return exactComponents[this.node.data.value.replace("Match", "").replace("Exact", "")];
+    return MatchNodeComponent;
   }
 };
 
@@ -812,12 +894,12 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         </ReactFlow>
       </div>
       <div className="col-md-5 d-grid" style={{gridTemplateRows: "1fr auto 1fr"}}>
-        <div>
+        <div style={{position: "relative"}}>
           {LastSelectedThingComponent && <LastSelectedThingComponent {...lastSelectedComponentProps} />}
         </div>
         <hr />
         <div>
-          world
+          {/*world*/}
         </div>
       </div>
     </div>

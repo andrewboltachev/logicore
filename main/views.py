@@ -1274,3 +1274,42 @@ def logicore_api(request, subtype, action):
         return JsonResponse({"error": "Element not found"}, status=400)
 
     return JsonResponse(getattr(element, action)(data), safe=False)
+
+
+"""
+def call_haskell(mehtod, params):
+    try:
+        resp = requests.post(
+            f"http://localhost:3042/{method}",
+            json=params,
+        )
+    except Exception as e:
+        return {"error": str(e)}
+    if resp.status_code != 200:
+        return JsonResponse(
+            {"error": f"Haskell API returned: {resp.content.decode('utf-8')}"}
+        )
+    return resp.json()
+
+
+
+class SourceType:
+    def __init__(self, state):
+        self.state = state
+
+
+class SimpleValueSourceType(SourceType):
+    def matchToFunnel(self):
+        return call_haskell(method, {"pattern": self.state[""], "value": self.state[""]})
+
+
+@csrf_exempt
+def embellishedMatchToFunnel(request):
+    import libcst
+    from main.parser.python import serialize_dc, unserialize_dc
+
+    data = json.loads(request.body)
+    print(data)
+
+    return JsonResponse({"error": "No such method"})
+"""
