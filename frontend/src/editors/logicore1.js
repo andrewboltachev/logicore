@@ -289,7 +289,7 @@ class SourceType {
   constructor({ state }) {
     this.state = state;
   }
-  async runToFunnel (pattern) {}
+  async runToFunnel (pattern, params) {}
 }
 
 formValidators.isValidJSON = (x) => {
@@ -317,16 +317,17 @@ class SimpleValueSourceType extends SourceType {
     ]
   }
 
-  async runToFunnel (pattern) {
+  async runToFunnel (pattern, params) {
     //const { t } = useTranslation();
     let t = _.identity;
     let resp;
-    console.log('aaaaaaaaaaaaaaaaaaaaaaaa', this.state);
     try {
       resp = await axios.post("/haskell-api/matchToFunnel", {
         pattern,
         value: JSON.parse(this.state.params.data),
+        ...(params || {}),
       });
+      return resp.data.funnel;
     } catch (e) {
       NotificationManager.warning("", t("Unknown error"));
       console.error(e);
@@ -465,57 +466,87 @@ const wrapNode = (node, result) => {
 
 };
 
+
+class FunnelMode {
+  static tag = "MatchFunnel";
+};
+
+class RegularFunnelMode extends FunnelMode {
+  static label = 'Funnel';
+  static icon = "fas fa-angle-double-down";
+};
+
+class KeysFunnelMode extends FunnelMode {
+  static tag = "MatchFunnelKeys";
+  static label = 'Funnel';
+  static icon = "fas fa-stream";
+};
+
+class PythonFunnelMode extends FunnelMode {
+  static label = 'Python';
+  static icon = "fab fa-python";
+};
+
+const funnelModes = [ RegularFunnelMode, KeysFunnelMode, PythonFunnelMode ];
+
 const MatchNodeComponent = (props) => {
-  const { value, nodes, edges } = props;
+  const { value, nodes, edges, funnel, setFunnel } = props;
   if (!value) return '';
   const ExactComponent = exactComponents[value?.data.value.replace("Match", "").replace("Exact", "")];
+  const funnelClick = async ({ tag, params }) => {
+    let result = { tag }, node = nodes.find(({ id }) => value.id), edge = null, error = null, source = null;
+    outer: while (true) {
+      edge = edges.find(({ target }) => node.id);
+      if (!edge) {
+        error = 'No source connected';
+        break;
+      }
+      node = nodes.find(({ id }) => edge.source);
+      if (!node) {
+        error = 'Impossible error: edge without source node';
+        break;
+      }
+      switch (node.type) {
+        case 'SourceNode': {
+          source = node;
+          break outer;
+        };
+        case 'MatchNode': {
+          [result, error] = wrapNode(node, result);
+          break;
+        };
+        default: {
+          error = `Unknown node type found: ${node.type}`;
+          break outer;
+        }
+      }
+    }
+    if (error) {
+      NotificationManager.error("", error, 5000);
+      return;
+    }
+    const SourceType = sourceTypes.find(({ value }) => value === source.data.state.type.value);
+    const sourceType = new SourceType(source.data);
+    const funnelResult = await sourceType.runToFunnel(result, params);
+    setFunnel(funnelResult);
+  };
   return <div style={{top: 0, right: 0, bottom: 0, left: 0, position: "absolute", gridTemplateRows: "auto 1fr auto"}} className="d-grid">
     <div className="text-muted text-bold">{value?.data.value}</div>
     <div className="flex-1">
       {ExactComponent && <ExactComponent {...props} />}
     </div>
-    <div>
+    <div className="d-flex">
       <div className="btn-group">
-        <button type="button" className="btn btn-primary" onClick={async () => {
-          let result = {"tag": "MatchFunnel"}, node = nodes.find(({ id }) => value.id), edge = null, error = null, source = null;
-          outer: while (true) {
-            edge = edges.find(({ target }) => node.id);
-            if (!edge) {
-              error = 'No source connected';
-              break;
-            }
-            node = nodes.find(({ id }) => edge.source);
-            if (!node) {
-              error = 'Impossible error: edge without source node';
-              break;
-            }
-            switch (node.type) {
-              case 'SourceNode': {
-                source = node;
-                break outer;
-              };
-              case 'MatchNode': {
-                [result, error] = wrapNode(node, result);
-                break;
-              };
-              default: {
-                error = `Unknown node type found: ${node.type}`;
-                break outer;
-              }
-            }
-          }
-          if (error) {
-            NotificationManager.error("", error, 5000);
-            return;
-          }
-          const SourceType = sourceTypes.find(({ value }) => value === source.data.state.type.value);
-          const sourceType = new SourceType(source.data);
-          await sourceType.runToFunnel(result);
-        }}>
-          <i className="fas fa-angle-double-down" />{" "}
-          Funnel
-        </button>
-      </div>
+        {funnelModes.map((funnelMode) => {
+          const { icon, key, label } = funnelMode;
+          return (
+            <button type="button" className="btn btn-primary" onClick={() => funnelClick(funnelMode)}>
+              <i className={icon} />{" "}{label}
+            </button>
+          );
+        })}
+        </div>
+      <div style={{lineHeight: "36px", marginLeft: "12px"}}>{funnel && `${funnel.length} element(s)`}</div>
     </div>
   </div>;
 };
@@ -762,6 +793,8 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     setInitialized(instance);
   };
 
+  const [funnel, setFunnel] = useState(null);
+
   useEffect(() => {
     if (!storageKey) return;
     if (!initialized) return;
@@ -838,11 +871,13 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           lastSelectedComponentProps: {
             nodes,
             edges,
+            funnel,
+            setFunnel,
             ...onPathPlus(value, onChange, [pathBase, {matching: ({id}) => id === lastSelectedThing.value.id}]),
           }
         };
       }
-    }, [lastSelectedThing?.value.id, value, onChange, edges, nodes]
+    }, [lastSelectedThing?.value.id, value, onChange, edges, nodes, funnel, setFunnel]
   );
   return (<>
     <div className="row align-items-stretch flex-grow-1">
@@ -898,8 +933,15 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           {LastSelectedThingComponent && <LastSelectedThingComponent {...lastSelectedComponentProps} />}
         </div>
         <hr />
-        <div>
-          {/*world*/}
+        <div style={{position: 'relative'}}>
+          <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto'}}>
+            {funnel?.map((item, i) => <React.Fragment key={i}>
+              {!!i && <hr />}
+              <div>
+                {JSON.stringify(item)}
+              </div>
+            </React.Fragment>)}
+          </div>
         </div>
       </div>
     </div>
