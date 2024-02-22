@@ -43,7 +43,7 @@ import schema from "./jsonmatcher_schema";
 // ListT transform
 // walk
 
-const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
+export const JSONNode = ({ value, onChange, level, noFirstIndent, path }) => {
   const lvl = (level || 0) + 1;
   const indent = new Array(lvl).join("  ");
   const firstIndent = noFirstIndent ? "" : indent;

@@ -62,6 +62,7 @@ import 'reactflow/dist/style.css';
 import "./logicore1.scss";
 import d2 from "./d2.json";
 import {BezierEdgeProps} from "reactflow";
+import { JSONNode } from "./jsonmatcher";
 
 const walk = (value, post=_.identity, pre=_.identity) => {
   const items = pre(value);
@@ -320,9 +321,10 @@ class SimpleValueSourceType extends SourceType {
   async runToFunnel (pattern, params) {
     //const { t } = useTranslation();
     let t = _.identity;
+    const search = new URLSearchParams(params).toString();
     let resp;
     try {
-      resp = await axios.post("/haskell-api/matchToFunnel", {
+      resp = await axios.post(`/haskell-api/matchToFunnel?${search}`, {
         pattern,
         value: JSON.parse(this.state.params.data),
         ...(params || {}),
@@ -469,11 +471,26 @@ const wrapNode = (node, result) => {
 
 class FunnelMode {
   static tag = "MatchFunnel";
+  static FunnelComponent ({ item }) {
+    return item + '';
+  }
+  static params = {};
 };
 
 class RegularFunnelMode extends FunnelMode {
   static label = 'Funnel';
   static icon = "fas fa-angle-double-down";
+  static FunnelComponent ({ item }) {
+    return <div style={{
+      position: 'relative',
+      fontFamily: '"Monaco", monospace',
+      fontSize: "0.75rem",
+      lineHeight: "normal",
+      whiteSpace: "pre",
+    }}>
+      <JSONNode value={item} />
+    </div>;
+  }
 };
 
 class KeysFunnelMode extends FunnelMode {
@@ -485,6 +502,7 @@ class KeysFunnelMode extends FunnelMode {
 class PythonFunnelMode extends FunnelMode {
   static label = 'Python';
   static icon = "fab fa-python";
+  static params = {'mode': 'Python'};
 };
 
 const funnelModes = [ RegularFunnelMode, KeysFunnelMode, PythonFunnelMode ];
@@ -493,7 +511,8 @@ const MatchNodeComponent = (props) => {
   const { value, nodes, edges, funnel, setFunnel } = props;
   if (!value) return '';
   const ExactComponent = exactComponents[value?.data.value.replace("Match", "").replace("Exact", "")];
-  const funnelClick = async ({ tag, params }) => {
+  const funnelClick = async (funnelMode) => {
+    const { tag, params } = funnelMode;
     let result = { tag }, node = nodes.find(({ id }) => value.id), edge = null, error = null, source = null;
     outer: while (true) {
       edge = edges.find(({ target }) => node.id);
@@ -527,8 +546,8 @@ const MatchNodeComponent = (props) => {
     }
     const SourceType = sourceTypes.find(({ value }) => value === source.data.state.type.value);
     const sourceType = new SourceType(source.data);
-    const funnelResult = await sourceType.runToFunnel(result, params);
-    setFunnel(funnelResult);
+    const elements = await sourceType.runToFunnel(result, params);
+    setFunnel({funnelMode, elements});
   };
   return <div style={{top: 0, right: 0, bottom: 0, left: 0, position: "absolute", gridTemplateRows: "auto 1fr auto"}} className="d-grid">
     <div className="text-muted text-bold">{value?.data.value}</div>
@@ -546,7 +565,7 @@ const MatchNodeComponent = (props) => {
           );
         })}
         </div>
-      <div style={{lineHeight: "36px", marginLeft: "12px"}}>{funnel && `${funnel.length} element(s)`}</div>
+      <div style={{lineHeight: "36px", marginLeft: "12px"}}>{funnel && `${funnel.elements.length} element(s)`}</div>
     </div>
   </div>;
 };
@@ -935,10 +954,10 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         <hr />
         <div style={{position: 'relative'}}>
           <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto'}}>
-            {funnel?.map((item, i) => <React.Fragment key={i}>
+            {funnel?.elements.map((item, i) => <React.Fragment key={i}>
               {!!i && <hr />}
               <div>
-                {JSON.stringify(item)}
+                <funnel.funnelMode.FunnelComponent item={item} />
               </div>
             </React.Fragment>)}
           </div>
