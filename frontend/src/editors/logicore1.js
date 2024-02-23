@@ -898,6 +898,9 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       }
     }, [lastSelectedThing?.value.id, value, onChange, edges, nodes, funnel, setFunnel]
   );
+  useEffect(() => {
+    if (!lastSelectedThing) setFunnel(null);
+  }, [!lastSelectedThing]);
   return (<>
     <div className="row align-items-stretch flex-grow-1">
       <div className="col-md-7 d-flex flex-column">
