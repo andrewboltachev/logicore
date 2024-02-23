@@ -495,7 +495,7 @@ class RegularFunnelMode extends FunnelMode {
 
 class KeysFunnelMode extends FunnelMode {
   static tag = "MatchFunnelKeys";
-  static label = 'Funnel';
+  static label = 'Keys';
   static icon = "fas fa-stream";
 };
 
