@@ -202,6 +202,10 @@ class SingleOutput extends OutputHandleStrategy {
   async askForNewEdgeLabel (existingEdges) {
     return null;
   }
+
+  suggestedOutputEdgeLabels (contents) {
+    return [null];
+  }
 };
 
 class NamedOutput extends OutputHandleStrategy {
@@ -235,6 +239,10 @@ class NamedOutput extends OutputHandleStrategy {
     if (result) {
       return result.label.value;
     }
+  }
+
+  suggestedOutputEdgeLabels (contents) {
+    return this.labels;
   }
 };
 
@@ -270,6 +278,10 @@ class KeysOutput extends OutputHandleStrategy {
     if (result) {
       return result.label;
     }
+  }
+
+  suggestedOutputEdgeLabels (contents) {
+    return _.keys(contents);
   }
 };
 
@@ -322,19 +334,32 @@ class SimpleValueSourceType extends SourceType {
     //const { t } = useTranslation();
     let t = _.identity;
     const search = new URLSearchParams(params).toString();
-    let resp;
+    let resp, elements = null, suggestions = null;
     try {
       resp = await axios.post(`/haskell-api/matchToFunnel?${search}`, {
         pattern,
         value: JSON.parse(this.state.params.data),
         ...(params || {}),
       });
-      return resp.data.funnel;
+      elements = resp.data.funnel;
     } catch (e) {
       NotificationManager.warning("", t("Unknown error"));
       console.error(e);
       return;
     }
+    try {
+      resp = await axios.post(`/haskell-api/matchToFunnelSuggestions?${search}`, {
+        pattern,
+        value: JSON.parse(this.state.params.data),
+        ...(params || {}),
+      });
+      suggestions = resp.data.funnelSuggestions;
+    } catch (e) {
+      NotificationManager.warning("", t("Unknown error"));
+      console.error(e);
+      return;
+    }
+    return { elements, suggestions };
   }
 }
 
@@ -508,19 +533,27 @@ class PythonFunnelMode extends FunnelMode {
 const funnelModes = [ RegularFunnelMode, KeysFunnelMode, PythonFunnelMode ];
 
 const MatchNodeComponent = (props) => {
-  const { value, nodes, edges, funnel, setFunnel } = props;
+  const { value, nodes, setNodes, edges, setEdges, funnel, setFunnel } = props;
+  const ableToHaveSuggestions = useMemo(() => {
+    if (!value) return false;
+    if (!funnel?.suggestions?.length) return false;
+    console.log('edges', edges);
+    return !edges?.filter(({ source }) => source === value.id).length; // No edges output from this node
+  }, [!funnel?.suggestions?.length, edges, value]);
   if (!value) return '';
   const ExactComponent = exactComponents[value?.data.value.replace("Match", "").replace("Exact", "")];
   const funnelClick = async (funnelMode) => {
+    console.log('clicked on', value);
     const { tag, params } = funnelMode;
-    let result = { tag }, node = nodes.find(({ id }) => value.id), edge = null, error = null, source = null;
+    let result = { tag }, node = nodes.find(({ id }) => id === value.id), edge = null, error = null, source = null;
+    console.log('the node found', node, value.id);
     outer: while (true) {
-      edge = edges.find(({ target }) => node.id);
+      edge = edges.find(({ target }) => target === node.id);
       if (!edge) {
         error = 'No source connected';
         break;
       }
-      node = nodes.find(({ id }) => edge.source);
+      node = nodes.find(({ id }) => id === edge.source);
       if (!node) {
         error = 'Impossible error: edge without source node';
         break;
@@ -546,9 +579,54 @@ const MatchNodeComponent = (props) => {
     }
     const SourceType = sourceTypes.find(({ value }) => value === source.data.state.type.value);
     const sourceType = new SourceType(source.data);
-    const elements = await sourceType.runToFunnel(result, params);
-    setFunnel({funnelMode, elements});
+    const { elements, suggestions } = await sourceType.runToFunnel(result, params);
+    setFunnel({funnelMode, elements, suggestions});
   };
+  const applySuggestion = ({ tag, contents }) => {
+    const updatedNode = {...value};
+    updatedNode.data.value = tag;
+    let state = null;
+    if (tag === 'MatchStringExact') state = contents;
+    if (tag === 'MatchNumberExact') state = contents;
+    if (tag === 'MatchBoolExact') state = contents;
+    updatedNode.data.state = state;
+
+    const func = getNodeFunctionality(updatedNode);
+
+
+    //const contentsArr = !contents ? [] : Array.isArray(contents) ? contents : [contents];
+    const newNodes = [];
+    let newEdges = [];
+    const labels = func._getOutputHandleStrategy().suggestedOutputEdgeLabels(contents);
+    const yStep = 100;
+    let yPos = value.position.y - Math.round(yStep * labels.length / 2);
+    setNodes(nds => modifyHelper([{matching: ({ id }) => id === value.id}], nds, _ => updatedNode));
+    setEdges(eds => [...eds, ...newEdges])
+    for (const label of labels) {
+      const id = "id_" + uuidv4();
+      const newNode = {
+        id,
+        position: { x: value.position.x + 250, y: yPos },
+        type: 'MatchNode',
+        data: { value: 'MatchAny', state: "" },
+      };
+      newNodes.push(newNode);
+      setNodes(nds => [...nds, newNode]);
+      setEdges(eds => addEdge({
+        id: `reactflow__edge-${value.id}-${id}`,
+        source: value.id,
+        sourceHandle: null,
+        target: id,
+        targetHandle: null,
+        label,
+        markerEnd,
+      }, eds));
+      yPos += yStep;
+    }
+    // XXX: here's actually the opposite of defaultValue that's required
+    // const { defaultValue } = NODE_CLASSES.find(({ type }) => type === 'MatchNode').options.find(({ value }) => value === tag);
+    //console.log('edges are', edges);
+  }
   return <div style={{top: 0, right: 0, bottom: 0, left: 0, position: "absolute", gridTemplateRows: "auto 1fr auto"}} className="d-grid">
     <div className="text-muted text-bold">{value?.data.value}</div>
     <div className="flex-1">
@@ -564,8 +642,18 @@ const MatchNodeComponent = (props) => {
             </button>
           );
         })}
-        </div>
+      </div>
       <div style={{lineHeight: "36px", marginLeft: "12px"}}>{funnel && `${funnel.elements.length} element(s)`}</div>
+      {!!funnel?.suggestions?.length && 
+        <div className="btn-group" style={{marginLeft: "12px"}}>
+          {funnel.suggestions.map(({ k, v }) => {
+            return (
+              <button type="button" className="btn btn-warning" onClick={() => applySuggestion(v)}>
+                {k}
+              </button>
+            );
+          })}
+        </div>}
     </div>
   </div>;
 };
@@ -762,8 +850,8 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const nodes = value?.nodes || [];
   const edges = value?.edges || [];
 
-  const setNodes = onPath(value, onChange, ["nodes"]).onChange;
-  const setEdges = onPath(value, onChange, ["edges"]).onChange;
+  const setNodes = onPathPlus(value, onChange, ["nodes"]).onChange;
+  const setEdges = onPathPlus(value, onChange, ["edges"]).onChange;
 
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [selectedEdges, setSelectedEdges] = useState([]);
@@ -889,7 +977,9 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           LastSelectedThingComponent,
           lastSelectedComponentProps: {
             nodes,
+            setNodes,
             edges,
+            setEdges,
             funnel,
             setFunnel,
             ...onPathPlus(value, onChange, [pathBase, {matching: ({id}) => id === lastSelectedThing.value.id}]),
@@ -899,8 +989,9 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     }, [lastSelectedThing?.value.id, value, onChange, edges, nodes, funnel, setFunnel]
   );
   useEffect(() => {
-    if (!lastSelectedThing) setFunnel(null);
-  }, [!lastSelectedThing]);
+    // when changed
+    setFunnel(null);
+  }, [lastSelectedThing?.value?.id]);
   return (<>
     <div className="row align-items-stretch flex-grow-1">
       <div className="col-md-7 d-flex flex-column">
@@ -919,7 +1010,6 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
                       <Dropdown.Item key={label} href="#" onClick={(e) => {
                         e.preventDefault();
                         const id = "id_" + uuidv4();
-                        console.log('type', type);
                         setNodes([...nodes, {
                           id,
                           position: { x: 0, y: 0 },

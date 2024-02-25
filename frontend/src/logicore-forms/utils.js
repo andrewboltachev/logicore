@@ -150,6 +150,7 @@ export function modifyHelper(path, struct, f, variables) {
     }
     return result;
   } else if (p.matching) {
+    console.log('matching', struct);
     return (struct || []).map((el) => {
       const matching = p.matching(el, variables);
       if (matching) {

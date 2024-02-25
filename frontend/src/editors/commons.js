@@ -41,7 +41,7 @@ export const onPath = (value, onChange, path, f) => {
 
 export const onPathPlus = (value, onChange, path, f) => {
   const handler = f || _.identity;
-  let result = null;
+  let result = void 0;
   const getter = (struct, variables) => {
     result = struct;
   }
@@ -49,8 +49,8 @@ export const onPathPlus = (value, onChange, path, f) => {
   return {
     value: result,
     onChange: (newValue) => {
-      const v = modifyHelper(path, value, _ => handler(newValue), {});
-      onChange(v);
+      const newValueHandler = typeof newValue === 'function' ? newValue : (() => newValue);
+      onChange(oldValue => modifyHelper(path, oldValue, oldSubValue => handler(newValueHandler(oldSubValue)), {}));
     },
   };
 };
