@@ -595,13 +595,10 @@ const MatchNodeComponent = (props) => {
 
 
     //const contentsArr = !contents ? [] : Array.isArray(contents) ? contents : [contents];
-    const newNodes = [];
-    let newEdges = [];
     const labels = func._getOutputHandleStrategy().suggestedOutputEdgeLabels(contents);
     const yStep = 100;
     let yPos = value.position.y - Math.round(yStep * labels.length / 2);
     setNodes(nds => modifyHelper([{matching: ({ id }) => id === value.id}], nds, _ => updatedNode));
-    setEdges(eds => [...eds, ...newEdges])
     for (const label of labels) {
       const id = "id_" + uuidv4();
       const newNode = {
@@ -610,14 +607,13 @@ const MatchNodeComponent = (props) => {
         type: 'MatchNode',
         data: { value: 'MatchAny', state: "" },
       };
-      newNodes.push(newNode);
       setNodes(nds => [...nds, newNode]);
       setEdges(eds => addEdge({
         id: `reactflow__edge-${value.id}-${id}`,
         source: value.id,
-        sourceHandle: null,
+        //sourceHandle: null,
         target: id,
-        targetHandle: null,
+        //targetHandle: null,
         label,
         markerEnd,
       }, eds));
