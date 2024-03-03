@@ -136,7 +136,7 @@ export function modifyHelper(path, struct, f, variables) {
   if (p === "*") {
     return (struct || []).map((el) => modifyHelper(rest, el, f, variables));
   } else if (typeof p === "string") {
-    return { ...struct, [p]: modifyHelper(rest, struct[p], f, variables) };
+    return { ...struct, [p]: modifyHelper(rest, (struct?.[p] || {}), f, variables) };
   } else if (p.oneOf) {
     const result = { ...struct };
     for (const k of p.oneOf) {
@@ -150,7 +150,6 @@ export function modifyHelper(path, struct, f, variables) {
     }
     return result;
   } else if (p.matching) {
-    console.log('matching', struct);
     return (struct || []).map((el) => {
       const matching = p.matching(el, variables);
       if (matching) {

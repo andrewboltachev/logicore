@@ -206,6 +206,10 @@ class SingleOutput extends OutputHandleStrategy {
   suggestedOutputEdgeLabels (contents) {
     return [null];
   }
+
+  getForFunnelRequest(node, edgeLabel, result) {
+    return {"tag": node.data.value, "contents": node};
+  }
 };
 
 class NamedOutput extends OutputHandleStrategy {
@@ -243,6 +247,10 @@ class NamedOutput extends OutputHandleStrategy {
 
   suggestedOutputEdgeLabels (contents) {
     return this.labels;
+  }
+
+  getForFunnelRequest(node, edgeLabel, result) {
+    return {"tag": node.data.value, "contents": node};
   }
 };
 
@@ -282,6 +290,10 @@ class KeysOutput extends OutputHandleStrategy {
 
   suggestedOutputEdgeLabels (contents) {
     return _.keys(contents);
+  }
+
+  getForFunnelRequest(node, edgeLabel, result) {
+    return {"tag": node.data.value, "contents": node};
   }
 };
 
@@ -489,8 +501,9 @@ const exactComponents = Object.fromEntries(Object.entries({
 }).map(([k, v]) => [k, MatchExactComponent(v)]));
 
 
-const wrapNode = (node, result) => {
-
+const wrapNode = (node, result, edgeLabel) => {
+  const ohs = getNodeFunctionality(node)._getOutputHandleStrategy();
+  return ohs.getForFunnelRequest(node, edgeLabel, result);
 };
 
 
@@ -564,7 +577,7 @@ const MatchNodeComponent = (props) => {
           break outer;
         };
         case 'MatchNode': {
-          [result, error] = wrapNode(node, result);
+          [result, error] = wrapNode(node, result, edge.label);
           break;
         };
         default: {
