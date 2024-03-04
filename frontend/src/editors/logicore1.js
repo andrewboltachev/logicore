@@ -293,7 +293,14 @@ class KeysOutput extends OutputHandleStrategy {
   }
 
   getForFunnelRequest(node, edgeLabel, result) {
-    return {"tag": node.data.value, "contents": node};
+    // console.log('getForFunnelRequest', node, edgeLabel, result);
+    //return [{"tag": node.data.value, "contents": []}, null];
+    return [
+        {
+          "tag": node.data.value,
+          "contents": {
+            [edgeLabel]: result
+          }}, null];
   }
 };
 
