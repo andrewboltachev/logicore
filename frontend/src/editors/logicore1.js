@@ -1134,10 +1134,13 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
     // when changed
     setFunnel(null);
   }, [lastSelectedThing?.value?.id]);
+  const viewport = useViewport();
+  const ref = useRef();
   return (<>
     <div className="row align-items-stretch flex-grow-1">
       <div className="col-md-7 d-flex flex-column">
         <div className="btn-group">
+          {/*<div>x: {viewport.x}, y: {viewport.y}, zoom: {viewport.zoom}</div>*/}
           {saveButton}
           <Dropdown>
             <Dropdown.Toggle variant="success" id="dropdown-basic" className={"mt-2"}>
@@ -1148,13 +1151,21 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
                 <React.Fragment key={type}>
                   {!!i && <Dropdown.Divider />}
                   {options.map(({ label, value, defaultValue, ...item }) => {
+                    let position = {x: 0, y: 0};
+                    if (ref.current && viewport) {
+                      const { width, height } = ref.current.getBoundingClientRect();
+                      position = {
+                        x: (width / 2 - viewport.x) / viewport.zoom,
+                        y: (height / 2 - viewport.y) / viewport.zoom,
+                      }
+                    }
                     return (
                       <Dropdown.Item key={label} href="#" onClick={(e) => {
                         e.preventDefault();
                         const id = "id_" + uuidv4();
                         setNodes([...nodes, {
                           id,
-                          position: { x: 0, y: 0 },
+                          position,
                           type,
                           data: { value, state: defaultValue },
                         }]);
@@ -1169,6 +1180,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           </Dropdown>
         </div>
         <ReactFlow
+          ref={ref}
           onInit={onInit}
           nodes={nodes}
           edges={edges}
