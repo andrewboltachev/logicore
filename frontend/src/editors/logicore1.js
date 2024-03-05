@@ -105,49 +105,132 @@ const refactorAppT = (node) => {
 
 const eV = (e) => e.target.value || "";
 
+class ContentsStrategy {};
+class KeysContentsStrategy extends ContentsStrategy {
+  getContents(params) {
+    const {node, edges, nodes, overrideMap} = params;
+    return Object.fromEntries(edges.filter(({ source }) => source === node.source).map(({ label, target }) => {
+      if (overrideMap?.[label]) {
+        return [label, overrideMap?.[label]];
+      } else {
+        const nextNode = nodes.find(({ id }) => id === target);
+        if (!nextNode) throw new Error("Next node not found");
+        return [label, getNodeFunctionality(nextNode).toGrammar({ ...params, node: nextNode })];
+      }
+    }));
+  }
+};
+class SingleContentsStrategy {
+  getContents(params) {
+    const {node, edges, nodes} = params;
+    const { target } = edges.find(({ source }) => source === node.source);
+    const nextNode = nodes.find(({ id }) => id === target);
+    if (!nextNode) throw new Error("Next node not found");
+    return getNodeFunctionality(nextNode).toGrammar({ ...params, node: nextNode });
+  }
+};
+
+class ExactContentsStrategy {
+  getContents({node, edges, nodes}) {
+    return node.data.params.state;
+  }
+};
+
+class NoneContentsStrategy {
+  getContents({node, edges, nodes}) {
+    return void 0;
+  }
+};
+
+class MatchIfThenContentsStrategy {
+  getContents(params) {
+    const {node, edges, nodes, overrideMap} = params;
+    const func = getNodeFunctionality(node);
+    const labels = func._getOutputHandleStrategy().labels;
+    const result = Object.fromEntries(edges.filter(({ source }) => source === node.source).map(({ label, target }) => {
+      if (overrideMap?.[label]) {
+        return [label, overrideMap?.[label]];
+      } else {
+        const nextNode = nodes.find(({ id }) => id === target);
+        if (!nextNode) throw new Error("Next node not found");
+        return [label, getNodeFunctionality(nextNode).toGrammar({ ...params, node: nextNode })];
+      }
+    }));
+    for (const label of labels) {
+      if (!result[label]) {
+        throw new Error(`Can't get contents. Key missing: ${label}`);
+      }
+    }
+    for (const k of Object.keys(result)) {
+      if (!_.includes(labels, k)) {
+        throw new Error(`Malformed contents. Extra key: ${k}`);
+      }
+    }
+    /*const resultArr = [];
+    for (const label of labels) {
+      resultArr.push(result[label]);
+    }*/
+    // TODO
+    return [result.cond, 'foo', result.out];
+  }
+};
+
 const nodeLabelsAndParamNames = {
   'MatchObjectOnly': {
     label: '{o}',
+    contentsStrategy: KeysContentsStrategy,
   },
   'MatchArray': {
     label: '[*]',
+    contentsStrategy: SingleContentsStrategy,
   },
   'MatchStringExact': {
     label: '"!"',
     defaultValue: "",
+    contentsStrategy: ExactContentsStrategy,
   },
   'MatchNumberExact': {
     label: '1!',
     defaultValue: 0,
+    contentsStrategy: ExactContentsStrategy,
   },
   'MatchBoolExact': {
     label: 't|f!',
     defaultValue: false,
+    contentsStrategy: ExactContentsStrategy,
   },
   'MatchNull': {
     label: 'null',
+    contentsStrategy: NoneContentsStrategy,
   },
   'MatchStringAny': {
     label: '""?',
+    contentsStrategy: NoneContentsStrategy,
   },
   'MatchNumberAny': {
     label: '1?',
+    contentsStrategy: NoneContentsStrategy,
   },
   'MatchBoolAny': {
     label: 't|f?',
+    contentsStrategy: NoneContentsStrategy,
   },
   'MatchAny': {
     label: '∀',
+    contentsStrategy: NoneContentsStrategy,
   },
   'MatchNone': {
     label: '∅',
+    contentsStrategy: NoneContentsStrategy,
   },
   'MatchOr': {
     label: '||',
+    contentsStrategy: KeysContentsStrategy,
   },
   'MatchIfThen': {
     label: 'if',
     paramNames: ['cond', 'Error text', 'out'],
+    contentsStrategy: MatchIfThenContentsStrategy,
   },
 };
 
@@ -192,7 +275,29 @@ const NODE_CLASSES = [
 
 
 // ADT for hipsters
-class OutputHandleStrategy {};
+class OutputHandleStrategy {
+  hasOutputHandle() { return true; }
+};
+
+class NoOutput extends OutputHandleStrategy {
+  hasOutputHandle() { return false; }
+
+  canHaveOutputEdge (existingEdges) {
+    return false;
+  }
+
+  async askForNewEdgeLabel (existingEdges) {
+    throw new Error("Must not call this");
+  }
+
+  suggestedOutputEdgeLabels (contents) {
+    return [];
+  }
+
+  getForFunnelRequest(node, edgeLabel, result) {
+    throw new Error("Must not call this");
+  }
+}
 
 class SingleOutput extends OutputHandleStrategy {
   canHaveOutputEdge (existingEdges) {
@@ -208,7 +313,7 @@ class SingleOutput extends OutputHandleStrategy {
   }
 
   getForFunnelRequest(node, edgeLabel, result) {
-    return {"tag": node.data.value, "contents": node};
+    return [{"tag": node.data.value, "contents": result}, null];
   }
 };
 
@@ -250,7 +355,7 @@ class NamedOutput extends OutputHandleStrategy {
   }
 
   getForFunnelRequest(node, edgeLabel, result) {
-    return {"tag": node.data.value, "contents": node};
+    return [{"tag": node.data.value, "contents": result}, null];
   }
 };
 
@@ -510,7 +615,9 @@ const exactComponents = Object.fromEntries(Object.entries({
 
 const wrapNode = (node, result, edgeLabel) => {
   const ohs = getNodeFunctionality(node)._getOutputHandleStrategy();
-  return ohs.getForFunnelRequest(node, edgeLabel, result);
+  const r = ohs.getForFunnelRequest(node, edgeLabel, result);
+  console.log('wrapNode returns', r);
+  return r;
 };
 
 
@@ -612,7 +719,7 @@ const MatchNodeComponent = (props) => {
     updatedNode.data.state = state;
 
     const func = getNodeFunctionality(updatedNode);
-
+    console.log('func', func);
 
     //const contentsArr = !contents ? [] : Array.isArray(contents) ? contents : [contents];
     const labels = func._getOutputHandleStrategy().suggestedOutputEdgeLabels(contents);
@@ -677,7 +784,7 @@ const MatchNodeComponent = (props) => {
 
 class MatchNodeFunctionality extends NodeFunctionality {
   hasOutputHandle () {
-    return !!this._getOutputHandleStrategy();
+    return this._getOutputHandleStrategy().hasOutputHandle();
   }
 
   canHaveOutputEdge (existingEdges) {
@@ -690,15 +797,15 @@ class MatchNodeFunctionality extends NodeFunctionality {
 
   _getOutputHandleStrategy () {
     if (this.c.typeDef.contents.length === 0) {
-      return null;
+      return new NoOutput();
     } else if (this.c.typeDef.contents.length === 1) {
       if (_.isEqual(this.c.typeDef.contents[0], KEYMAP_OF_MATCHPATTERN)) {
         return new KeysOutput();
       } else if (_.isEqual(this.c.typeDef.contents[0], MATCHPATTERN)) {
         return new SingleOutput();
       }
-      //console.warn('Cannot define output handle strategy for type', this.c.typeDef.contents[0]);
-      return null;
+      console.warn('Cannot properly define output handle strategy for type', this.c.typeDef.contents[0]);
+      return new NoOutput();
     } else {
       const result = [];
       for (const [item, name] of _.zip(this.c.typeDef.contents, this.c.paramNames)) {
@@ -720,6 +827,11 @@ class MatchNodeFunctionality extends NodeFunctionality {
 
   getComponentForNode () {
     return MatchNodeComponent;
+  }
+
+  toGrammar ({ node, nodes, edges, overrideMap }) {
+    const st = this.c.contentsStrategy(); // class here
+    return {"tag": node.data.value, contents: st.getContents({ node, nodes, edges, overrideMap })};
   }
 };
 
