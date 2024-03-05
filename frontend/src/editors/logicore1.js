@@ -123,7 +123,7 @@ class KeysContentsStrategy extends ContentsStrategy {
 class SingleContentsStrategy {
   getContents(params) {
     const {node, edges, nodes} = params;
-    const { target } = edges.find(({ source }) => source === node.source);
+    const { target } = edges.find(({ source }) => source === node.id);
     const nextNode = nodes.find(({ id }) => id === target);
     if (!nextNode) throw new Error("Next node not found");
     return getNodeFunctionality(nextNode).toGrammar({ ...params, node: nextNode });
@@ -147,7 +147,7 @@ class MatchIfThenContentsStrategy {
     const {node, edges, nodes, overrideMap} = params;
     const func = getNodeFunctionality(node);
     const labels = func._getOutputHandleStrategy().labels;
-    const result = Object.fromEntries(edges.filter(({ source }) => source === node.source).map(({ label, target }) => {
+    const result = Object.fromEntries(edges.filter(({ source }) => source === node.id).map(({ label, target }) => {
       if (overrideMap?.[label]) {
         return [label, overrideMap?.[label]];
       } else {
@@ -158,7 +158,7 @@ class MatchIfThenContentsStrategy {
     }));
     for (const label of labels) {
       if (!result[label]) {
-        throw new Error(`Can't get contents. Key missing: ${label}`);
+        throw new Error(`Can't get contents. Key missing: ${label}. Present keys: ${Object.keys(result).join(', ') || '(none)'}`);
       }
     }
     for (const k of Object.keys(result)) {
@@ -294,7 +294,7 @@ class NoOutput extends OutputHandleStrategy {
     return [];
   }
 
-  getForFunnelRequest(node, edgeLabel, result) {
+  getForFunnelRequest({node, edgeLabel, result}) {
     throw new Error("Must not call this");
   }
 }
@@ -312,8 +312,8 @@ class SingleOutput extends OutputHandleStrategy {
     return [null];
   }
 
-  getForFunnelRequest(node, edgeLabel, result) {
-    return [{"tag": node.data.value, "contents": result}, null];
+  getForFunnelRequest({node, edgeLabel, result}) {
+    return {"tag": node.data.value, "contents": result};
   }
 };
 
@@ -354,8 +354,9 @@ class NamedOutput extends OutputHandleStrategy {
     return this.labels;
   }
 
-  getForFunnelRequest(node, edgeLabel, result) {
-    return [{"tag": node.data.value, "contents": result}, null];
+  getForFunnelRequest({node, edgeLabel, result, nodes, edges}) {
+    const func = getNodeFunctionality(node);
+    return func.toGrammar({node, nodes, edges, });
   }
 };
 
@@ -397,15 +398,15 @@ class KeysOutput extends OutputHandleStrategy {
     return _.keys(contents);
   }
 
-  getForFunnelRequest(node, edgeLabel, result) {
+  getForFunnelRequest({node, edgeLabel, result}) {
     // console.log('getForFunnelRequest', node, edgeLabel, result);
     //return [{"tag": node.data.value, "contents": []}, null];
-    return [
-        {
-          "tag": node.data.value,
-          "contents": {
-            [edgeLabel]: result
-          }}, null];
+    return {
+      "tag": node.data.value,
+      "contents": {
+        [edgeLabel]: result
+      }
+    };
   }
 };
 
@@ -623,11 +624,14 @@ const exactComponents = Object.fromEntries(Object.entries({
 }).map(([k, v]) => [k, MatchExactComponent(v)]));
 
 
-const wrapNode = (node, result, edgeLabel) => {
-  const ohs = getNodeFunctionality(node)._getOutputHandleStrategy();
-  const r = ohs.getForFunnelRequest(node, edgeLabel, result);
-  console.log('wrapNode returns', r);
-  return r;
+const wrapNode = ({node, result, edgeLabel, edges, nodes}) => {
+  try {
+    const ohs = getNodeFunctionality(node)._getOutputHandleStrategy();
+    const r = ohs.getForFunnelRequest({node, edgeLabel, result, edges, nodes});
+    return [r, null];
+  } catch (e) {
+    return [null, e.message];
+  }
 };
 
 
@@ -701,7 +705,7 @@ const MatchNodeComponent = (props) => {
           break outer;
         };
         case 'MatchNode': {
-          [result, error] = wrapNode(node, result, edge.label);
+          [result, error] = wrapNode({ node, result, edgeLabel: edge.label, nodes, edges });
           break;
         };
         default: {
@@ -840,7 +844,7 @@ class MatchNodeFunctionality extends NodeFunctionality {
   }
 
   toGrammar ({ node, nodes, edges, overrideMap }) {
-    const st = this.c.contentsStrategy(); // class here
+    const st = new this.c.contentsStrategy(); // to call instance methods
     return {"tag": node.data.value, contents: st.getContents({ node, nodes, edges, overrideMap })};
   }
 };
