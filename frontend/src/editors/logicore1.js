@@ -465,7 +465,12 @@ class SimpleValueSourceType extends SourceType {
         value: JSON.parse(this.state.params.data),
         ...(params || {}),
       });
-      elements = resp.data.funnel;
+      if (resp.data.error) {
+        NotificationManager.warning("", resp.data.error);
+        return;
+      } else {
+        elements = resp.data.funnel;
+      }
     } catch (e) {
       NotificationManager.warning("", t("Unknown error"));
       console.error(e);
@@ -477,7 +482,12 @@ class SimpleValueSourceType extends SourceType {
         value: JSON.parse(this.state.params.data),
         ...(params || {}),
       });
-      suggestions = resp.data.funnelSuggestions;
+      if (resp.data.error) {
+        NotificationManager.warning("", resp.data.error);
+        return;
+      } else {
+        suggestions = resp.data.funnelSuggestions;
+      }
     } catch (e) {
       NotificationManager.warning("", t("Unknown error"));
       console.error(e);
