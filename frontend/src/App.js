@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useRef,
   useContext,
+  useMemo,
   useCallback,
   memo,
 } from "react";
@@ -1157,11 +1158,15 @@ const Fiddle = (props) => {
     []
   );
 
+  const valJSON = useMemo(() => JSON.stringify(val), [val]);
+  const topValJSON = useMemo(() => JSON.stringify(props.val), [props.val]);
+
   const editVal = (v) => {
-    if (JSON.stringify(v) !== JSON.stringify(val)) {
-      if (!dirty) setDirty(true);
+    const vJson = JSON.stringify(v);
+    if (vJson !== valJSON) {
       setVal(v);
     }
+    setDirty(vJson !== topValJSON);
   };
 
   const { Editor } = fiddleTypes[props.kind];

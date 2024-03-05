@@ -1126,7 +1126,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         <div className="btn-group">
           {saveButton}
           <Dropdown>
-            <Dropdown.Toggle variant="success" id="dropdown-basic">
+            <Dropdown.Toggle variant="success" id="dropdown-basic" className={"mt-2"}>
               Add
             </Dropdown.Toggle>
             <Dropdown.Menu>
