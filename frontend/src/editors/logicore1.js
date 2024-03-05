@@ -170,7 +170,7 @@ class MatchIfThenContentsStrategy {
     for (const label of labels) {
       resultArr.push(result[label]);
     }*/
-    // TODO
+    // TODO Named in common
     return [result.cond, 'foo', result.out];
   }
 };
