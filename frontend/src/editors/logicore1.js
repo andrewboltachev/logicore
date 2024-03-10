@@ -498,7 +498,72 @@ class SimpleValueSourceType extends SourceType {
   }
 }
 
-const sourceTypes = [ SimpleValueSourceType ];
+class LocalJSONFileSourceType extends SourceType {
+  static value = 'local_json_file';
+  static label = 'Local JSON File';
+  static fields = {
+    type: 'Fields',
+    fields: [
+      {
+        'k': 'filename',
+        'type': 'TextField',
+        'label': 'Filename (full)',
+        'required': true,
+      }
+    ]
+  }
+
+  async runToFunnel (innerPattern, params) {
+    //const { t } = useTranslation();
+    let t = _.identity;
+    const search = new URLSearchParams(params).toString();
+    let resp, elements = null, suggestions = null;
+    const pattern = {
+      "tag": "MatchGetFromFile",
+      "contents": [
+        this.state.params.filename,
+        innerPattern
+      ]
+    };
+    try {
+        resp = await axios.post(`/haskell-api/matchToFunnelOptimized?${search}`, {
+        pattern,
+        value: null,
+        ...(params || {}),
+      });
+      if (resp.data.error) {
+        NotificationManager.warning("", resp.data.error);
+        return;
+      } else {
+        elements = resp.data.funnel;
+      }
+    } catch (e) {
+      NotificationManager.warning("", t("Unknown error"));
+      console.error(e);
+      return;
+    }
+    try {
+      resp = await axios.post(`/haskell-api/matchToFunnelSuggestions?${search}`, {
+        pattern,
+        value: null,
+        ...(params || {}),
+      });
+      if (resp.data.error) {
+        NotificationManager.warning("", resp.data.error);
+        return;
+      } else {
+        suggestions = resp.data.funnelSuggestions;
+      }
+    } catch (e) {
+      NotificationManager.warning("", t("Unknown error"));
+      console.error(e);
+      return;
+    }
+    return { elements, suggestions };
+  }
+}
+
+const sourceTypes = [ SimpleValueSourceType, LocalJSONFileSourceType ];
 
 
 const SourceNodeComponent = ({ value, onChange }) => {
@@ -673,6 +738,91 @@ class PythonFunnelMode extends FunnelMode {
 
 const funnelModes = [ RegularFunnelMode, KeysFunnelMode, PythonFunnelMode ];
 
+class MatchPatternSuggestion {
+  async applySimpleSuggestion({tag, contents}, {nodes, edges, setNodes, setEdges, value}) {
+    const updatedNode = {...value};
+    updatedNode.data.value = tag;
+    let state = null;
+    if (tag === 'MatchStringExact') state = contents;
+    if (tag === 'MatchNumberExact') state = contents;
+    if (tag === 'MatchBoolExact') state = contents;
+    updatedNode.data.state = state;
+
+    const func = getNodeFunctionality(updatedNode);
+    console.log('func', func);
+
+    //const contentsArr = !contents ? [] : Array.isArray(contents) ? contents : [contents];
+    const labels = func._getOutputHandleStrategy().suggestedOutputEdgeLabels(contents);
+    const yStep = 100;
+    let yPos = value.position.y - Math.round(yStep * labels.length / 2);
+    setNodes(nds => modifyHelper([{matching: ({ id }) => id === value.id}], nds, _ => updatedNode));
+    for (const label of labels) {
+      const id = "id_" + uuidv4();
+      const newNode = {
+        id,
+        position: { x: value.position.x + 250, y: yPos },
+        type: 'MatchNode',
+        data: { value: 'MatchAny', state: "" },
+      };
+      setNodes(nds => [...nds, newNode]);
+      setEdges(eds => addEdge({
+        id: `reactflow__edge-${value.id}-${id}`,
+        source: value.id,
+        //sourceHandle: null,
+        target: id,
+        //targetHandle: null,
+        label,
+        markerEnd,
+      }, eds));
+      yPos += yStep;
+    }
+    // XXX: here's actually the opposite of defaultValue that's required
+    // const { defaultValue } = NODE_CLASSES.find(({ type }) => type === 'MatchNode').options.find(({ value }) => value === tag);
+    //console.log('edges are', edges);
+  }
+}
+
+class SimpleValueSuggestion extends MatchPatternSuggestion {
+  async applySuggestion(contents, context) {
+    this.applySimpleSuggestion(contents, context);
+  }
+}
+
+class KeyBreakdownSuggestion extends MatchPatternSuggestion {
+  async applySuggestion(keysMap, context) {
+    const {nodes, edges, setNodes, setEdges, value} = context;
+    const result = await window.runModal({
+      title: "Select key",
+      fields: {
+        type: "Fields",
+        fields: [
+          {
+            type: "SelectField",
+            k: "label",
+            label: "Key",
+            required: true,
+            options: Object.keys(keysMap).map((n) => ({value: n, label: n})),
+          },
+        ],
+      },
+      modalSize: "md",
+      value: {label: null},
+    });
+    if (result !== null) {
+      const selected = keysMap[result.label.value];
+      const theTag = {
+        tag: 'MatchOr',
+        contents: Object.fromEntries(
+          selected.map((option) => );
+        ),
+      };
+      this.applySimpleSuggestion(theTag, context);
+    }
+  }
+}
+
+const matchPatternSuggestions = { SimpleValueSuggestion, KeyBreakdownSuggestion };
+
 const MatchNodeComponent = (props) => {
   const { value, nodes, setNodes, edges, setEdges, funnel, setFunnel } = props;
   const ableToHaveSuggestions = useMemo(() => {
@@ -723,46 +873,9 @@ const MatchNodeComponent = (props) => {
     const { elements, suggestions } = await sourceType.runToFunnel(result, params);
     setFunnel({funnelMode, elements, suggestions});
   };
-  const applySuggestion = ({ tag, contents }) => {
-    const updatedNode = {...value};
-    updatedNode.data.value = tag;
-    let state = null;
-    if (tag === 'MatchStringExact') state = contents;
-    if (tag === 'MatchNumberExact') state = contents;
-    if (tag === 'MatchBoolExact') state = contents;
-    updatedNode.data.state = state;
-
-    const func = getNodeFunctionality(updatedNode);
-    console.log('func', func);
-
-    //const contentsArr = !contents ? [] : Array.isArray(contents) ? contents : [contents];
-    const labels = func._getOutputHandleStrategy().suggestedOutputEdgeLabels(contents);
-    const yStep = 100;
-    let yPos = value.position.y - Math.round(yStep * labels.length / 2);
-    setNodes(nds => modifyHelper([{matching: ({ id }) => id === value.id}], nds, _ => updatedNode));
-    for (const label of labels) {
-      const id = "id_" + uuidv4();
-      const newNode = {
-        id,
-        position: { x: value.position.x + 250, y: yPos },
-        type: 'MatchNode',
-        data: { value: 'MatchAny', state: "" },
-      };
-      setNodes(nds => [...nds, newNode]);
-      setEdges(eds => addEdge({
-        id: `reactflow__edge-${value.id}-${id}`,
-        source: value.id,
-        //sourceHandle: null,
-        target: id,
-        //targetHandle: null,
-        label,
-        markerEnd,
-      }, eds));
-      yPos += yStep;
-    }
-    // XXX: here's actually the opposite of defaultValue that's required
-    // const { defaultValue } = NODE_CLASSES.find(({ type }) => type === 'MatchNode').options.find(({ value }) => value === tag);
-    //console.log('edges are', edges);
+  const applySuggestion = async ({ tag, contents }) => {
+    const mps = new matchPatternSuggestions[tag];
+    await mps.applySuggestion(contents, {nodes, edges, setNodes, setEdges, value});
   }
   return <div style={{top: 0, right: 0, bottom: 0, left: 0, position: "absolute", gridTemplateRows: "auto 1fr auto"}} className="d-grid">
     <div className="text-muted text-bold">{value?.data.value}</div>
@@ -785,7 +898,7 @@ const MatchNodeComponent = (props) => {
         <div className="btn-group" style={{marginLeft: "12px"}}>
           {funnel.suggestions.map(({ k, v }) => {
             return (
-              <button type="button" className="btn btn-warning" onClick={() => applySuggestion(v)}>
+              <button type="button" className="btn btn-warning" onClick={async () => await applySuggestion(v)}>
                 {k}
               </button>
             );
