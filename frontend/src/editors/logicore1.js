@@ -758,7 +758,20 @@ const MATCHPATTERN = {
 const KEYMAP_OF_MATCHPATTERN = {
   type: 'AppT1',
   target: { type: 'ConT', value: 'KeyMap' },
-  params: [ { type: 'ConT', value: 'MatchPattern' } ]
+  params: [MATCHPATTERN]
+};
+
+
+const CONTEXTFREEGRAMMAR = {
+  type: 'AppT1',
+  target: { type: 'ConT', value: 'ContextFreeGrammar' },
+  params: [ MATCHPATTERN ]
+}
+
+const KEYMAP_OF_CONTEXTFREEGRAMMAR = {
+  type: 'AppT1',
+  target: { type: 'ConT', value: 'KeyMap' },
+  params: [CONTEXTFREEGRAMMAR]
 };
 
 const KeysEdgeComponent = ({ edges, value, onChange }) => {
@@ -1002,7 +1015,7 @@ const MatchNodeComponent = (props) => {
   const ableToHaveSuggestions = useMemo(() => {
     if (!value) return false;
     if (!funnel?.suggestions?.length) return false;
-    console.log('edges', edges);
+    //console.log('edges', edges);
     return !edges?.filter(({ source }) => source === value.id).length; // No edges output from this node
   }, [!funnel?.suggestions?.length, edges, value]);
   if (!value) return '';
@@ -1103,73 +1116,20 @@ class MatchNodeFunctionality extends NodeFunctionality {
     if (this.c.typeDef.contents.length === 0) {
       return new NoOutput();
     } else if (this.c.typeDef.contents.length === 1) {
-      if (_.isEqual(this.c.typeDef.contents[0], KEYMAP_OF_MATCHPATTERN)) {
+      const item = this.c.typeDef.contents[0];
+      if (_.isEqual(item, KEYMAP_OF_MATCHPATTERN) || _.isEqual(item, KEYMAP_OF_CONTEXTFREEGRAMMAR)) {
         return new KeysOutput();
-      } else if (_.isEqual(this.c.typeDef.contents[0], MATCHPATTERN)) {
+      } else if (_.isEqual(item, MATCHPATTERN) || _.isEqual(item, CONTEXTFREEGRAMMAR)) {
         return new SingleOutput();
       }
-      console.warn('Cannot properly define output handle strategy for type', this.c.typeDef.contents[0]);
+      console.warn('Cannot properly define output handle strategy for type', item);
       return new NoOutput();
     } else {
       const result = [];
       for (const [item, name] of _.zip(this.c.typeDef.contents, this.c.paramNames)) {
-        if (_.isEqual(item, MATCHPATTERN)) {
+        if (_.isEqual(item, MATCHPATTERN) || _.isEqual(item, CONTEXTFREEGRAMMAR)) {
           result.push(name);
-        } else if (item.type === 'AppT1' && !item.params.length && _.isEqual(item.target, MATCHPATTERN)) {
-          result.push(name);
-        }
-      }
-      return new NamedOutput(result);
-    }
-  }
-
-  getComponentForEdge (arg) {
-    if (this._getOutputHandleStrategy() instanceof KeysOutput) {
-      return KeysEdgeComponent;
-    }
-  }
-
-  getComponentForNode () {
-    return MatchNodeComponent;
-  }
-
-  toGrammar ({ node, nodes, edges, overrideMap }) {
-    const st = new this.c.contentsStrategy(); // to call instance methods
-    return {"tag": node.data.value, contents: st.getContents({ node, nodes, edges, overrideMap })};
-  }
-};
-
-
-class ContextFreeNodeFunctionality extends NodeFunctionality {
-  hasOutputHandle () {
-    return this._getOutputHandleStrategy().hasOutputHandle();
-  }
-
-  canHaveOutputEdge (existingEdges) {
-    return this._getOutputHandleStrategy().canHaveOutputEdge(existingEdges);
-  }
-
-  askForNewEdgeLabel (existingEdges) {
-    return this._getOutputHandleStrategy().askForNewEdgeLabel(existingEdges);
-  }
-
-  _getOutputHandleStrategy () {
-    if (this.c.typeDef.contents.length === 0) {
-      return new NoOutput();
-    } else if (this.c.typeDef.contents.length === 1) {
-      if (_.isEqual(this.c.typeDef.contents[0], KEYMAP_OF_MATCHPATTERN)) {
-        return new KeysOutput();
-      } else if (_.isEqual(this.c.typeDef.contents[0], MATCHPATTERN)) {
-        return new SingleOutput();
-      }
-      console.warn('Cannot properly define output handle strategy for type', this.c.typeDef.contents[0]);
-      return new NoOutput();
-    } else {
-      const result = [];
-      for (const [item, name] of _.zip(this.c.typeDef.contents, this.c.paramNames)) {
-        if (_.isEqual(item, MATCHPATTERN)) {
-          result.push(name);
-        } else if (item.type === 'AppT1' && !item.params.length && _.isEqual(item.target, MATCHPATTERN)) {
+        } else if (item.type === 'AppT1' && !item.params.length && (_.isEqual(item.target, MATCHPATTERN) || _.isEqual(item.target, CONTEXTFREEGRAMMAR))) {
           result.push(name);
         }
       }
@@ -1195,6 +1155,8 @@ class ContextFreeNodeFunctionality extends NodeFunctionality {
     return {"tag": node.data.value, contents: st.getContents({ node, nodes, edges, overrideMap })};
   }
 };
+
+class ContextFreeNodeFunctionality extends MatchNodeFunctionality {}
 
 
 const nodeFunctionalityClasses = {
