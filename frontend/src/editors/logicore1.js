@@ -84,7 +84,7 @@ function difference(setA, setB) {
 }
 
 const isStrictNumberStr = (s) => {
-  return !!/^[1-9][0-9]+$/.exec(s);
+  return !!/^(0|[1-9][0-9]*)$/.exec(s + '');
 }
 
 const refactorAppT = (node) => {
@@ -533,14 +533,34 @@ class SeqOutput extends OutputHandleStrategy {
     return _.keys(contents);
   }
 
-  getForFunnelRequest({node, edgeLabel, result}) {
-    // console.log('getForFunnelRequest', node, edgeLabel, result);
-    //return [{"tag": node.data.value, "contents": []}, null];
+  getForFunnelRequest({node, edgeLabel, result, edges}) {
+    //console.log('edges here', );
+    const outgoingEdges = edges.filter(({ source }) => source === node.id);
+    const indices = new Set();
+    for (const { label } of outgoingEdges) {
+      const index = +label;
+      if (!isStrictNumberStr(label + '')) {
+        throw new Error(`Improper numeric index: ${label + ''}`);
+      }
+      indices.add(index);
+    }
+    const missing = [];
+    for (let i = 0; i < outgoingEdges.length; i++) {
+      if (!indices.has(i)) missing.push(i);
+    }
+    if (missing.length) throw new Error(`Missing keys: ${missing.join(', ')}`);
+    // {
+    //    [edgeLabel]: result
+    // }
     return {
       "tag": node.data.value,
-      "contents": {
-        [edgeLabel]: result
-      }
+      "contents": outgoingEdges.map((x, i) => {
+        if (i === +edgeLabel) {
+          return result;
+        } else {
+          return {"tag": "Char", "contents": {"tag": "MatchAny"}};
+        }
+      })
     };
   }
 };
@@ -874,6 +894,7 @@ const wrapNode = ({node, result, edgeLabel, edges, nodes}) => {
   try {
     const ohs = getNodeFunctionality(node)._getOutputHandleStrategy();
     const r = ohs.getForFunnelRequest({node, edgeLabel, result, edges, nodes});
+    console.log('wrapNode', node.data.value, result, r);
     return [r, null];
   } catch (e) {
     return [null, e.message];
@@ -932,7 +953,28 @@ class JSONFunnelMode extends FunnelMode {
   }
 }
 
-const funnelModes = [ RegularFunnelMode, KeysFunnelMode, PythonFunnelMode ];
+class NarrowFunnelMode extends RegularFunnelMode {
+  static label = 'Narrow';
+  static icon = "fas fa-compress-arrows-alt";
+
+  static _wrap(x) {
+    return x;
+  }
+}
+
+class WideFunnelMode extends RegularFunnelMode {
+  static label = 'Wide';
+  static icon = "fas fa-expand-arrows-alt";
+
+  static _wrap(x) {
+    return {"tag": "Seq", "contents": [{"tag": "Star", "contents": x}]};
+  }
+}
+
+const funnelModes = {
+  'MatchNode': [ RegularFunnelMode, KeysFunnelMode ],
+  'ContextFreeNode': [ NarrowFunnelMode, WideFunnelMode ],
+};
 
 class MatchPatternSuggestion {
   async applySimpleSuggestion({tag, contents}, {nodes, edges, setNodes, setEdges, value}) {
@@ -1029,50 +1071,9 @@ const MatchNodeComponent = (props) => {
   }, [!funnel?.suggestions?.length, edges, value]);
   if (!value) return '';
   const ExactComponent = exactComponents[value?.data.value.replace("Match", "").replace("Exact", "")];
-  const funnelClick = async (funnelMode) => {
-    console.log('clicked on', value);
-    const { tag, params } = funnelMode;
-    let result = { tag }, node = nodes.find(({ id }) => id === value.id), edge = null, error = null, source = null;
-    console.log('the node found', node, value.id);
-    outer: while (true) {
-      edge = edges.find(({ target }) => target === node.id);
-      if (!edge) {
-        error = 'No source connected';
-        break;
-      }
-      node = nodes.find(({ id }) => id === edge.source);
-      if (!node) {
-        error = 'Impossible error: edge without source node';
-        break;
-      }
-      switch (node.type) {
-        case 'SourceNode': {
-          source = node;
-          break outer;
-        };
-        case 'MatchNode': {
-          [result, error] = wrapNode({ node, result, edgeLabel: edge.label, nodes, edges });
-          break;
-        };
-        case 'ContextFreeNode': {
-          [result, error] = wrapNode({ node, result, edgeLabel: edge.label, nodes, edges });
-          break;
-        };
-        default: {
-          error = `Unknown node type found: ${node.type}`;
-          break outer;
-        }
-      }
-    }
-    if (error) {
-      NotificationManager.error("", error, 5000);
-      return;
-    }
-    const SourceType = sourceTypes.find(({ value }) => value === source.data.state.type.value);
-    const sourceType = new SourceType(source.data);
-    const data = await sourceType.runToFunnel(result, params);
-    setFunnel(data ? {funnelMode, ...data} : null);
-  };
+  // funnelClick
+  const func = getNodeFunctionality(value);
+  const funnelClick = (funnelMode) => func.funnelClick({ funnelMode, value, nodes, edges, setFunnel });
   const applySuggestion = async ({ tag, contents }) => {
     const mps = new matchPatternSuggestions[tag];
     await mps.applySuggestion(contents, {nodes, edges, setNodes, setEdges, value});
@@ -1084,7 +1085,7 @@ const MatchNodeComponent = (props) => {
     </div>
     <div className="d-flex">
       <div className="btn-group">
-        {funnelModes.map((funnelMode) => {
+        {funnelModes[value.type].map((funnelMode) => {
           const { icon, key, label } = funnelMode;
           return (
             <button type="button" className="btn btn-primary" onClick={() => funnelClick(funnelMode)}>
@@ -1171,9 +1172,63 @@ class MatchNodeFunctionality extends NodeFunctionality {
     const st = new this.c.contentsStrategy(); // to call instance methods
     return {"tag": node.data.value, contents: st.getContents({ node, nodes, edges, overrideMap })};
   }
+
+  funnelTip(funnelMode, { tag }) {
+    return { tag };
+  }
+
+  async funnelClick({ funnelMode, value, nodes, edges, setFunnel }) {
+    const { tag, params } = funnelMode;
+    let result = this.funnelTip(funnelMode, { tag }), node = nodes.find(({ id }) => id === value.id), edge = null, error = null, source = null;
+    console.log('the node found', node, value.id);
+    outer: while (true) {
+      edge = edges.find(({ target }) => target === node.id);
+      if (!edge) {
+        error = 'No source connected';
+        break;
+      }
+      node = nodes.find(({ id }) => id === edge.source);
+      if (!node) {
+        error = 'Impossible error: edge without source node';
+        break;
+      }
+      console.log('switch', node.data.value);
+      switch (node.type) {
+        case 'SourceNode': {
+          source = node;
+          break outer;
+        };
+        case 'MatchNode': {
+          [result, error] = wrapNode({ node, result, edgeLabel: edge.label, nodes, edges });
+          break;
+        };
+        case 'ContextFreeNode': {
+          [result, error] = wrapNode({ node, result, edgeLabel: edge.label, nodes, edges });
+          break;
+        };
+        default: {
+          error = `Unknown node type found: ${node.type}`;
+          break outer;
+        }
+      }
+      if (error) break outer;
+    }
+    if (error) {
+      NotificationManager.error("", error, 5000);
+      return;
+    }
+    const SourceType = sourceTypes.find(({ value }) => value === source.data.state.type.value);
+    const sourceType = new SourceType(source.data);
+    const data = await sourceType.runToFunnel(result, params);
+    setFunnel(data ? {funnelMode, ...data} : null);
+  };
 };
 
-class ContextFreeNodeFunctionality extends MatchNodeFunctionality {}
+class ContextFreeNodeFunctionality extends MatchNodeFunctionality {
+  funnelTip(funnelMode, { tag }) {
+    return funnelMode._wrap({"tag": "Char", "contents": { tag }});
+  }
+}
 
 
 const nodeFunctionalityClasses = {
