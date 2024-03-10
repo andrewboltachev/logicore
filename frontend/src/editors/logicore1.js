@@ -62,7 +62,7 @@ import 'reactflow/dist/style.css';
 import "./logicore1.scss";
 import d2 from "./d2.json";
 import {BezierEdgeProps} from "reactflow";
-import { JSONNode } from "./jsonmatcher";
+import { JSONNode, callType } from "./jsonmatcher";
 
 const walk = (value, post=_.identity, pre=_.identity) => {
   const items = pre(value);
@@ -304,7 +304,10 @@ const contextFreeGrammarNodeLabelsAndParamNames = {
 const matchPatternDataConstructors = d2[0].contents;
 const matchPatternDataConstructorsRefactored = walk(matchPatternDataConstructors, _.identity, refactorAppT);
 const contextFreeGrammarDataConstructors = d2[2].contents;
-const contextFreeGrammarDataConstructorsRefactored = walk(contextFreeGrammarDataConstructors, _.identity, refactorAppT);
+
+const cf = d2[0].contents.find(({tag}) => tag === 'MatchArrayContextFree').contents[0];
+
+const contextFreeGrammarDataConstructorsRefactored = walk(callType(d2, cf).contents, _.identity, refactorAppT);
 
 // 0 is MatchPattern
 const d2AsMap_matchPattern = Object.fromEntries(matchPatternDataConstructorsRefactored.map(({tag, ...item}) => {
@@ -447,9 +450,9 @@ const validateKeyDoesntAlreadyExist = (existingEdges) => ({ label }) => {
   }
 };
 
-const validateIndexIsValidAndDoesntAlreadyExist = (existingEdges) => ({ label }) => {
-  if (_.includes(existingEdges.map(({ label }) => label), label)) {
-    return {label: "Edge with this key already exists"};
+const validateIndexDoesntAlreadyExist = (existingEdges) => ({ label }) => {
+  if (_.includes(existingEdges.map(({ label }) => +label), +label)) {
+    return {label: "Edge with this index already exists"};
   }
 };
 
@@ -519,7 +522,7 @@ class SeqOutput extends OutputHandleStrategy {
       },
       modalSize: "md",
       value: {label: null},
-      validate: validateKeyDoesntAlreadyExist(existingEdges),
+      validate: validateIndexDoesntAlreadyExist(existingEdges),
     });
     if (result) {
       return result.label;
@@ -774,6 +777,12 @@ const KEYMAP_OF_CONTEXTFREEGRAMMAR = {
   params: [CONTEXTFREEGRAMMAR]
 };
 
+const VECTOR_OF_CONTEXTFREEGRAMMAR = {
+  type: 'AppT1',
+  target: { type: 'ConT', value: 'Vector' },
+  params: [CONTEXTFREEGRAMMAR]
+};
+
 const KeysEdgeComponent = ({ edges, value, onChange }) => {
   if (!value) return <div />; // TODO
   const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
@@ -822,7 +831,7 @@ const SeqEdgeComponent = ({ edges, value, onChange }) => {
             }
           ],
         }}
-        validate={validateKeyDoesntAlreadyExist(siblingEdges)}
+        validate={validateIndexDoesntAlreadyExist(siblingEdges)}
       />
     </div>
   </div>;
@@ -1045,6 +1054,10 @@ const MatchNodeComponent = (props) => {
           [result, error] = wrapNode({ node, result, edgeLabel: edge.label, nodes, edges });
           break;
         };
+        case 'ContextFreeNode': {
+          [result, error] = wrapNode({ node, result, edgeLabel: edge.label, nodes, edges });
+          break;
+        };
         default: {
           error = `Unknown node type found: ${node.type}`;
           break outer;
@@ -1121,6 +1134,10 @@ class MatchNodeFunctionality extends NodeFunctionality {
         return new KeysOutput();
       } else if (_.isEqual(item, MATCHPATTERN) || _.isEqual(item, CONTEXTFREEGRAMMAR)) {
         return new SingleOutput();
+      }
+      // TODO (1) matchPattern on client (2) Resolve types (w/o vars) or (3) type inference?
+      if (_.isEqual(item, VECTOR_OF_CONTEXTFREEGRAMMAR)) {
+        return new SeqOutput();
       }
       console.warn('Cannot properly define output handle strategy for type', item);
       return new NoOutput();
@@ -1205,7 +1222,20 @@ function MatchNode(node) {
   }
 }
 
-const nodeTypes = { SourceNode, MatchNode };
+function ContextFreeNode(node) {
+  const { data, selected, isConnectable } = node;
+  const n = getNodeFunctionality(node);
+
+  return (
+    <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+      <div>{n.c.label}</div>
+      {!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
+    </div>
+  );
+}
+
+const nodeTypes = { SourceNode, MatchNode, ContextFreeNode };
 
 
 /*const ArrowEdge = ({

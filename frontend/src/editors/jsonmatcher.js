@@ -176,7 +176,7 @@ const getTypeFromDef = (d) => {
 // KeyMap, ContextFreeGrammar, Text (Key) Scientific Bool
 // ObjectKeyMatch, List
 
-const applyTypeVars = (d, typeVars) => {
+export const applyTypeVars = (d, typeVars) => {
   if (!d) return d;
   if (d.type === "ConT") {
     return d;
@@ -923,7 +923,7 @@ const convertListT = (typeCall) => {
   return typeCall;
 };
 
-const callType = (schema, typeCall) => {
+export const callType = (schema, typeCall) => {
   const c = convertListT(collapseAppT(typeCall));
   const tt = getTypeFromDef(c);
   for (const item of schema) {
