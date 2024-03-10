@@ -1070,8 +1070,8 @@ const MatchNodeComponent = (props) => {
     }
     const SourceType = sourceTypes.find(({ value }) => value === source.data.state.type.value);
     const sourceType = new SourceType(source.data);
-    const { elements, suggestions } = await sourceType.runToFunnel(result, params);
-    setFunnel({funnelMode, elements, suggestions});
+    const data = await sourceType.runToFunnel(result, params);
+    setFunnel(data ? {funnelMode, ...data} : null);
   };
   const applySuggestion = async ({ tag, contents }) => {
     const mps = new matchPatternSuggestions[tag];
