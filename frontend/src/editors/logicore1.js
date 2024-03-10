@@ -809,14 +809,14 @@ class KeyBreakdownSuggestion extends MatchPatternSuggestion {
       value: {label: null},
     });
     if (result !== null) {
-      const selected = keysMap[result.label.value];
+      /*const selected = keysMap[result.label.value];
       const theTag = {
         tag: 'MatchOr',
         contents: Object.fromEntries(
           selected.map((option) => );
         ),
       };
-      this.applySimpleSuggestion(theTag, context);
+      this.applySimpleSuggestion(theTag, context);*/
     }
   }
 }
