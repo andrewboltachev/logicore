@@ -109,6 +109,37 @@ const refactorAppT = (node) => {
 
 const eV = (e) => e.target.value || "";
 
+const edgesAreConnected = (edges, idFrom, idTo) => {
+  let current = idTo;
+  while (current) {
+    if (current === idFrom) return true;
+    const edge = edges.find(({ target }) => target === current);
+    current = edge?.source;
+  }
+  return false;
+};
+
+const validateKeyDoesntAlreadyExist = (existingEdges) => ({ label }) => {
+  if (_.includes(existingEdges.map(({ label }) => label), label)) {
+    return {label: "Edge with this key already exists"};
+  }
+};
+
+const validateIndexDoesntAlreadyExist = (existingEdges) => ({ label }) => {
+  if (_.includes(existingEdges.map(({ label }) => +label), +label)) {
+    return {label: "Edge with this index already exists"};
+  }
+};
+
+formValidators.isValidJSON = (x) => {
+  try {
+    JSON.parse(x);
+  } catch (e) {
+    return e.message;
+  }
+  return null;
+};
+
 class ContentsStrategy {};
 class KeysContentsStrategy extends ContentsStrategy {
   getContents(params) {
@@ -320,17 +351,6 @@ const d2AsMap_contextFreeGrammar = Object.fromEntries(contextFreeGrammarDataCons
 }));
 
 
-const edgesAreConnected = (edges, idFrom, idTo) => {
-  let current = idTo;
-  while (current) {
-    if (current === idFrom) return true;
-    const edge = edges.find(({ target }) => target === current);
-    current = edge?.source;
-  }
-  return false;
-};
-
-
 const NODE_CLASSES = [
   {
     type: 'SourceNode',
@@ -435,24 +455,12 @@ class NamedOutput extends OutputHandleStrategy {
   }
 
   suggestedOutputEdgeLabels (contents) {
-    return this.labels;
+    return this.labels.map(label => contents);
   }
 
   getForFunnelRequest({node, edgeLabel, result, nodes, edges}) {
     const func = getNodeFunctionality(node);
     return func.toGrammar({node, nodes, edges, });
-  }
-};
-
-const validateKeyDoesntAlreadyExist = (existingEdges) => ({ label }) => {
-  if (_.includes(existingEdges.map(({ label }) => label), label)) {
-    return {label: "Edge with this key already exists"};
-  }
-};
-
-const validateIndexDoesntAlreadyExist = (existingEdges) => ({ label }) => {
-  if (_.includes(existingEdges.map(({ label }) => +label), +label)) {
-    return {label: "Edge with this index already exists"};
   }
 };
 
@@ -584,15 +592,6 @@ class SourceType {
   }
   async runToFunnel (pattern, params) {}
 }
-
-formValidators.isValidJSON = (x) => {
-  try {
-    JSON.parse(x);
-  } catch (e) {
-    return e.message;
-  }
-  return null;
-};
 
 class SimpleValueSourceType extends SourceType {
   static value = 'simple_value';
@@ -976,9 +975,61 @@ const funnelModes = {
   'ContextFreeNode': [ NarrowFunnelMode, WideFunnelMode ],
 };
 
+const getStateForSubGraph = ({ tag, contents }) => {
+  let state = null;
+  if (tag === 'MatchStringExact') state = contents;
+  if (tag === 'MatchNumberExact') state = contents;
+  if (tag === 'MatchBoolExact') state = contents;
+  return state;
+}
+
+const getEdgesForSubgraph = ({ tag, contents }) => {
+  /*const func = getNodeFunctionality(updatedNode);
+  const labels = func._getOutputHandleStrategy().suggestedOutputEdgeLabels(contents);
+  const result = [];
+  for (const label in labels) {
+    result.push({label, targetNodeData});
+  }*/
+  return [];
+}
+
+const placeSubGraph = (baseNode, theType) => {
+  const nodes = [];
+  const edges = [];
+  const walk = ({tag, contents}, baseNode) => {
+    const newId = "id_" + uuidv4();
+    let dc = null, type = null;
+    if (!dc && (dc = d2AsMap_matchPattern[tag])) type = 'MatchNode';
+    if (!dc && (dc = d2AsMap_contextFreeGrammar[tag])) type = 'ContextFreeNode';
+    const newNode = {
+      id: baseNode?.id || newId,
+      position: { x: 0, y: 0},
+      type,
+      data: { value: tag, state: getStateForSubGraph({ tag, contents }) }
+    };
+    nodes.push(newNode);
+    for (const { label, targetNodeData } of getEdgesForSubgraph({ tag, contents })) {
+      const targetNode = walk(targetNodeData);
+      nodes.push(targetNode);
+      edges.append({
+        id: `reactflow__edge-${newNode.id}-${targetNode.id}`,
+        source: newNode.id,
+        //sourceHandle: null,
+        target: targetNode.id,
+        //targetHandle: null,
+        label,
+        markerEnd,
+      });
+    }
+    return newNode;
+  };
+  walk(baseNode);
+  return { nodes, edges };
+};
+
 class MatchPatternSuggestion {
-  async applySimpleSuggestion({tag, contents}, {nodes, edges, setNodes, setEdges, value}) {
-    const updatedNode = {...value};
+  async applySimpleSuggestion(newData, {nodes, edges, setNodes, setEdges, value}) {
+    /*const updatedNode = {...value};
     updatedNode.data.value = tag;
     let state = null;
     if (tag === 'MatchStringExact') state = contents;
@@ -1013,10 +1064,11 @@ class MatchPatternSuggestion {
         markerEnd,
       }, eds));
       yPos += yStep;
-    }
+    }*/
     // XXX: here's actually the opposite of defaultValue that's required
     // const { defaultValue } = NODE_CLASSES.find(({ type }) => type === 'MatchNode').options.find(({ value }) => value === tag);
     //console.log('edges are', edges);
+    console.log('newData', placeSubGraph(newData, value));
   }
 }
 
