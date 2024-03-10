@@ -83,6 +83,10 @@ function difference(setA, setB) {
   return _difference;
 }
 
+const isStrictNumberStr = (s) => {
+  return !!/^[1-9][0-9]+$/.exec(s);
+}
+
 const refactorAppT = (node) => {
   if (!!node && !Array.isArray(node) && typeof node === 'object') {
     if (node.type === 'AppT') {
@@ -109,7 +113,7 @@ class ContentsStrategy {};
 class KeysContentsStrategy extends ContentsStrategy {
   getContents(params) {
     const {node, edges, nodes, overrideMap} = params;
-    return Object.fromEntries(edges.filter(({ source }) => source === node.source).map(({ label, target }) => {
+    return Object.fromEntries(edges.filter(({ source }) => source === node.id).map(({ label, target }) => {
       if (overrideMap?.[label]) {
         return [label, overrideMap?.[label]];
       } else {
@@ -118,6 +122,33 @@ class KeysContentsStrategy extends ContentsStrategy {
         return [label, getNodeFunctionality(nextNode).toGrammar({ ...params, node: nextNode })];
       }
     }));
+  }
+};
+class SeqContentsStrategy extends ContentsStrategy {
+  getContents(params) {
+    const {node, edges, nodes, overrideMap} = params;
+    const result = [], indices = new Set();
+    for (const { label, target } of edges.filter(({ source }) => source === node.id)) {
+      if (!isStrictNumberStr(label + '')) {
+        console.warn(`Isn't strict number string: ${label}`);
+        continue;
+      }
+      const index = +label;
+      indices.add(index);
+      if (overrideMap?.[index]) {
+        result[index] = overrideMap?.[index];
+      } else {
+        const nextNode = nodes.find(({ id }) => id === target);
+        if (!nextNode) throw new Error("Next node not found");
+        result[index] = getNodeFunctionality(nextNode).toGrammar({ ...params, node: nextNode });
+      }
+    }
+    const missing = [];
+    for (let i = 0; i < result.length; i++) {
+      if (!indices.has(i)) missing.push(i);
+    }
+    if (missing.length) throw new Error(`Missing keys: ${missing.join(', ')}`);
+    return result;
   }
 };
 class SingleContentsStrategy {
@@ -132,7 +163,7 @@ class SingleContentsStrategy {
 
 class ExactContentsStrategy {
   getContents({node, edges, nodes}) {
-    return node.data.params.state;
+    return node.data.state;
   }
 };
 
@@ -175,14 +206,23 @@ class MatchIfThenContentsStrategy {
   }
 };
 
-const nodeLabelsAndParamNames = {
+const matchPatternNodeLabelsAndParamNames = {
   'MatchObjectOnly': {
     label: '{o}',
     contentsStrategy: KeysContentsStrategy,
   },
+  'MatchRecord': {
+    label: '{r}',
+    contentsStrategy: SingleContentsStrategy,
+  },
   'MatchArray': {
     label: '[*]',
     contentsStrategy: SingleContentsStrategy,
+  },
+  'MatchArrayContextFree': {
+    label: '[…]',
+    contentsStrategy: SingleContentsStrategy,
+    connectsTo: 'ContextFreeNode',
   },
   'MatchStringExact': {
     label: '"!"',
@@ -234,11 +274,45 @@ const nodeLabelsAndParamNames = {
   },
 };
 
+const contextFreeGrammarNodeLabelsAndParamNames = {
+  'Seq': {
+    label: 'Seq',
+    contentsStrategy: SeqContentsStrategy,
+  },
+  'Star': {
+    label: 'Star',
+    contentsStrategy: SingleContentsStrategy,
+  },
+  'Plus': {
+    label: 'Plus',
+    contentsStrategy: SingleContentsStrategy,
+  },
+  'Optional': {
+    label: 'Opt',
+    contentsStrategy: SingleContentsStrategy,
+  },
+  'Or': {
+    label: 'Or',
+    contentsStrategy: KeysContentsStrategy,
+  },
+  'Char': {
+    label: 'Char',
+    contentsStrategy: SingleContentsStrategy,
+  },
+};
+
 const matchPatternDataConstructors = d2[0].contents;
 const matchPatternDataConstructorsRefactored = walk(matchPatternDataConstructors, _.identity, refactorAppT);
+const contextFreeGrammarDataConstructors = d2[2].contents;
+const contextFreeGrammarDataConstructorsRefactored = walk(contextFreeGrammarDataConstructors, _.identity, refactorAppT);
 
 // 0 is MatchPattern
-const d2AsMap = Object.fromEntries(matchPatternDataConstructorsRefactored.map(({tag, ...item}) => {
+const d2AsMap_matchPattern = Object.fromEntries(matchPatternDataConstructorsRefactored.map(({tag, ...item}) => {
+  return [tag, item];
+}));
+
+
+const d2AsMap_contextFreeGrammar = Object.fromEntries(contextFreeGrammarDataConstructorsRefactored.map(({tag, ...item}) => {
   return [tag, item];
 }));
 
@@ -266,8 +340,15 @@ const NODE_CLASSES = [
   },
   {
     type: 'MatchNode',
-    options: Object.entries(nodeLabelsAndParamNames).map(([value, ctx]) => {
-      const typeDef = d2AsMap[value];
+    options: Object.entries(matchPatternNodeLabelsAndParamNames).map(([value, ctx]) => {
+      const typeDef = d2AsMap_matchPattern[value];
+      return { value, ...ctx, typeDef };
+    }),
+  },
+  {
+    type: 'ContextFreeNode',
+    options: Object.entries(contextFreeGrammarNodeLabelsAndParamNames).map(([value, ctx]) => {
+      const typeDef = d2AsMap_contextFreeGrammar[value];
       return { value, ...ctx, typeDef };
     }),
   },
@@ -360,7 +441,13 @@ class NamedOutput extends OutputHandleStrategy {
   }
 };
 
-const validateKeyAlreadyExists = (existingEdges) => ({ label }) => {
+const validateKeyDoesntAlreadyExist = (existingEdges) => ({ label }) => {
+  if (_.includes(existingEdges.map(({ label }) => label), label)) {
+    return {label: "Edge with this key already exists"};
+  }
+};
+
+const validateIndexIsValidAndDoesntAlreadyExist = (existingEdges) => ({ label }) => {
   if (_.includes(existingEdges.map(({ label }) => label), label)) {
     return {label: "Edge with this key already exists"};
   }
@@ -387,7 +474,52 @@ class KeysOutput extends OutputHandleStrategy {
       },
       modalSize: "md",
       value: {label: null},
-      validate: validateKeyAlreadyExists(existingEdges),
+      validate: validateKeyDoesntAlreadyExist(existingEdges),
+    });
+    if (result) {
+      return result.label;
+    }
+  }
+
+  suggestedOutputEdgeLabels (contents) {
+    return _.keys(contents);
+  }
+
+  getForFunnelRequest({node, edgeLabel, result}) {
+    // console.log('getForFunnelRequest', node, edgeLabel, result);
+    //return [{"tag": node.data.value, "contents": []}, null];
+    return {
+      "tag": node.data.value,
+      "contents": {
+        [edgeLabel]: result
+      }
+    };
+  }
+};
+
+
+class SeqOutput extends OutputHandleStrategy {
+  canHaveOutputEdge (existingEdges) {
+    return true;
+  }
+
+  async askForNewEdgeLabel (existingEdges) {
+    const result = await window.runModal({
+      title: "Add edge",
+      fields: {
+        type: "Fields",
+        fields: [
+          {
+            type: "NumberField",
+            k: "label",
+            label: "Key",
+            required: true,
+          },
+        ],
+      },
+      modalSize: "md",
+      value: {label: null},
+      validate: validateKeyDoesntAlreadyExist(existingEdges),
     });
     if (result) {
       return result.label;
@@ -650,7 +782,34 @@ const KeysEdgeComponent = ({ edges, value, onChange }) => {
             }
           ],
         }}
-        validate={validateKeyAlreadyExists(siblingEdges)}
+        validate={validateKeyDoesntAlreadyExist(siblingEdges)}
+      />
+    </div>
+  </div>;
+}
+
+const SeqEdgeComponent = ({ edges, value, onChange }) => {
+  if (!value) return <div />; // TODO
+  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
+  return <div>
+    <h2>Edit arrow</h2>
+    <div>
+      <GenericForm
+        key={value.id}
+        data={{ label: value.label }}
+        onChange={({ label }) => onChange({...value, label, selected: false})}
+        fields={{
+          type: "Fields",
+          fields: [
+            {
+              type: "NumberField",
+              k: "label",
+              label: "Index",
+              required: true,
+            }
+          ],
+        }}
+        validate={validateKeyDoesntAlreadyExist(siblingEdges)}
       />
     </div>
   </div>;
@@ -735,6 +894,21 @@ class PythonFunnelMode extends FunnelMode {
   static icon = "fab fa-python";
   static params = {'mode': 'Python'};
 };
+
+
+class JSONFunnelMode extends FunnelMode {
+  static FunnelComponent ({ item }) {
+    return <div style={{
+      position: 'relative',
+      fontFamily: '"Monaco", monospace',
+      fontSize: "0.75rem",
+      lineHeight: "normal",
+      whiteSpace: "pre",
+    }}>
+      {JSON.stringify(item, null, 2)}
+    </div>;
+  }
+}
 
 const funnelModes = [ RegularFunnelMode, KeysFunnelMode, PythonFunnelMode ];
 
@@ -892,6 +1066,9 @@ const MatchNodeComponent = (props) => {
             </button>
           );
         })}
+        <button type="button" className="btn btn-secondary" onClick={() => setFunnel({funnelMode: JSONFunnelMode, elements: [getNodeFunctionality(value).toGrammar({node: value, nodes, edges})]})}>
+          <i className="fas fa-microchip" />{" "}Code
+        </button>
       </div>
       <div style={{lineHeight: "36px", marginLeft: "12px"}}>{funnel && `${funnel.elements.length} element(s)`}</div>
       {!!funnel?.suggestions?.length && 
@@ -963,9 +1140,67 @@ class MatchNodeFunctionality extends NodeFunctionality {
 };
 
 
+class ContextFreeNodeFunctionality extends NodeFunctionality {
+  hasOutputHandle () {
+    return this._getOutputHandleStrategy().hasOutputHandle();
+  }
+
+  canHaveOutputEdge (existingEdges) {
+    return this._getOutputHandleStrategy().canHaveOutputEdge(existingEdges);
+  }
+
+  askForNewEdgeLabel (existingEdges) {
+    return this._getOutputHandleStrategy().askForNewEdgeLabel(existingEdges);
+  }
+
+  _getOutputHandleStrategy () {
+    if (this.c.typeDef.contents.length === 0) {
+      return new NoOutput();
+    } else if (this.c.typeDef.contents.length === 1) {
+      if (_.isEqual(this.c.typeDef.contents[0], KEYMAP_OF_MATCHPATTERN)) {
+        return new KeysOutput();
+      } else if (_.isEqual(this.c.typeDef.contents[0], MATCHPATTERN)) {
+        return new SingleOutput();
+      }
+      console.warn('Cannot properly define output handle strategy for type', this.c.typeDef.contents[0]);
+      return new NoOutput();
+    } else {
+      const result = [];
+      for (const [item, name] of _.zip(this.c.typeDef.contents, this.c.paramNames)) {
+        if (_.isEqual(item, MATCHPATTERN)) {
+          result.push(name);
+        } else if (item.type === 'AppT1' && !item.params.length && _.isEqual(item.target, MATCHPATTERN)) {
+          result.push(name);
+        }
+      }
+      return new NamedOutput(result);
+    }
+  }
+
+  getComponentForEdge (arg) {
+    if (this._getOutputHandleStrategy() instanceof KeysOutput) {
+      return KeysEdgeComponent;
+    }
+    if (this._getOutputHandleStrategy() instanceof SeqOutput) {
+      return SeqEdgeComponent;
+    }
+  }
+
+  getComponentForNode () {
+    return MatchNodeComponent;
+  }
+
+  toGrammar ({ node, nodes, edges, overrideMap }) {
+    const st = new this.c.contentsStrategy(); // to call instance methods
+    return {"tag": node.data.value, contents: st.getContents({ node, nodes, edges, overrideMap })};
+  }
+};
+
+
 const nodeFunctionalityClasses = {
   SourceNodeFunctionality,
   MatchNodeFunctionality,
+  ContextFreeNodeFunctionality,
 };
 
 const getNodeFunctionality = (node) => {
@@ -1120,7 +1355,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       return;
     }
     if (outcomingEdges.filter(({ target }) => target === params.target).length) {
-      NotificationManager.warning("", t('Cannot create with the same source and target (that\'s thin category after all)'), 2000);
+      NotificationManager.warning("", t('Cannot create edge with the same source and target (that\'s thin category after all)'), 2000);
       return;
     }
     const sourceNodeFunctionality = getNodeFunctionality(sourceNode);
