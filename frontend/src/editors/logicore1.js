@@ -1764,7 +1764,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
               definition={{type: 'Fields', fields: [
                 {type: 'TextField', 'label': '', 'k': 'title'},
               ]}}
-              value={{title: value.title || ''}}
+              value={{title: value?.title || ''}}
               onChange={({title}) => onChange({...value, title})}
             />
           </div>
