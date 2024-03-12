@@ -1127,6 +1127,7 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
                     "template": "FiddleNotFound",
                 }
         return {
+            "owner": (obj.user.username if obj.user else 'Anonymous') if obj else None,
             "kind": self.c.as_choice_key(),
             "uuid": uid,
             "rev": rev,
@@ -1160,6 +1161,7 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
             if existing:
                 if (first_obj.user == request.user) or (first_obj.pk in owned):
                     continue_last = True
+        import ipdb; ipdb.set_trace() # BREAKPOINT
         new_rev = 1
         if first_obj and continue_last:
             # Get the max available rev

@@ -1345,7 +1345,15 @@ const FiddleWrapper = ({ result, onChange }) => {
                 <Trans>Mine</Trans>
               </Link>
             </Nav>
-            <Nav className="ml-auto">
+            <Nav className="ml-auto me-5">
+              {result?.owner && <>Owner:<br /></>}
+              {result?.owner}
+            </Nav>
+            <Nav className="me-5">
+              Logged in as<br />
+              {result?.user?.username || <span className="text-danger">Anonymous</span>}
+            </Nav>
+            <Nav>
               <NavDropdown
                 title={
                   <>
