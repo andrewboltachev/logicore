@@ -12,7 +12,7 @@ import "./App.scss";
 import classd from "classd";
 import "react-notifications/lib/notifications.css";
 import { axios, extend, update } from "./imports";
-import { Button, Modal } from "react-bootstrap";
+import {Button, Dropdown, ButtonGroup, Modal} from "react-bootstrap";
 import { v4 as uuidv4 } from "uuid";
 import {
   NotificationContainer,
@@ -1248,13 +1248,9 @@ const MyFiddleList = ({ items }) => {
       </h3>
       {/*<ul>
         {items?.map((item) => {
-          let url = `/toolbox/${item.url_key}/${item.uuid}/`;
-          if (item.rev > 1) {
-            url += `${item.rev}/`;
-          }
           return (
             <li>
-              <Link to={addLang(url)}>{item.title}</Link>
+              <Link to={addLang(item.url)}>{item.title}</Link>
             </li>
           );
         })}
@@ -1268,13 +1264,21 @@ const MyFiddleList = ({ items }) => {
             <div className="card" style={{ width: "18rem", margin: 10 }}>
               {/*<img src="..." className="card-img-top" alt="..." />*/}
               <div className="card-body">
-                <h5 className="card-title">{item.kind}</h5>
-                <p className="card-text">
-                  {item.title}
+                <h5 className="card-title">{item.title}</h5>
+                <p className="card-text text-secondary fw-bold">
+                  {item.kind}<br />
                 </p>
-                <a href="#" className="btn btn-primary">
-                  Go somewhere
-                </a>
+                <Dropdown as={ButtonGroup} drop={"down-centered"}>
+                  <Button href={addLang(item.url)} variant="success">Rev ({item.rev}) - {item.time_ago}</Button>
+
+                  <Dropdown.Toggle split variant="success" id="dropdown-split-basic" />
+
+                  <Dropdown.Menu>
+                    {item.revs.map(item => (
+                      <Dropdown.Item key={item.rev} href={addLang(item.url)}>Rev ({item.rev}) - {item.time_ago}</Dropdown.Item>
+                    ))}
+                  </Dropdown.Menu>
+                </Dropdown>
               </div>
             </div>
           );

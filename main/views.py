@@ -5,6 +5,7 @@ import locale
 import uuid
 import requests
 import pprint
+import timeago
 from itertools import groupby
 from collections import defaultdict
 from decimal import Decimal
@@ -1065,7 +1066,7 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
         items = list(
             qs.values("kind", "created_dt", "uuid", "rev")
             .annotate(
-                title=Coalesce("data__title", Value(None), output_field=CharField())
+                title=Coalesce("data__title", Value('"(no title)"'), output_field=CharField())
                 #Concat(
                 #    F("kind"),
                 #    Value(": "),
@@ -1079,13 +1080,25 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
             )
             .order_by("-created_dt")
         )
-        for item in items:
-            item["title"] = item["title"] or "(no title)"
+        result = []
+        for uuid, items in groupby(sorted(items, key=lambda item: (item["uuid"], -item["rev"])), key=lambda item: item["uuid"]):
+            items = list(items)
             for c in models.FiddleType.__subclasses__():
-                if c.as_choice_key() == item["kind"]:
-                    item["url_key"] = c.as_part_of_url()
-            item["url"] = 1
-        return {"items": items}
+                if c.as_choice_key() == items[0]["kind"]:
+                    url_key = c.as_part_of_url()
+            for item in items:
+                item["title"] = json.loads(item["title"])
+                item["time_ago"] = timeago.format(item["created_dt"], now)
+                item["url"] = f"/toolbox/{url_key}/{uuid}/"
+                if item["rev"] > 1:
+                    item["url"] += f"{item['rev']}/"
+            item = items[0]
+            result.append({
+                **item,
+                "revs": [item for item in sorted(items[1:], key=lambda item: -item["rev"])],
+            })
+        result = list(sorted(result, key=lambda item: item["created_dt"]))[::-1]
+        return {"items": result}
 
 
 @method_decorator(csrf_exempt, name="dispatch")

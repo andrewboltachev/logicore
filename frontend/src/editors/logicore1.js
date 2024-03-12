@@ -1756,6 +1756,18 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       <div className="col-md-7 d-flex flex-column">
         <div className="btn-group">
           {/*<div>x: {viewport.x}, y: {viewport.y}, zoom: {viewport.zoom}</div>*/}
+          <div style={{position: 'relative', "top": "4px"}}>
+            <FormComponent
+              onReset={() => {}}
+              error={null}
+              path={[]}
+              definition={{type: 'Fields', fields: [
+                {type: 'TextField', 'label': '', 'k': 'title'},
+              ]}}
+              value={{title: value.title || ''}}
+              onChange={({title}) => onChange({...value, title})}
+            />
+          </div>
           {saveButton}
           <Dropdown>
             <Dropdown.Toggle variant="success" id="dropdown-basic" className={"mt-2"}>
