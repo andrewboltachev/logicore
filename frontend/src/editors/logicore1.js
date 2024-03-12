@@ -1201,7 +1201,6 @@ class MatchPatternSuggestion {
     // XXX: here's actually the opposite of defaultValue that's required
     // const { defaultValue } = NODE_CLASSES.find(({ type }) => type === 'MatchNode').options.find(({ value }) => value === tag);
     //console.log('edges are', edges);
-    console.log('newData', placeSubGraph(newData, value));
   }
 }
 
@@ -1214,7 +1213,8 @@ class SimpleValueSuggestion extends MatchPatternSuggestion {
 class KeyBreakdownSuggestion extends MatchPatternSuggestion {
   async applySuggestion(keysMap, context) {
     const {nodes, edges, setNodes, setEdges, value} = context;
-    const result = await window.runModal({
+    const options = Object.keys(keysMap).map((n) => ({value: n, label: n}));
+    const result = options?.length === 1 ? {label: options[0]} : await window.runModal({
       title: "Select key",
       fields: {
         type: "Fields",
@@ -1224,7 +1224,7 @@ class KeyBreakdownSuggestion extends MatchPatternSuggestion {
             k: "label",
             label: "Key",
             required: true,
-            options: Object.keys(keysMap).map((n) => ({value: n, label: n})),
+            options,
           },
         ],
       },
@@ -1232,6 +1232,7 @@ class KeyBreakdownSuggestion extends MatchPatternSuggestion {
       value: {label: null},
     });
     if (result !== null) {
+      console.log('result', result.label.value, keysMap[result.label.value]);
       /*const selected = keysMap[result.label.value];
       const theTag = {
         tag: 'MatchOr',
@@ -1240,6 +1241,7 @@ class KeyBreakdownSuggestion extends MatchPatternSuggestion {
         ),
       };
       this.applySimpleSuggestion(theTag, context);*/
+      //console.log('newData', placeSubGraph(newData, value));
     }
   }
 }
@@ -1435,7 +1437,7 @@ const getNodeFunctionality = (node) => {
 
 function SourceNode({ data, selected, isConnectable }) {
   return (
-    <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+    <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
       {/*<Handle type="target" position={Position.Left} isConnectable={isConnectable} />*/}
       <div>{'Src'}</div>
       <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
@@ -1449,7 +1451,7 @@ function MatchNode(node) {
 
   if (new Set(['MatchStringExact', 'MatchNumberExact', 'MatchBoolExact']).has(node.data.value)) {
     return (
-      <div style={{minWidth: 50, maxWidth: 200, padding: "0 10px", width: 'auto', height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      <div style={{minWidth: 50, maxWidth: 200, padding: "0 10px", width: 'auto', height: 50, borderRadius: 50, background: 'white', border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
         {node.data.value === 'MatchStringExact' && <code className="text-truncate">{node.data.state}</code>}
         {node.data.value === 'MatchNumberExact' && <code className="text-truncate" style={{color: 'blue'}}>{node.data.state}</code>}
@@ -1472,7 +1474,7 @@ function ContextFreeNode(node) {
   const n = getNodeFunctionality(node);
 
   return (
-    <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+    <div style={{width: 50, height: 50, borderRadius: 50, background: 'white', border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
       <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
       <div>{n.c.label}</div>
       {!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />}
