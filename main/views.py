@@ -1161,7 +1161,6 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
             if existing:
                 if (first_obj.user == request.user) or (first_obj.pk in owned):
                     continue_last = True
-        import ipdb; ipdb.set_trace() # BREAKPOINT
         new_rev = 1
         if first_obj and continue_last:
             # Get the max available rev
