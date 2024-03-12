@@ -54,7 +54,7 @@ import ReactFlow, {
   EdgeLabelRenderer,
   MarkerType,
   useOnViewportChange,
-  getBezierPath,
+  getBezierPath, getMarkerEnd, getSimpleBezierPath,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -125,6 +125,12 @@ const validateKeyDoesntAlreadyExist = (existingEdges) => ({ label }) => {
   }
 };
 
+/*const validateOptionalKeyDoesntAlreadyExist = (existingEdges) => ({ label, optional }) => {
+  if (existingEdges.map((e) => e.label === label && !e.data.optional === !optional)) {
+    return {label: `${optional ? 'Optional' : 'Required'} edge with this key already exists`};
+  }
+};*/
+
 const validateIndexDoesntAlreadyExist = (existingEdges) => ({ label }) => {
   if (_.includes(existingEdges.map(({ label }) => +label), +label)) {
     return {label: "Edge with this index already exists"};
@@ -140,6 +146,8 @@ formValidators.isValidJSON = (x) => {
   return null;
 };
 
+const optional2index = {false: 0, true: 1};
+
 class ContentsStrategy {};
 class KeysContentsStrategy extends ContentsStrategy {
   getContents(params) {
@@ -153,6 +161,24 @@ class KeysContentsStrategy extends ContentsStrategy {
         return [label, getNodeFunctionality(nextNode).toGrammar({ ...params, node: nextNode })];
       }
     }));
+  }
+};
+class OptionalKeysContentsStrategy extends ContentsStrategy {
+  getContents(params) {
+    const {node, edges, nodes, overrideMap} = params;
+    const contents = [{}, {}];
+    for (const { label, optional, target } of edges.filter(({ source }) => source === node.id)) {
+      const obj = contents[optional2index[!!optional]];
+      if (overrideMap?.[label]) {
+        obj[label] = overrideMap?.[label];
+      } else {
+        const nextNode = nodes.find(({ id }) => id === target);
+        if (!nextNode) throw new Error("Next node not found");
+        obj[label] = getNodeFunctionality(nextNode).toGrammar({ ...params, node: nextNode });
+      }
+    }
+    console.log('contents', contents);
+    return contents;
   }
 };
 class SeqContentsStrategy extends ContentsStrategy {
@@ -241,6 +267,10 @@ const matchPatternNodeLabelsAndParamNames = {
   'MatchObjectOnly': {
     label: '{o}',
     contentsStrategy: KeysContentsStrategy,
+  },
+  'MatchObjectOptional': {
+    label: '{?}',
+    contentsStrategy: OptionalKeysContentsStrategy,
   },
   'MatchRecord': {
     label: '{r}',
@@ -378,6 +408,8 @@ const NODE_CLASSES = [
 ];
 
 
+console.log('NODE_CLASSES', NODE_CLASSES);
+
 // ADT for hipsters
 class OutputHandleStrategy {
   hasOutputHandle() { return true; }
@@ -504,6 +536,65 @@ class KeysOutput extends OutputHandleStrategy {
       "contents": {
         [edgeLabel]: result
       }
+    };
+  }
+};
+
+class OptionalKeysOutput extends OutputHandleStrategy {
+  canHaveOutputEdge (existingEdges) {
+    return true;
+  }
+
+  async askForNewEdgeLabel (existingEdges) {
+    const result = await window.runModal({
+      title: "Add edge",
+      fields: {
+        type: "Fields",
+        fields: [
+          {
+            type: "TextField",
+            k: "label",
+            label: "Key",
+            required: true,
+          },
+          {
+            type: "BooleanField",
+            k: "optional",
+            label: "Optional",
+            required: false,
+          }
+        ],
+      },
+      modalSize: "md",
+      value: {label: null, optional: false},
+      validate: validateKeyDoesntAlreadyExist(existingEdges),
+    });
+    if (result) {
+      return result.label;
+    }
+  }
+
+  suggestedOutputEdgeLabels (contents) {
+    const result = [];
+    for (const label of _.keys(contents[0])) {
+      result.push({ label, optional: false });
+    }
+    for (const label of _.keys(contents[1])) {
+      result.push({ label, optional: true });
+    }
+    return result;
+  }
+
+  getForFunnelRequest({node, edgeLabel, result, edges}) {
+    const contents = [{}, {}];
+    for (const { label, data } of edges.filter(({ source }) => source === node.id)) {
+      const optional = !!data?.optional;
+      const current = (label === edgeLabel) ? result : {"tag": "MatchAny"};
+      contents[optional2index[optional]][label] = current;
+    }
+    return {
+      tag: node.data.value,
+      contents
     };
   }
 };
@@ -829,6 +920,39 @@ const KeysEdgeComponent = ({ edges, value, onChange }) => {
   </div>;
 }
 
+const OptionalKeysEdgeComponent = ({ edges, value, onChange }) => {
+  if (!value) return <div />; // TODO
+  const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
+  return <div>
+    <h2>Edit arrow</h2>
+    <div>
+      <GenericForm
+        key={value.id}
+        data={{ label: value.label, optional: !!value.data.optional }}
+        onChange={({ label, optional }) => onChange({...value, label, data: {...(value.data || {}), optional}, selected: false})}
+        fields={{
+          type: "Fields",
+          fields: [
+            {
+              type: "TextField",
+              k: "label",
+              label: "Key",
+              required: true,
+            },
+            {
+              type: "BooleanField",
+              k: "optional",
+              label: "Optional",
+              required: false,
+            }
+          ],
+        }}
+        validate={validateKeyDoesntAlreadyExist(siblingEdges)}
+      />
+    </div>
+  </div>;
+}
+
 const SeqEdgeComponent = ({ edges, value, onChange }) => {
   if (!value) return <div />; // TODO
   const siblingEdges = edges.filter(({ source, id }) => source === value.source && id !== value.id);
@@ -907,6 +1031,9 @@ class FunnelMode {
     return item + '';
   }
   static params = {};
+  static postProcess(funnelResult) {
+    return funnelResult;
+  }
 };
 
 class RegularFunnelMode extends FunnelMode {
@@ -929,6 +1056,9 @@ class KeysFunnelMode extends FunnelMode {
   static tag = "MatchFunnelKeys";
   static label = 'Keys';
   static icon = "fas fa-stream";
+  static postProcess(funnelResult) {
+    return _.uniq(funnelResult);
+  }
 };
 
 class PythonFunnelMode extends FunnelMode {
@@ -1029,7 +1159,8 @@ const placeSubGraph = (baseNode, theType) => {
 
 class MatchPatternSuggestion {
   async applySimpleSuggestion(newData, {nodes, edges, setNodes, setEdges, value}) {
-    /*const updatedNode = {...value};
+    const { tag, contents } = newData;
+    const updatedNode = JSON.parse(JSON.stringify(value));
     updatedNode.data.value = tag;
     let state = null;
     if (tag === 'MatchStringExact') state = contents;
@@ -1045,7 +1176,8 @@ class MatchPatternSuggestion {
     const yStep = 100;
     let yPos = value.position.y - Math.round(yStep * labels.length / 2);
     setNodes(nds => modifyHelper([{matching: ({ id }) => id === value.id}], nds, _ => updatedNode));
-    for (const label of labels) {
+    for (const item of labels) {
+      const { label, optional } = (item && typeof item === "object") ? item : { label: item, optional: void 0 };
       const id = "id_" + uuidv4();
       const newNode = {
         id,
@@ -1061,10 +1193,11 @@ class MatchPatternSuggestion {
         target: id,
         //targetHandle: null,
         label,
+        data: { optional },
         markerEnd,
       }, eds));
       yPos += yStep;
-    }*/
+    }
     // XXX: here's actually the opposite of defaultValue that's required
     // const { defaultValue } = NODE_CLASSES.find(({ type }) => type === 'MatchNode').options.find(({ value }) => value === tag);
     //console.log('edges are', edges);
@@ -1194,6 +1327,8 @@ class MatchNodeFunctionality extends NodeFunctionality {
       }
       console.warn('Cannot properly define output handle strategy for type', item);
       return new NoOutput();
+    } if (this.node?.data?.value === 'MatchObjectOptional') { // TODO?
+      return new OptionalKeysOutput();
     } else {
       const result = [];
       for (const [item, name] of _.zip(this.c.typeDef.contents, this.c.paramNames)) {
@@ -1210,6 +1345,9 @@ class MatchNodeFunctionality extends NodeFunctionality {
   getComponentForEdge (arg) {
     if (this._getOutputHandleStrategy() instanceof KeysOutput) {
       return KeysEdgeComponent;
+    }
+    if (this._getOutputHandleStrategy() instanceof OptionalKeysOutput) {
+      return OptionalKeysEdgeComponent;
     }
     if (this._getOutputHandleStrategy() instanceof SeqOutput) {
       return SeqEdgeComponent;
@@ -1433,6 +1571,34 @@ const markerEnd = {
   color: '#000000',
 };
 
+function ArrowEdge(props) {
+  const {
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+  } = props;
+  const [edgePath, labelX, labelY] = getSimpleBezierPath({
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+  });
+  const label = (props.label || '') + (props.data?.optional ? '?' : '');
+  return (
+      <>
+        <BaseEdge {...props} id={id} path={edgePath} labelX={labelX} labelY={labelY} label={label} animated={!!props.data?.optional} />
+      </>
+  );
+}
+
+const edgeTypes = { ArrowEdge };
+
 function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const { t } = useTranslation();
 
@@ -1519,7 +1685,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   }, [storageKey, initialized]);
 
   useOnViewportChange({
-    onChange: ({x, y, zoom}: Viewport) => window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}))
+    onChange: ({x, y, zoom}) => window.localStorage.setItem(storageKey, JSON.stringify({x, y, zoom}))
   });
 
 
@@ -1635,6 +1801,8 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          defaultEdgeOptions={{type: 'ArrowEdge'}}
         >
           <MiniMap />
           <Controls />
@@ -1648,7 +1816,7 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         <hr />
         <div style={{position: 'relative'}}>
           <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto'}}>
-            {funnel?.elements.map((item, i) => <React.Fragment key={i}>
+            {funnel?.funnelMode.postProcess(funnel?.elements).map((item, i) => <React.Fragment key={i}>
               {!!i && <hr />}
               <div>
                 <funnel.funnelMode.FunnelComponent item={item} />
