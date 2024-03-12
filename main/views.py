@@ -14,6 +14,7 @@ from proxy.views import proxy_view
 import networkx as nx
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 
 
 from django.conf import settings
@@ -36,7 +37,7 @@ from django.db.models import (
     When,
     Avg,
 )
-from django.db.models.functions import Concat, JSONObject, Now, Cast
+from django.db.models.functions import Concat, JSONObject, Now, Cast, Coalesce
 from django.http import JsonResponse as JsonResponseOriginal
 import datetime as python_datetime
 from django.utils.timezone import datetime, now, timedelta
@@ -1052,6 +1053,7 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
     WRAPPER = "FiddleWrapper"
 
     def get_data(self, request, *args, **kwargs):
+        now = timezone.now()
         if request.user.is_authenticated:
             owned = [
                 int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",") if x
@@ -1059,23 +1061,26 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
             qs = models.Fiddle.objects.filter(pk__in=owned)
         else:
             qs = models.Fiddle.objects.filter()
+        qs = qs.order_by("-created_dt")
         items = list(
             qs.values("kind", "created_dt", "uuid", "rev")
             .annotate(
-                title=Concat(
-                    F("kind"),
-                    Value(": "),
-                    F("uuid"),
-                    Value(" / "),
-                    F("rev"),
-                    Value(" - "),
-                    F("created_dt"),
-                    output_field=CharField(),
-                )
+                title=Coalesce("data__title", Value(None), output_field=CharField())
+                #Concat(
+                #    F("kind"),
+                #    Value(": "),
+                #    F("uuid"),
+                #    Value(" / "),
+                #    F("rev"),
+                #    Value(" - "),
+                #    F("created_dt"),
+                #    output_field=CharField(),
+                #)
             )
             .order_by("-created_dt")
         )
         for item in items:
+            item["title"] = item["title"] or "(no title)"
             for c in models.FiddleType.__subclasses__():
                 if c.as_choice_key() == item["kind"]:
                     item["url_key"] = c.as_part_of_url()

@@ -1246,7 +1246,7 @@ const MyFiddleList = ({ items }) => {
       <h3 className="my-3">
         <Trans>My copies</Trans>
       </h3>
-      <ul>
+      {/*<ul>
         {items?.map((item) => {
           let url = `/toolbox/${item.url_key}/${item.uuid}/`;
           if (item.rev > 1) {
@@ -1258,7 +1258,28 @@ const MyFiddleList = ({ items }) => {
             </li>
           );
         })}
-      </ul>
+      </ul>*/}
+      {/*className="d-grid" style={{gridAutoFlow: 'column', gap: '15px', gridTemplateColumns: "repeat(auto-fit, 18rem)"}}*/}
+      <div 
+        style={{display: 'flex', flexWrap: 'wrap', margin: -10}}
+        >
+        {items?.map((item) => {
+          return (
+            <div className="card" style={{ width: "18rem", margin: 10 }}>
+              {/*<img src="..." className="card-img-top" alt="..." />*/}
+              <div className="card-body">
+                <h5 className="card-title">{item.kind}</h5>
+                <p className="card-text">
+                  {item.title}
+                </p>
+                <a href="#" className="btn btn-primary">
+                  Go somewhere
+                </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
