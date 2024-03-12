@@ -1055,18 +1055,19 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
 
     def get_data(self, request, *args, **kwargs):
         now = timezone.now()
-        if request.user.is_authenticated:
+        if not request.user.is_authenticated:
             owned = [
                 int(x) for x in request.session.get("FIDDLES_OWNED", "").split(",") if x
             ]
             qs = models.Fiddle.objects.filter(pk__in=owned)
         else:
-            qs = models.Fiddle.objects.filter()
+            qs = models.Fiddle.objects.filter(user=self.request.user)
         qs = qs.order_by("-created_dt")
         items = list(
             qs.values("kind", "created_dt", "uuid", "rev")
             .annotate(
-                title=Coalesce("data__title", Value('"(no title)"'), output_field=CharField())
+                title=Coalesce("data__title", Value('"(no title)"'), output_field=CharField()),
+                owner=Coalesce("user__username", Value("Anonymous"), output_field=CharField()),
                 #Concat(
                 #    F("kind"),
                 #    Value(": "),

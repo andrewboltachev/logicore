@@ -1240,7 +1240,7 @@ const FiddleTypes = ({ items }) => {
   );
 };
 
-const MyFiddleList = ({ items }) => {
+const MyFiddleList = ({ user, items }) => {
   return (
     <div className="container">
       <h3 className="my-3">
@@ -1266,18 +1266,21 @@ const MyFiddleList = ({ items }) => {
               <div className="card-body">
                 <h5 className="card-title">{item.title}</h5>
                 <p className="card-text text-secondary fw-bold">
-                  {item.kind}<br />
+                  {item.kind}
+                </p>
+                <p className={`card-text text-${item.owner === user.username ? 'success' : 'danger'} fw-bold`}>
+                  {item.owner}<br />
                 </p>
                 <Dropdown as={ButtonGroup} drop={"down-centered"}>
-                  <Button href={addLang(item.url)} variant="success">Rev ({item.rev}) - {item.time_ago}</Button>
+                  <Button href={addLang(item.url)} variant="primary">Rev ({item.rev}) - {item.time_ago}</Button>
 
-                  <Dropdown.Toggle split variant="success" id="dropdown-split-basic" />
+                  {!!item.revs.length && <Dropdown.Toggle split variant="primary" id="dropdown-split-basic" />}
 
-                  <Dropdown.Menu>
+                  {!!item.revs.length && <Dropdown.Menu>
                     {item.revs.map(item => (
                       <Dropdown.Item key={item.rev} href={addLang(item.url)}>Rev ({item.rev}) - {item.time_ago}</Dropdown.Item>
                     ))}
-                  </Dropdown.Menu>
+                  </Dropdown.Menu>}
                 </Dropdown>
               </div>
             </div>
@@ -1345,7 +1348,7 @@ const FiddleWrapper = ({ result, onChange }) => {
                 <Trans>Mine</Trans>
               </Link>
             </Nav>
-            <Nav className="ml-auto me-5">
+            <Nav className={`ml-auto me-5 text-${result?.owner === result?.user.username ? 'success' : 'danger'}`}>
               {result?.owner && <>Owner:<br /></>}
               {result?.owner}
             </Nav>
