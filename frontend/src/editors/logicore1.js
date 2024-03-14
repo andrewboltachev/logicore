@@ -537,7 +537,7 @@ class KeysOutput extends OutputHandleStrategy {
   }
 
   suggestedOutputEdges (contents) {
-    return Object.entries(contents).map(([k, v]) => ({tag: k, targetNodeData: v}));
+    return Object.entries(contents).map(([k, v]) => ({label: k, targetNodeData: v}));
   }
 
   getForFunnelRequest({node, edgeLabel, result}) {
@@ -588,10 +588,10 @@ class OptionalKeysOutput extends OutputHandleStrategy {
 
   suggestedOutputEdges (contents) {
     const result = [];
-    for (const label of _.keys(contents[0])) {
+    for (const [label, value] of Object.entries(contents[0])) {
       result.push({ label, optional: false });
     }
-    for (const label of _.keys(contents[1])) {
+    for (const [label, value] of Object.entries(contents[1])) {
       result.push({ label, optional: true });
     }
     return result;
@@ -641,7 +641,7 @@ class SeqOutput extends OutputHandleStrategy {
   }
 
   suggestedOutputEdges (contents) {
-    return _.keys(contents);
+    return contents.map((item, index) => ({label: index, targetNodeData: item}));
   }
 
   getForFunnelRequest({node, edgeLabel, result, edges}) {
@@ -1215,33 +1215,41 @@ class MatchPatternSuggestion {
     //console.log('edges are', edges);
   }
   async applyMultiLevelSuggestion(newData, {nodes, edges, setNodes, setEdges, value}) {
-    const walk = (newData, value) => {
+    const walk = (value, newData) => {
+      console.log({ value, newData });
       const { tag, contents } = newData;
       const updatedNode = JSON.parse(JSON.stringify(value));
+      updatedNode.data = updatedNode.data || {};
       updatedNode.data.value = tag;
       let state = null;
       if (tag === 'MatchStringExact') state = contents;
       if (tag === 'MatchNumberExact') state = contents;
       if (tag === 'MatchBoolExact') state = contents;
+      let dc = null, type = null;
+      if (!dc && (dc = d2AsMap_matchPattern[tag])) type = 'MatchNode';
+      if (!dc && (dc = d2AsMap_contextFreeGrammar[tag])) type = 'ContextFreeNode';
+      if (!type) throw new Error(`Type is empty: ${tag}`);
+      updatedNode.type = type;
       updatedNode.data.state = state;
 
       const func = getNodeFunctionality(updatedNode);
-      console.log('func', func);
 
-      const labels = func._getOutputHandleStrategy().suggestedOutputEdges(contents);
+      const suggsestedEdges = func._getOutputHandleStrategy().suggestedOutputEdges(contents);
       const yStep = 100;
-      let yPos = value.position.y - Math.round(yStep * labels.length / 2);
+      let yPos = value.position.y - Math.round(yStep * suggsestedEdges.length / 2);
       setNodes(nds => modifyHelper([{matching: ({ id }) => id === value.id}], nds, _ => updatedNode));
-      for (const item of labels) {
-        const { label, optional, targetNodeData } = (item && typeof item === "object") ? item : { label: item, optional: void 0, targetNodeData: null };
+      for (const { label, optional, targetNodeData } of suggsestedEdges) {
+        if (!targetNodeData) {
+          console.log(suggsestedEdges);
+          throw new Error(`Empty targetNodeData`);
+        }
         const id = "id_" + uuidv4();
         const newNode = {
           id,
           position: { x: value.position.x + 250, y: yPos },
           type: 'MatchNode',
-          data: { value: 'MatchAny', state: "" },
+          data: { value: 'MatchAny', data: {} },
         };
-        walk(targetNodeData, newNode);
         setNodes(nds => [...nds, newNode]);
         setEdges(eds => addEdge({
           id: `reactflow__edge-${value.id}-${id}`,
@@ -1254,16 +1262,17 @@ class MatchPatternSuggestion {
           markerEnd,
         }, eds));
         yPos += yStep;
+        walk(newNode, targetNodeData);
       }
       return updatedNode;
     }
-    walk(newData, value);
+    walk(value, newData);
   }
 }
 
 class SimpleValueSuggestion extends MatchPatternSuggestion {
   async applySuggestion(contents, context) {
-    this.applySimpleSuggestion(contents, context);
+    this.applyMultiLevelSuggestion(contents, context);
   }
 }
 
@@ -1290,14 +1299,8 @@ class KeyBreakdownSuggestion extends MatchPatternSuggestion {
     });
     if (result !== null) {
       console.log('result', result.label.value, keysMap[result.label.value]);
-      /*const selected = keysMap[result.label.value];
-      const theTag = {
-        tag: 'MatchOr',
-        contents: Object.fromEntries(
-          selected.map((option) => );
-        ),
-      };
-      this.applySimpleSuggestion(theTag, context);*/
+      const selected = keysMap[result.label.value];
+      this.applyMultiLevelSuggestion(selected, context);
       //console.log('newData', placeSubGraph(newData, value));
     }
   }
@@ -1636,6 +1639,13 @@ const markerEnd = {
 };
 
 function ArrowEdge(props) {
+  const displayLabel = (label) => {
+    if (typeof label === "string") return label;
+    if (typeof label === "number") return label + '';
+    if (label === null) return '';
+    console.warn(`Uncommon label type: ${typeof label} (${label})`);
+    return '';
+  }
   const {
     id,
     sourceX,
@@ -1653,7 +1663,7 @@ function ArrowEdge(props) {
     sourcePosition,
     targetPosition,
   });
-  const label = (props.label || '') + (props.data?.optional ? '?' : '');
+  const label = displayLabel(props.label) + (props.data?.optional ? '?' : '');
   return (
       <>
         <BaseEdge {...props} id={id} path={edgePath} labelX={labelX} labelY={labelY} label={label} animated={!!props.data?.optional} />
