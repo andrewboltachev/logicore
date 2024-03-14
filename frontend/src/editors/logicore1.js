@@ -491,7 +491,15 @@ class NamedOutput extends OutputHandleStrategy {
   }
 
   suggestedOutputEdges (contents) {
-    return this.labels.map(label => contents);
+    const result = [];
+    let j = 0;
+    for (let i = 0; i < contents.length; i++) {
+      if (this.func.namedParamsIndexes.has(i)) {
+        result.push({label: this.labels[j], targetNodeData: contents[i]});
+        j++;
+      }
+    }
+    return result;
   }
 
   getForFunnelRequest({node, edgeLabel, result, nodes, edges}) {
@@ -529,7 +537,7 @@ class KeysOutput extends OutputHandleStrategy {
   }
 
   suggestedOutputEdges (contents) {
-    return _.keys(contents);
+    return Object.entries(contents).map(([k, v]) => ({tag: k, targetNodeData: v}));
   }
 
   getForFunnelRequest({node, edgeLabel, result}) {
@@ -1382,12 +1390,17 @@ class MatchNodeFunctionality extends NodeFunctionality {
       return new OptionalKeysOutput(this);
     } else {
       const result = [];
+      this.namedParamsIndexes = new Set();
+      let i = 0;
       for (const [item, name] of _.zip(this.c.typeDef.contents, this.c.paramNames)) {
         if (_.isEqual(item, MATCHPATTERN) || _.isEqual(item, CONTEXTFREEGRAMMAR)) {
           result.push(name);
+          this.namedParamsIndexes.add(i);
         } else if (item.type === 'AppT1' && !item.params.length && (_.isEqual(item.target, MATCHPATTERN) || _.isEqual(item.target, CONTEXTFREEGRAMMAR))) {
           result.push(name);
+          this.namedParamsIndexes.add(i);
         }
+        i++;
       }
       return new NamedOutput(this, result);
     }
