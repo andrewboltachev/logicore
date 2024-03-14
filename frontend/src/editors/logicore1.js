@@ -412,6 +412,10 @@ console.log('NODE_CLASSES', NODE_CLASSES);
 
 // ADT for hipsters
 class OutputHandleStrategy {
+  constructor(func) {
+    this.func = func;
+  }
+
   hasOutputHandle() { return true; }
 };
 
@@ -426,7 +430,7 @@ class NoOutput extends OutputHandleStrategy {
     throw new Error("Must not call this");
   }
 
-  suggestedOutputEdgeLabels (contents) {
+  suggestedOutputEdges (contents) {
     return [];
   }
 
@@ -444,8 +448,8 @@ class SingleOutput extends OutputHandleStrategy {
     return null;
   }
 
-  suggestedOutputEdgeLabels (contents) {
-    return [null];
+  suggestedOutputEdges (contents) {
+    return [{label: null, targetNodeData: contents}];
   }
 
   getForFunnelRequest({node, edgeLabel, result}) {
@@ -454,8 +458,8 @@ class SingleOutput extends OutputHandleStrategy {
 };
 
 class NamedOutput extends OutputHandleStrategy {
-  constructor(labels) {
-    super();
+  constructor(func, labels) {
+    super(func);
     this.labels = labels;
   }
 
@@ -486,7 +490,7 @@ class NamedOutput extends OutputHandleStrategy {
     }
   }
 
-  suggestedOutputEdgeLabels (contents) {
+  suggestedOutputEdges (contents) {
     return this.labels.map(label => contents);
   }
 
@@ -524,7 +528,7 @@ class KeysOutput extends OutputHandleStrategy {
     }
   }
 
-  suggestedOutputEdgeLabels (contents) {
+  suggestedOutputEdges (contents) {
     return _.keys(contents);
   }
 
@@ -574,7 +578,7 @@ class OptionalKeysOutput extends OutputHandleStrategy {
     }
   }
 
-  suggestedOutputEdgeLabels (contents) {
+  suggestedOutputEdges (contents) {
     const result = [];
     for (const label of _.keys(contents[0])) {
       result.push({ label, optional: false });
@@ -628,7 +632,7 @@ class SeqOutput extends OutputHandleStrategy {
     }
   }
 
-  suggestedOutputEdgeLabels (contents) {
+  suggestedOutputEdges (contents) {
     return _.keys(contents);
   }
 
@@ -1115,7 +1119,7 @@ const getStateForSubGraph = ({ tag, contents }) => {
 
 const getEdgesForSubgraph = ({ tag, contents }) => {
   /*const func = getNodeFunctionality(updatedNode);
-  const labels = func._getOutputHandleStrategy().suggestedOutputEdgeLabels(contents);
+  const labels = func._getOutputHandleStrategy().suggestedOutputEdges(contents);
   const result = [];
   for (const label in labels) {
     result.push({label, targetNodeData});
@@ -1172,7 +1176,7 @@ class MatchPatternSuggestion {
     console.log('func', func);
 
     //const contentsArr = !contents ? [] : Array.isArray(contents) ? contents : [contents];
-    const labels = func._getOutputHandleStrategy().suggestedOutputEdgeLabels(contents);
+    const labels = func._getOutputHandleStrategy().suggestedOutputEdges(contents);
     const yStep = 100;
     let yPos = value.position.y - Math.round(yStep * labels.length / 2);
     setNodes(nds => modifyHelper([{matching: ({ id }) => id === value.id}], nds, _ => updatedNode));
@@ -1201,6 +1205,51 @@ class MatchPatternSuggestion {
     // XXX: here's actually the opposite of defaultValue that's required
     // const { defaultValue } = NODE_CLASSES.find(({ type }) => type === 'MatchNode').options.find(({ value }) => value === tag);
     //console.log('edges are', edges);
+  }
+  async applyMultiLevelSuggestion(newData, {nodes, edges, setNodes, setEdges, value}) {
+    const walk = (newData, value) => {
+      const { tag, contents } = newData;
+      const updatedNode = JSON.parse(JSON.stringify(value));
+      updatedNode.data.value = tag;
+      let state = null;
+      if (tag === 'MatchStringExact') state = contents;
+      if (tag === 'MatchNumberExact') state = contents;
+      if (tag === 'MatchBoolExact') state = contents;
+      updatedNode.data.state = state;
+
+      const func = getNodeFunctionality(updatedNode);
+      console.log('func', func);
+
+      const labels = func._getOutputHandleStrategy().suggestedOutputEdges(contents);
+      const yStep = 100;
+      let yPos = value.position.y - Math.round(yStep * labels.length / 2);
+      setNodes(nds => modifyHelper([{matching: ({ id }) => id === value.id}], nds, _ => updatedNode));
+      for (const item of labels) {
+        const { label, optional, targetNodeData } = (item && typeof item === "object") ? item : { label: item, optional: void 0, targetNodeData: null };
+        const id = "id_" + uuidv4();
+        const newNode = {
+          id,
+          position: { x: value.position.x + 250, y: yPos },
+          type: 'MatchNode',
+          data: { value: 'MatchAny', state: "" },
+        };
+        walk(targetNodeData, newNode);
+        setNodes(nds => [...nds, newNode]);
+        setEdges(eds => addEdge({
+          id: `reactflow__edge-${value.id}-${id}`,
+          source: value.id,
+          //sourceHandle: null,
+          target: id,
+          //targetHandle: null,
+          label,
+          data: { optional },
+          markerEnd,
+        }, eds));
+        yPos += yStep;
+      }
+      return updatedNode;
+    }
+    walk(newData, value);
   }
 }
 
@@ -1315,22 +1364,22 @@ class MatchNodeFunctionality extends NodeFunctionality {
 
   _getOutputHandleStrategy () {
     if (this.c.typeDef.contents.length === 0) {
-      return new NoOutput();
+      return new NoOutput(this);
     } else if (this.c.typeDef.contents.length === 1) {
       const item = this.c.typeDef.contents[0];
       if (_.isEqual(item, KEYMAP_OF_MATCHPATTERN) || _.isEqual(item, KEYMAP_OF_CONTEXTFREEGRAMMAR)) {
-        return new KeysOutput();
+        return new KeysOutput(this);
       } else if (_.isEqual(item, MATCHPATTERN) || _.isEqual(item, CONTEXTFREEGRAMMAR)) {
-        return new SingleOutput();
+        return new SingleOutput(this);
       }
       // TODO (1) matchPattern on client (2) Resolve types (w/o vars) or (3) type inference?
       if (_.isEqual(item, VECTOR_OF_CONTEXTFREEGRAMMAR)) {
-        return new SeqOutput();
+        return new SeqOutput(this);
       }
       console.warn('Cannot properly define output handle strategy for type', item);
-      return new NoOutput();
+      return new NoOutput(this);
     } if (this.node?.data?.value === 'MatchObjectOptional') { // TODO?
-      return new OptionalKeysOutput();
+      return new OptionalKeysOutput(this);
     } else {
       const result = [];
       for (const [item, name] of _.zip(this.c.typeDef.contents, this.c.paramNames)) {
@@ -1340,7 +1389,7 @@ class MatchNodeFunctionality extends NodeFunctionality {
           result.push(name);
         }
       }
-      return new NamedOutput(result);
+      return new NamedOutput(this, result);
     }
   }
 

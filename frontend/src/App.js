@@ -1348,7 +1348,7 @@ const FiddleWrapper = ({ result, onChange }) => {
                 <Trans>Mine</Trans>
               </Link>
             </Nav>
-            <Nav className={`ml-auto me-5 text-${result?.owner === result?.user.username ? 'success' : 'danger'}`}>
+            <Nav className={`ml-auto me-5 text-${result?.owner === result?.user?.username ? 'success' : 'danger'}`}>
               {result?.owner && <>Owner:<br /></>}
               {result?.owner}
             </Nav>
