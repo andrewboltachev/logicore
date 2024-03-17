@@ -1201,9 +1201,9 @@ class MatchPatternSuggestion {
       setEdges(eds => addEdge({
         id: `reactflow__edge-${value.id}-${id}`,
         source: value.id,
-        //sourceHandle: null,
+        sourceHandle: 'arrowSource',
         target: id,
-        //targetHandle: null,
+        targetHandle: 'arrowTarget',
         label,
         data: { optional },
         markerEnd,
@@ -1254,9 +1254,9 @@ class MatchPatternSuggestion {
         setEdges(eds => addEdge({
           id: `reactflow__edge-${value.id}-${id}`,
           source: value.id,
-          //sourceHandle: null,
+          sourceHandle: 'arrowSource',
           target: id,
-          //targetHandle: null,
+          targetHandle: 'arrowTarget',
           label,
           data: { optional },
           markerEnd,
@@ -1693,6 +1693,8 @@ function Flow({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const [selectedEdges, setSelectedEdges] = useState([]);
 
   const onConnect = useCallback(async (params) => {
+    if (params.sourceHandle !== 'arrowSource') return;
+    if (params.targetHandle !== 'arrowTarget') return;
     const sourceNode = nodes.find(n => n.id === params.source);
     const targetNode = nodes.find(n => n.id === params.target);
     const outcomingEdges = edges.filter(({ source }) => source === params.source);

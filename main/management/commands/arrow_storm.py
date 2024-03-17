@@ -19,7 +19,6 @@ class Command(BaseCommand):
                 continue
             if "edges" not in f.data:
                 continue
-            f.data["edges"] = [
-                handle(e) for e in f.data["edges"] 
-            ]
+            for e in f.data["edges"]:
+                handle(e)
             f.save()
