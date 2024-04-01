@@ -589,10 +589,10 @@ class OptionalKeysOutput extends OutputHandleStrategy {
   suggestedOutputEdges (contents) {
     const result = [];
     for (const [label, value] of Object.entries(contents[0])) {
-      result.push({ label, optional: false });
+      result.push({ label, optional: false, targetNodeData: value });
     }
     for (const [label, value] of Object.entries(contents[1])) {
-      result.push({ label, optional: true });
+      result.push({ label, optional: true, targetNodeData: value });
     }
     return result;
   }
