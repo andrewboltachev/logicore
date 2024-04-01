@@ -70,14 +70,14 @@ from .utils import (
 
 def react_static(request, path):
     if path.lower().endswith(".css") or path.lower().endswith(".js"):
-        remoteurl = "http://127.0.0.1:3000/static/" + path
+        remoteurl = "http://127.0.0.1:3008/static/" + path
     else:
-        remoteurl = "http://127.0.0.1:3000/react-static/" + path
+        remoteurl = "http://127.0.0.1:3008/react-static/" + path
     return proxy_view(request, remoteurl, {})
 
 
 def hot_update(request, path):
-    remoteurl = "http://127.0.0.1:3000/" + path
+    remoteurl = "http://127.0.0.1:3008/" + path
     return proxy_view(request, remoteurl, {})
 
 

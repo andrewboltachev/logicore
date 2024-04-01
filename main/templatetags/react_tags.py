@@ -12,6 +12,6 @@ def include_react(context):
     if not settings.FRONTEND_DEV_MODE:
         return ''
     return SafeString(
-        ' '.join(re.findall(r'<script [^>]+></script>', requests.get('http://localhost:3000/').text.replace('/static/', '/react-static/')))
+        ' '.join(re.findall(r'<script [^>]+></script>', requests.get('http://localhost:3008/').text.replace('/static/', '/react-static/')))
     )
 
