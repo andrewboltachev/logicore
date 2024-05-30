@@ -619,7 +619,7 @@ class PythonGrammarView(MainView):
                         json={"value": result},
                     )
                 except Exception as e:
-                    return result = str(e)
+                    result = str(e)
                 else:
                     if resp.status_code != 200:
                         resp = f"Haskell API returned: {resp.content.decode('utf-8')}"
