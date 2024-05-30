@@ -622,7 +622,7 @@ class PythonGrammarView(MainView):
                     return result = str(e)
                 else:
                     if resp.status_code != 200:
-                        resp = f"Haskell API returned: {resp.content.decode('utf-8')}"}
+                        resp = f"Haskell API returned: {resp.content.decode('utf-8')}"
                     else:
                         try:
                             result = resp.json()["grammar"]
