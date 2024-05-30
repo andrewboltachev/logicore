@@ -612,9 +612,25 @@ class PythonGrammarView(MainView):
                 )
             except Exception as e:
                 result = str(e)
+            else:
+                try:
+                    resp = requests.post(
+                        "http://localhost:3042/valueToExactGrammar",
+                        json={"value": result},
+                    )
+                except Exception as e:
+                    return result = str(e)
+                else:
+                    if resp.status_code != 200:
+                        resp = f"Haskell API returned: {resp.content.decode('utf-8')}"}
+                    else:
+                        try:
+                            result = resp.json()["grammar"]
+                        except Exception as e:
+                            result = str(e)
         return JsonResponse(
             {
-                # "navigate": f"/python"
+                # "navigate": f"/pyg"
                 "result": result,
             }
         )
