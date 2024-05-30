@@ -584,6 +584,42 @@ class PythonView(MainView):
         )
 
 
+class PythonView(MainView):
+    in_menu = False
+    url_path = "/python-g"
+    title = "Hello world"
+    TEMPLATE = "LanguageView"
+
+    def get_data(self, request, *args, **kwargs):
+        return {
+            "value": "",
+            "result": None,
+        }
+
+    def post(self, request, *args, **kwargs):
+        from main.parser.python import serialize_dc
+        import libcst
+
+        data = json.loads(request.body)["data"]
+        try:
+            result = serialize_dc(libcst.parse_module(data["value"]))
+        except Exception as e:
+            result = str(e)
+        else:
+            try:
+                result = (
+                    result["body"][0] if len(result["body"]) == 1 else result["body"]
+                )
+            except Exception as e:
+                result = str(e)
+        return JsonResponse(
+            {
+                # "navigate": f"/python"
+                "result": result,
+            }
+        )
+
+
 class CodeSearchsApiView(MainView):
     in_menu = False
     url_path = "/logicore-code/"
