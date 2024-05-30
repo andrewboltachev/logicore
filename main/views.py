@@ -584,9 +584,9 @@ class PythonView(MainView):
         )
 
 
-class PythonView(MainView):
+class PythonGrammarView(MainView):
     in_menu = False
-    url_path = "/python-g"
+    url_path = "/pyg"
     title = "Hello world"
     TEMPLATE = "LanguageView"
 
