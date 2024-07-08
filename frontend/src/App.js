@@ -344,19 +344,23 @@ const TSView = ({ onChange }) => {
                   top: 6, // TODO
                   left: 12,
                 }}
-              >{text.split('\n').map((line, row) => <React.Fragment>
+              >{/*text.split('\n').map((line, row) => <React.Fragment>
                 {!!row && <br />}
                 {line.split('').map((ch, col) => <span
                   onClick={(e) => {
                     e.persist();
                     console.log(row, col, ch);
-                    /*const { x, y, width, height } = ref.current.getBoundingClientRect();
-                    const cols = window._.max(text.split('\n').map(x => x.length));
-                    const colWidth = +(width / cols).toFixed(3);
-                    console.log(Math.floor((e.clientX - x) / colWidth), Math.floor((e.clientY - y) / 20));*/
                   }}
                 >{' '}</span>)}
-              </React.Fragment>)}</div>
+              </React.Fragment>)*/}
+              {text.split('').map((ch, num) => <span
+                  style={{display: 'inline'}}
+                  onClick={(e) => {
+                    e.persist();
+                    console.log(ch, num, text[num]);
+                  }}
+                >{ch === '\n' ? ch : ' '}</span>)}
+              </div>
               <div
                 className="typescript"
                 style={{
