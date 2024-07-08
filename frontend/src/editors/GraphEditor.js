@@ -75,6 +75,9 @@ const C1 = () => <List items={$}>
 window.C1 = C1();*/
 
 
+  var NODE_TYPES = [];
+  var EDGE_TYPES = [];
+
 export default function GraphEditor({ storageKey, prevStorageKey, value, onChange, beforeContent, definition }) {
   // TODO: refactor out storageKey stuff
 	const nodes = value?.nodes || [];
@@ -87,7 +90,7 @@ export default function GraphEditor({ storageKey, prevStorageKey, value, onChang
   const [selectedEdges, setSelectedEdges] = useState([]);
 
   const onConnect = useCallback(async (params) => {
-    /*const result = await runModal({
+    const result = await runModal({
       title: "Add edge",
       fields: {
         type: "Fields",
@@ -104,7 +107,7 @@ export default function GraphEditor({ storageKey, prevStorageKey, value, onChang
       modalSize: "md",
       value: {subtype: null},
     });
-    if (result) setEdges(addEdge(update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}), edges));*/
+    if (result) setEdges(addEdge(update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}), edges));
   }, [setEdges]);
 
 	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
@@ -113,7 +116,7 @@ export default function GraphEditor({ storageKey, prevStorageKey, value, onChang
   const { runModal } = useContext(ModalContext);
 
 	const doAdd = async () => {
-  	/*const id = "id_" + uuidv4();
+  	const id = "id_" + uuidv4();
     const result = await runModal({
       title: "Add node",
       fields: {
@@ -136,9 +139,8 @@ export default function GraphEditor({ storageKey, prevStorageKey, value, onChang
     setNodes([...nodes, {
       id,
       position: { x: 0, y: 0 },
-      //type: "GraphNode",
       data: { subtype: t, label: t }
-    }]);*/
+    }]);
 	};
 
   const [state, setState] = useLocalStorage(storageKey);
@@ -223,45 +225,12 @@ export default function GraphEditor({ storageKey, prevStorageKey, value, onChang
       ...sourceAndTarget
     };
   }*/
-  const nodeTypes = useMemo(
-    () => Object.fromEntries(definition.nodeClasses.map(({ type, component }) => [type, component])),
-    [definition?.nodeClasses]
-  );
   return (<>
     <div className="row align-items-stretch flex-grow-1">
       <div className="col d-flex flex-column">
         <div className="btn-group">
           {beforeContent}
-          {/*<button type="button" className="btn btn-success mt-2" onClick={_ => doAdd()}>Add</button>*/}
-          <Dropdown>
-            <Dropdown.Toggle variant="success" id="dropdown-basic" className="mt-2">
-              Add
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              {definition.nodeClasses.map(({ options, type, ...parentItem }, i) => (
-                <React.Fragment key={type}>
-                  {!!i && <Dropdown.Divider />}
-                  {options.map(({ label, value, defaultValue, ...item }) => {
-                    return (
-                      <Dropdown.Item key={label} href="#" onClick={(e) => {
-                        e.preventDefault();
-                        const id = "id_" + uuidv4();
-                        console.log('type', type);
-                        setNodes([...nodes, {
-                          id,
-                          position: { x: 0, y: 0 },
-                          type,
-                          data: { value, state: defaultValue },
-                        }]);
-                      }}>
-                        {label}
-                      </Dropdown.Item>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+          <button type="button" className="btn btn-success mt-2" onClick={_ => doAdd()}>Add</button>
         </div>
         <ReactFlow
           onInit={onInit}
@@ -270,7 +239,6 @@ export default function GraphEditor({ storageKey, prevStorageKey, value, onChang
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          nodeTypes={nodeTypes}
         >
           <MiniMap />
           <Controls />

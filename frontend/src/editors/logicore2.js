@@ -78,152 +78,39 @@ function difference(setA, setB) {
   return _difference;
 }
 
-const refactorAppT = (node) => {
-  if (!!node && !Array.isArray(node) && typeof node === 'object') {
-    if (node.type === 'AppT') {
-      const params = [];
-      let target = node;
-      const f = (x) => {
-        params.unshift(x.param);
-        if (x.target.type === 'AppT') {
-          f(x.target);
-        } else {
-          target = x.target;
-        }
-      };
-      f(node);
-      return {type: 'AppT1', target, params};
-    }
+/*const Component = (node) => {
+  const { data, selected, isConnectable, label } = node;
+  let n = matchNodeOptions.find(({ value }) => value === node.data.value);
+
+  if (new Set(['MatchStringExact', 'MatchNumberExact', 'MatchBoolExact']).has(node.data.value)) {
+    return (
+      <div style={{minWidth: 50, maxWidth: 200, padding: "0 10px", width: 'auto', height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
+        {node.data.value === 'MatchStringExact' && <code className="text-truncate">{node.data.state}</code>}
+        {node.data.value === 'MatchNumberExact' && <code className="text-truncate" style={{color: 'blue'}}>{node.data.state}</code>}
+        {node.data.value === 'MatchBoolExact' && <code style={{color: 'blue'}}>{node.data.state ? 'true' : 'false'}</code>}
+      </div>
+    );
+  } else {
+    return (
+      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div>{n.label}</div>
+      </div>
+    );
   }
-  return node;
-}
-
-const nodeLabelsAndParamNames = {
-  'MatchObjectOnly': {
-    label: '{o}',
-  },
-  'MatchArray': {
-    label: '[*]',
-  },
-  'MatchStringExact': {
-    label: '"!"',
-    defaultValue: "",
-  },
-  'MatchNumberExact': {
-    label: '1!',
-    defaultValue: 0,
-  },
-  'MatchBoolExact': {
-    label: 't|f!',
-    defaultValue: false,
-  },
-  'MatchNull': {
-    label: 'null',
-  },
-  'MatchStringAny': {
-    label: '""?',
-  },
-  'MatchNumberAny': {
-    label: '1?',
-  },
-  'MatchBoolAny': {
-    label: 't|f?',
-  },
-  'MatchAny': {
-    label: '∀',
-  },
-  'MatchNone': {
-    label: '∅',
-  },
-  'MatchOr': {
-    label: '||',
-  },
-  'MatchIfThen': {
-    label: 'if',
-    paramNames: ['cond', 'Error text', 'out'],
-  },
-};
-
-const matchPatternDataConstructors = d2[0].contents;
-const matchPatternDataConstructorsRefactored = walk(matchPatternDataConstructors, _.identity, refactorAppT);
-
-// 0 is MatchPattern
-const d2AsMap = Object.fromEntries(matchPatternDataConstructorsRefactored.map(({tag, ...item}) => {
-  return [tag, item];
-}));
+};*/
 
 
-const edgesAreConnected = (edges, idFrom, idTo) => {
-  let current = idTo;
-  while (current) {
-    if (current === idFrom) return true;
-    const edge = edges.find(({ target }) => target === current);
-    current = edge?.source;
-  }
-  return false;
-};
-
-
-
-function SourceNode({ data, selected, isConnectable }) {
-  return (
-    <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-      {/*<Handle type="target" position={Position.Left} isConnectable={isConnectable} />*/}
-      <div>{'Src'}</div>
-      <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
-    </div>
-  );
-}
-
-const matchNodeOptions = Object.entries(nodeLabelsAndParamNames).map(([value, ctx]) => {
-  const typeDef = d2AsMap[value];
-  const { label } = ctx;
-  //...ctx, typeDef
-  return { value, label };
-});
-
-
-
-const GraphDef = {
-  nodeClasses: [
-    {
-      type: 'SourceNode',
-      options: [
-        {
-          value: 'Source',
-          label: 'Source',
-        },
-      ],
-      component: SourceNode,
-    },
-    {
-      type: 'MatchNode',
-      options: matchNodeOptions,
-      component: (node) => {
-        const { data, selected, isConnectable, label } = node;
-        let n = matchNodeOptions.find(({ value }) => value === node.data.value);
-
-        if (new Set(['MatchStringExact', 'MatchNumberExact', 'MatchBoolExact']).has(node.data.value)) {
-          return (
-            <div style={{minWidth: 50, maxWidth: 200, padding: "0 10px", width: 'auto', height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-              <Handle type="target" position={Position.Left} isConnectable={isConnectable} />
-              {node.data.value === 'MatchStringExact' && <code className="text-truncate">{node.data.state}</code>}
-              {node.data.value === 'MatchNumberExact' && <code className="text-truncate" style={{color: 'blue'}}>{node.data.state}</code>}
-              {node.data.value === 'MatchBoolExact' && <code style={{color: 'blue'}}>{node.data.state ? 'true' : 'false'}</code>}
-            </div>
-          );
-        } else {
-          return (
-            <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-              {/*<Handle type="target" position={Position.Left} isConnectable={isConnectable} />*/}
-              <div>{n.label}</div>
-              {/*!!n.hasOutputHandle() && <Handle type="source" position={Position.Right} isConnectable={isConnectable} />*/}
-            </div>
-          );
-        }
-      },
-    }
+const definition = {
+  nodes: [
+    {type: 'FS'},
+    {type: 'PythonFile'},
+    {type: 'Data'},
   ],
+  edges: [
+    {type: 'Set'},
+    {type: 'Grammar'},
+  ]
 };
 
 
@@ -239,7 +126,6 @@ const Logicore2Editor = ({
   return (
 	  <ReactFlowProvider>
       <GraphEditor
-        definition={GraphDef}
         storageKey={`viewport-${revId}`}
         prevStorageKey={
           prevRevId ? `viewport-${prevRevId}` : null
@@ -254,4 +140,3 @@ const Logicore2Editor = ({
 export default {
   Editor: Logicore2Editor,
 };
-

@@ -615,8 +615,8 @@ class PythonGrammarView(MainView):
             else:
                 try:
                     resp = requests.post(
-                        "http://localhost:3042/valueToExactGrammar",
-                        json={"value": result},
+                        "http://localhost:3042/pythonValueToExactGrammar",
+                        json={"pythonValue": result},
                     )
                 except Exception as e:
                     result = str(e)
@@ -634,6 +634,17 @@ class PythonGrammarView(MainView):
                 "result": result,
             }
         )
+
+
+class PythonGrammarView(MainView):
+    in_menu = False
+    url_path = "/tsview/"
+    title = "Hello world"
+    TEMPLATE = "TSView"
+
+    def get_data(self, request, *args, **kwargs):
+        return {
+        }
 
 
 class CodeSearchsApiView(MainView):
@@ -1263,6 +1274,11 @@ class RevisionFiddleItemApiView(ExistingFiddleItemApiView):
 @csrf_exempt
 def haskell_api(request, path):
     return proxy_view(request, f"http://localhost:3042/{path}", {})
+
+
+@csrf_exempt
+def javascript_api(request, path):
+    return proxy_view(request, f"http://localhost:3043/{path}", {})
 
 
 @csrf_exempt

@@ -94,6 +94,11 @@ import LOGICORE1 from "./editors/logicore1";
 import LOGICORE2 from "./editors/logicore2";
 import UI1 from "./editors/ui1";
 
+import hljs from 'highlight.js/lib/core';
+import typescript from 'highlight.js/lib/languages/typescript';
+import 'highlight.js/styles/github.css';
+hljs.registerLanguage('typescript', typescript);
+
 const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url);
 
 const FolderField = ({
@@ -263,6 +268,119 @@ const FiddleListView = ({ title, create_form, items, onChange, baseUrl }) => {
           )}
         </tbody>
       </table>
+    </div>
+  );
+};
+
+const EXAMPLE_TYPESCRIPT = `\
+type Pick<T, K extends keyof T> = {
+    [P in K]: T[P];
+};
+`;
+
+
+const TSView = ({ onChange }) => {
+  const [text, setText] = useState(EXAMPLE_TYPESCRIPT);
+  const [edit, setEdit] = useState(false);
+  const [result, setResult] = useState(null);
+  const [worker, setWorker] = useState(null);
+  const [html, setHtml] = useState('');
+  useEffect(() => {
+    if (worker) return;
+    let workerObj = new Worker('/static/hljs/worker.js');
+    workerObj.onmessage = (evt) => {
+      console.log('worker response', evt);
+      setHtml(evt.data);
+    }
+    workerObj.onerror = (evt) => {
+      console.warn('worker error', evt);
+    }
+    setWorker(workerObj);
+    //const code = document.querySelector('#code');
+  }, []);
+
+  useEffect(() => {
+    if (!worker) return;
+    console.log('WORKER online', worker);
+    setTimeout(() => worker.postMessage(text), 50);
+  }, [worker]);
+
+  return (
+    <div className="container-fluid my-4">
+      <div className="row">
+        <div className="col-md-6 d-flex justify-content-center">
+          <h3>TypeScript</h3>
+        </div>
+        <div className="col-md-6 d-flex justify-content-center">Result</div>
+      </div>
+      <div className="row my-5">
+        <div className="col-md-6">
+          Code:
+          {edit && <textarea
+            className="form-control"
+            style={{
+              height: "75vh",
+              fontFamily: "Monaco, Menlo, Consolas, monospace",
+            }}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          ></textarea>}
+          {!edit && <code
+            className="form-control typescript"
+            style={{
+              height: "75vh",
+              fontFamily: "Monaco, Menlo, Consolas, monospace",
+              whiteSpace: "pre",
+            }}
+            dangerouslySetInnerHTML={{__html: html}}
+            />}
+          {!edit && <button
+            type="button"
+            className="btn btn-success my-2"
+            onClick={(_) => {
+              setEdit(true);
+            }}
+          >
+            Edit
+          </button>}
+          {edit && <div>
+            <button
+              type="button"
+              className="btn btn-success my-2"
+              onClick={(_) => {
+                setEdit(false);
+                worker.postMessage(text);
+              }}
+            >
+              OK
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary my-2"
+              onClick={(_) => {
+                setEdit(false);
+              }}
+            >
+              Cancel
+            </button>
+          </div>}
+        </div>
+        {/*typeof result === "string" ? (
+          <div className="col-md-6 text-danger">
+            Error:
+            <hr style={{ marginTop: 0 }} />
+            <code>{result}</code>
+          </div>
+        ) : (
+          <div className="col-md-6">
+            Result:
+            <hr style={{ marginTop: 0 }} />
+            <code style={{ whiteSpace: "pre" }}>
+              {JSON.stringify(result, null, 2)}
+            </code>
+          </div>
+        )*/}
+      </div>
     </div>
   );
 };
@@ -1298,6 +1416,7 @@ const mainComponents = {
   JSONExplorerGadget,
   LogicoreFormsDemoView,
   LanguageView,
+  TSView,
   PageNotFound,
   FiddleListView,
   // Fiddle begin
