@@ -281,7 +281,7 @@ type Pick<T, K extends keyof T> = {
 
 const TSView = ({ onChange }) => {
   const [text, setText] = useState(EXAMPLE_TYPESCRIPT);
-  const [edit, setEdit] = useState(false);
+  const [edit, setEdit] = useState(null);
   const [result, setResult] = useState(null);
   const [worker, setWorker] = useState(null);
   const [html, setHtml] = useState('');
@@ -301,9 +301,10 @@ const TSView = ({ onChange }) => {
 
   useEffect(() => {
     if (!worker) return;
-    console.log('WORKER online', worker);
     setTimeout(() => worker.postMessage(text), 50);
-  }, [worker]);
+  }, [worker, text]);
+
+  const ref = useRef(null);
 
   return (
     <div className="container-fluid my-4">
@@ -315,30 +316,66 @@ const TSView = ({ onChange }) => {
       </div>
       <div className="row my-5">
         <div className="col-md-6">
+        </div>
+        <div className="col-md-6">
           Code:
-          {edit && <textarea
+          {(edit !== null) && <textarea
             className="form-control"
             style={{
               height: "75vh",
               fontFamily: "Monaco, Menlo, Consolas, monospace",
             }}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
+            value={edit}
+            onChange={(e) => setEdit(e.target.value)}
           ></textarea>}
-          {!edit && <code
-            className="form-control typescript"
-            style={{
-              height: "75vh",
-              fontFamily: "Monaco, Menlo, Consolas, monospace",
-              whiteSpace: "pre",
-            }}
-            dangerouslySetInnerHTML={{__html: html}}
-            />}
+          {(edit === null) && <div
+              className="form-control"
+              style={{
+                height: "75vh",
+                position: "relative",
+                fontFamily: "Monaco, Menlo, Consolas, monospace",
+              }}
+            >
+              <div
+                className="codeback"
+                style={{
+                  whiteSpace: 'pre',
+                  position: "absolute",
+                  top: 6, // TODO
+                  left: 12,
+                }}
+              >{text.split('\n').map((line, row) => <React.Fragment>
+                {!!row && <br />}
+                {line.split('').map((ch, col) => <span
+                  onClick={(e) => {
+                    e.persist();
+                    console.log(row, col, ch);
+                    /*const { x, y, width, height } = ref.current.getBoundingClientRect();
+                    const cols = window._.max(text.split('\n').map(x => x.length));
+                    const colWidth = +(width / cols).toFixed(3);
+                    console.log(Math.floor((e.clientX - x) / colWidth), Math.floor((e.clientY - y) / 20));*/
+                  }}
+                >{' '}</span>)}
+              </React.Fragment>)}</div>
+              <div
+                className="typescript"
+                style={{
+                  whiteSpace: "pre",
+                  display: "inline-block",
+                  cursor: "pointer",
+                  pointerEvents: "none",
+                  position: "relative",
+                  zIndex: 1,
+                }}
+                ref={ref}
+                dangerouslySetInnerHTML={{__html: html}}
+              />
+            </div>}
           {!edit && <button
             type="button"
             className="btn btn-success my-2"
             onClick={(_) => {
-              setEdit(true);
+              setEdit(text);
             }}
           >
             Edit
@@ -348,8 +385,8 @@ const TSView = ({ onChange }) => {
               type="button"
               className="btn btn-success my-2"
               onClick={(_) => {
-                setEdit(false);
-                worker.postMessage(text);
+                setText(edit);
+                setEdit(null);
               }}
             >
               OK
@@ -358,7 +395,7 @@ const TSView = ({ onChange }) => {
               type="button"
               className="btn btn-secondary my-2"
               onClick={(_) => {
-                setEdit(false);
+                setEdit(null);
               }}
             >
               Cancel
