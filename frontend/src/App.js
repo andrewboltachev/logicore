@@ -302,9 +302,13 @@ const TSView = ({ onChange }) => {
   useEffect(() => {
     if (!worker) return;
     setTimeout(() => worker.postMessage(text), 50);
+
+
+
   }, [worker, text]);
 
   const ref = useRef(null);
+  const [selected, setSelected] = useState(null);
 
   return (
     <div className="container-fluid my-4">
@@ -316,6 +320,14 @@ const TSView = ({ onChange }) => {
       </div>
       <div className="row my-5">
         <div className="col-md-6">
+    {selected && <div
+            className="form-control"
+            style={{
+              height: "75vh",
+              fontFamily: "Monaco, Menlo, Consolas, monospace",
+                whiteSpace: 'pre',
+            }}
+          >{JSON.stringify(selected, null, 2)}</div>}
         </div>
         <div className="col-md-6">
           Code:
@@ -354,10 +366,65 @@ const TSView = ({ onChange }) => {
                 >{' '}</span>)}
               </React.Fragment>)*/}
               {text.split('').map((ch, num) => <span
-                  style={{display: 'inline'}}
+                  style={{display: 'inline', backgroundColor: (selected && (num >= selected.pos) && (num < selected.end)) ? 'yellow' : void 0}}
+                  key={num}
                   onClick={(e) => {
                     e.persist();
-                    console.log(ch, num, text[num]);
+                    //console.log(ch, num, text[num]);
+
+
+
+
+
+
+
+
+
+    (async () => {
+
+
+
+
+    let resp;
+    let t = window._.identity;
+
+    try {
+      resp = await axios.post(`/javascript-api/ts-tree?`, {
+        code: text,
+        pos: num,
+      });
+      /*if (resp.data.error) {
+        NotificationManager.warning("", resp.data.error);
+        return;
+      } else {
+        elements = resp.data.funnel;
+      }*/
+    } catch (e) {
+      NotificationManager.warning("", t("Unknown error"));
+      console.error(e);
+      return;
+    }
+    
+    setSelected(resp.data);
+    //console.log('ts-tree data', resp.data);
+
+
+
+
+    })();
+
+
+
+
+
+
+
+
+
+
+
+
+
                   }}
                 >{ch === '\n' ? ch : ' '}</span>)}
               </div>
