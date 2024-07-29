@@ -47,6 +47,8 @@ import ReactFlow, {
   Handle, NodeProps, Position,
   useKeyPress,
   useOnSelectionChange,
+  BaseEdge,
+  getBezierPath, getMarkerEnd, getSimpleBezierPath,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -78,20 +80,6 @@ function difference(setA, setB) {
 
 // Stuff
 
-const BaseNodeComponent = (node) => {
-  const { data, selected, isConnectable } = node;
-  return (
-    <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-      <Handle id="arrowTarget" type="target" position={Position.Left} isConnectable={isConnectable} />
-      <div>{node.label}</div>
-      <Handle id="arrowSource" type="source" position={Position.Right} isConnectable={isConnectable} />
-    </div>
-  );
-}
-
-const BaseEdgeComponent = undefined;
-
-
 class GraphComponent {
   constructor () {
   }
@@ -105,8 +93,9 @@ class Node extends GraphComponent {
   static component(node) {
     const { data, selected, isConnectable } = node;
     return (
-      <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <div>{node.label}Src</div>
+      <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Handle id="arrowTarget" type="target" position={Position.Left} isConnectable={isConnectable} />
+        <div>{node.label}</div>
         <Handle id="arrowSource" type="source" position={Position.Right} isConnectable={isConnectable} />
       </div>
     );
@@ -140,56 +129,147 @@ class LocalPathSourceType extends SourceType {
 const sourceTypes = [ LocalPathSourceType ];
 
 class SourceNode extends Node {
+  static component(node) {
+    const { data, selected, isConnectable } = node;
+    return (
+      <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div>{node.label}Src</div>
+        <Handle id="arrowSource" type="source" position={Position.Right} isConnectable={isConnectable} />
+      </div>
+    );
+  }
+
   static editComponent({ value, onChange }) {
-  if (!value) return <div />; // TODO
-  return <div>
-    <h2>Edit source</h2>
-    <div>
-      <GenericForm
-        key={value.id}
-        data={value.data.payload}
-        onChange={(payload) => onChange({...value, data: {...value.data, payload}, selected: false })}
-        fields={{
-          type: "Fields",
-          fields: [
-            {
-              type: 'SelectField',
-              k: "type",
-              label: "Value",
-              required: false,
-              options: sourceTypes.map(({ value, label }) => ({ value, label })),
-            },
-            {
-              type: 'DefinedField',
-              k: "params",
-              label: "Value",
-              required: false,
-              master_field: 'type',
-              definitions: Object.fromEntries(sourceTypes.map(({ value, fields }) => ([ value, fields ]))),
-            },
-          ],
-        }}
-      />
-    </div>
-  </div>;
-}
+    if (!value) return <div />; // TODO
+    return <div>
+      <h2>Edit source</h2>
+      <div>
+        <GenericForm
+          key={value.id}
+          data={value.data.payload}
+          onChange={(payload) => onChange({...value, data: {...value.data, payload}, selected: false })}
+          fields={{
+            type: "Fields",
+            fields: [
+              {
+                type: 'SelectField',
+                k: "type",
+                label: "Value",
+                required: false,
+                options: sourceTypes.map(({ value, label }) => ({ value, label })),
+              },
+              {
+                type: 'DefinedField',
+                k: "params",
+                label: "Value",
+                required: false,
+                master_field: 'type',
+                definitions: Object.fromEntries(sourceTypes.map(({ value, fields }) => ([ value, fields ]))),
+              },
+            ],
+          }}
+        />
+      </div>
+    </div>;
+  }
 };
 
 class FileNode extends Node {
+  static component(node) {
+    const { data, selected, isConnectable } = node;
+    return (
+      <div style={{width: 50, height: 50, borderRadius: 50, background: 'white', border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <Handle id="arrowTarget" type="target" position={Position.Left} isConnectable={isConnectable} />
+        <div>File</div>
+        <Handle id="arrowTarget" type="source" position={Position.Right} isConnectable={isConnectable} />
+      </div>
+    );
+  }
+
 };
 
 class DataNode extends Node {
 };
 
 class Edge extends GraphComponent {
+  static sourceTypes = new Set();
+  static targetTypes = new Set();
+
   constructor () {
     super();
 
   }
+  static component(props) {
+    const displayLabel = (label) => {
+      if (typeof label === "string") return label;
+      if (typeof label === "number") return label + '';
+      if (label === null) return '';
+      console.warn(`Uncommon label type: ${typeof label} (${label})`);
+      return '';
+    }
+    const {
+      id,
+      sourceX,
+      sourceY,
+      targetX,
+      targetY,
+      sourcePosition,
+      targetPosition,
+    } = props;
+    const [edgePath, labelX, labelY] = getSimpleBezierPath({
+      sourceX,
+      sourceY,
+      targetX,
+      targetY,
+      sourcePosition,
+      targetPosition,
+    });
+    const label = displayLabel(props.label) + (props.data?.optional ? '?' : '');
+    return (
+        <>
+          <BaseEdge {...props} id={id} path={edgePath} labelX={labelX} labelY={labelY} label={label} animated={!!props.data?.optional} />
+        </>
+    );
+  }
 }
 
 class FileSelectionEdge extends Edge {
+  static sourceTypes = new Set(['SourceNode']);
+  static targetTypes = new Set(['FileNode']);
 
+  static editComponent({ value, onChange }) {
+    if (!value) return <div />; // TODO
+    return <div>
+      <h2>Select file</h2>
+      <div>
+        <GenericForm
+          key={value.id}
+          data={value.data.payload}
+          onChange={(payload) => onChange({...value, data: {...value.data, payload}, selected: false })}
+          fields={{
+            type: "Fields",
+            fields: [
+              {
+                type: 'SelectField',
+                k: "type",
+                label: "Value",
+                required: false,
+                options: sourceTypes.map(({ value, label }) => ({ value, label })),
+              },
+              {
+                type: 'DefinedField',
+                k: "params",
+                label: "Value",
+                required: false,
+                master_field: 'type',
+                definitions: Object.fromEntries(sourceTypes.map(({ value, fields }) => ([ value, fields ]))),
+              },
+            ],
+          }}
+        />
+      </div>
+    </div>;
+  }
 }
 
 class ManualSelectionEdge extends Edge {
@@ -208,16 +288,16 @@ const NODE_CLASSES = [SourceNode, FileNode, DataNode];
 const EDGE_CLASSES = [FileSelectionEdge, ManualSelectionEdge, GrammarApplicationEdge, FunctionApplicationEdge];
 
 
-const classes2types = (classes, defaultComponent) => {
+const classes2types = (classes) => {
   const result = {};
   for (const cls of classes) {
-    result[cls.name] = cls.component || defaultComponent;
+    result[cls.name] = cls.component;
   }
   return result;
 }
 
-const NODE_TYPES = classes2types(NODE_CLASSES, BaseNodeComponent);
-const EDGE_TYPES = classes2types(EDGE_CLASSES, BaseEdgeComponent);
+const NODE_TYPES = classes2types(NODE_CLASSES);
+const EDGE_TYPES = classes2types(EDGE_CLASSES);
 
 console.log('NODE_TYPES', NODE_TYPES);
 
@@ -242,6 +322,18 @@ const InnerEditor = ({
   const [selectedEdges, setSelectedEdges] = useState([]);
 
   const onConnect = useCallback(async (params) => {
+    const sourceNode = nodes.find((n) => n.id === params.source);
+    const targetNode = nodes.find((n) => n.id === params.target);
+
+    const options = EDGE_CLASSES.filter(
+      (n) => {
+        return n.sourceTypes.has(sourceNode.type) && n.targetTypes.has(targetNode.type);
+      }
+    ).map((n) => ({value: n.name, label: n.name}));
+    if (!options.length) {
+      NotificationManager.warning('Can\'t connect such nodes');
+      return;
+    }
     const result = await runModal({
       title: "Add edge",
       fields: {
@@ -249,17 +341,17 @@ const InnerEditor = ({
         fields: [
           {
             type: "SelectField",
-            k: "subtype",
+            k: "type",
             label: "Type",
             required: true,
-            options: EDGE_TYPES.map((n) => ({value: n, label: n})),
+            options,
           },
         ],
       },
       modalSize: "md",
-      value: {subtype: null},
+      value: {type: null},
     });
-    if (result) setEdges(addEdge(update(params, {data: {$auto: {subtype: {$set: result.subtype.value}}}, label: {$set: result.subtype.value}}), edges));
+    if (result) setEdges(addEdge(update(params, {data: {$auto: {type: {$set: result.type.value}}}}), edges));
   }, [setEdges]);
 
 	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
@@ -365,8 +457,10 @@ const InnerEditor = ({
         return c.name === lastSelectedThing.value.type;
       }
     );
-    if (lastSelectedObjectCtor) lastSelectedObject = new lastSelectedObjectCtor(lastSelectedThing);
-    LastSelectedThingComponent = lastSelectedObjectCtor.editComponent;
+    if (lastSelectedObjectCtor) {
+      lastSelectedObject = new lastSelectedObjectCtor(lastSelectedThing);
+      LastSelectedThingComponent = lastSelectedObjectCtor.editComponent;
+    }
   }
   let theProps = {};
   if (lastSelectedThing && LastSelectedThingComponent) {
