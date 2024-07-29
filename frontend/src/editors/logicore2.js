@@ -78,11 +78,48 @@ function difference(setA, setB) {
 
 // Stuff
 
+const BaseNodeComponent = (node) => {
+  const { data, selected, isConnectable } = node;
+  return (
+    <div style={{width: 50, height: 50, borderRadius: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      <Handle id="arrowTarget" type="target" position={Position.Left} isConnectable={isConnectable} />
+      <div>{node.label}</div>
+      <Handle id="arrowSource" type="source" position={Position.Right} isConnectable={isConnectable} />
+    </div>
+  );
+}
+
+const BaseEdgeComponent = undefined;
+
+const SourceNodeComponent = ({}) => {
+
+};
+
+const FileNodeComponent = ({}) => {
+
+};
+
+const DataNodeComponent = ({}) => {
+
+};
+
 class Node {
   constructor () {
 
   }
 }
+
+class SourceNode extends Node {
+  static component = SourceNodeComponent;
+};
+
+class FileNode extends Node {
+  static component = FileNodeComponent;
+};
+
+class DataNode extends Node {
+  static component = DataNodeComponent;
+};
 
 class Edge {
   constructor () {
@@ -90,8 +127,36 @@ class Edge {
   }
 }
 
-const NODE_CLASSES = [];
-const EDGE_CLASSES = [];
+class FileSelectionEdge extends Edge {
+
+}
+
+class ManualSelectionEdge extends Edge {
+
+}
+
+class GrammarApplicationEdge extends Edge {
+
+}
+
+class FunctionApplicationEdge extends Edge {
+
+}
+
+const NODE_CLASSES = [SourceNode, FileNode, DataNode];
+const EDGE_CLASSES = [FileSelectionEdge, ManualSelectionEdge, GrammarApplicationEdge, FunctionApplicationEdge];
+
+
+const classes2types = (classes, baseComponent) => {
+  const result = {};
+  for (const cls of classes) {
+    result[cls.name] = cls.component || baseComponent;
+  }
+  return result;
+}
+
+const NODE_TYPES = classes2types(NODE_CLASSES, BaseNodeComponent);
+const EDGE_TYPES = classes2types(EDGE_CLASSES, BaseEdgeComponent);
 
 const Logicore2Editor = ({
   revId,
@@ -100,12 +165,14 @@ const Logicore2Editor = ({
   onChange,
   saveButton,
 }) => {
-  const { t } = useTranslation();
+  /*const { t } = useTranslation();
   const storageKey = `viewport-${revId}`;
   const prevStorageKey = prevRevId ? `viewport-${prevRevId}` : null;
   // TODO: refactor out storageKey stuff
 	const nodes = value?.nodes || [];
 	const edges = value?.edges || [];
+
+  const editableItems = {};  // TODO
 
 	const setNodes = onPath(value, onChange, ["nodes"]).onChange;
 	const setEdges = onPath(value, onChange, ["edges"]).onChange;
