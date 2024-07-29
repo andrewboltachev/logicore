@@ -91,38 +91,99 @@ const BaseNodeComponent = (node) => {
 
 const BaseEdgeComponent = undefined;
 
-const SourceNodeComponent = ({}) => {
 
-};
-
-const FileNodeComponent = ({}) => {
-
-};
-
-const DataNodeComponent = ({}) => {
-
-};
-
-class Node {
+class GraphComponent {
   constructor () {
-
   }
 }
 
+class Node extends GraphComponent {
+  constructor () {
+    super();
+
+  }
+  static component(node) {
+    const { data, selected, isConnectable } = node;
+    return (
+      <div style={{width: 50, height: 50, border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div>{node.label}Src</div>
+        <Handle id="arrowSource" type="source" position={Position.Right} isConnectable={isConnectable} />
+      </div>
+    );
+  }
+}
+
+
+class SourceType {
+  constructor({ state }) {
+    this.state = state;
+  }
+}
+
+
+class LocalPathSourceType extends SourceType {
+  static value = 'local_path';
+  static label = 'Local Path';
+  static fields = {
+    type: 'Fields',
+    fields: [
+      {
+        'k': 'data',
+        'type': 'TextField',
+        'label': 'Path',
+        'required': true,
+      }
+    ]
+  }
+}
+
+const sourceTypes = [ LocalPathSourceType ];
+
 class SourceNode extends Node {
-  static component = SourceNodeComponent;
+  static editComponent({ value, onChange }) {
+  if (!value) return <div />; // TODO
+  return <div>
+    <h2>Edit source</h2>
+    <div>
+      <GenericForm
+        key={value.id}
+        data={value.data.payload}
+        onChange={(payload) => onChange({...value, data: {...value.data, payload}, selected: false })}
+        fields={{
+          type: "Fields",
+          fields: [
+            {
+              type: 'SelectField',
+              k: "type",
+              label: "Value",
+              required: false,
+              options: sourceTypes.map(({ value, label }) => ({ value, label })),
+            },
+            {
+              type: 'DefinedField',
+              k: "params",
+              label: "Value",
+              required: false,
+              master_field: 'type',
+              definitions: Object.fromEntries(sourceTypes.map(({ value, fields }) => ([ value, fields ]))),
+            },
+          ],
+        }}
+      />
+    </div>
+  </div>;
+}
 };
 
 class FileNode extends Node {
-  static component = FileNodeComponent;
 };
 
 class DataNode extends Node {
-  static component = DataNodeComponent;
 };
 
-class Edge {
+class Edge extends GraphComponent {
   constructor () {
+    super();
 
   }
 }
@@ -147,10 +208,10 @@ const NODE_CLASSES = [SourceNode, FileNode, DataNode];
 const EDGE_CLASSES = [FileSelectionEdge, ManualSelectionEdge, GrammarApplicationEdge, FunctionApplicationEdge];
 
 
-const classes2types = (classes, baseComponent) => {
+const classes2types = (classes, defaultComponent) => {
   const result = {};
   for (const cls of classes) {
-    result[cls.name] = cls.component || baseComponent;
+    result[cls.name] = cls.component || defaultComponent;
   }
   return result;
 }
@@ -158,21 +219,21 @@ const classes2types = (classes, baseComponent) => {
 const NODE_TYPES = classes2types(NODE_CLASSES, BaseNodeComponent);
 const EDGE_TYPES = classes2types(EDGE_CLASSES, BaseEdgeComponent);
 
-const Logicore2Editor = ({
+console.log('NODE_TYPES', NODE_TYPES);
+
+const InnerEditor = ({
   revId,
   prevRevId,
   value,
   onChange,
   saveButton,
 }) => {
-  /*const { t } = useTranslation();
+  const { t } = useTranslation();
   const storageKey = `viewport-${revId}`;
   const prevStorageKey = prevRevId ? `viewport-${prevRevId}` : null;
   // TODO: refactor out storageKey stuff
 	const nodes = value?.nodes || [];
 	const edges = value?.edges || [];
-
-  const editableItems = {};  // TODO
 
 	const setNodes = onPath(value, onChange, ["nodes"]).onChange;
 	const setEdges = onPath(value, onChange, ["edges"]).onChange;
@@ -218,7 +279,7 @@ const Logicore2Editor = ({
             k: "type",
             label: "Type",
             required: true,
-            options: NODE_TYPES.map((n) => ({value: n, label: n})),
+            options: NODE_CLASSES.map((n) => ({value: n.name, label: n.name})),
           },
         ],
       },
@@ -227,11 +288,14 @@ const Logicore2Editor = ({
     });
     if (!result) return;
     const t = result.type.value;
-    setNodes([...nodes, {
+    const newNode = {
       id,
       position: { x: 0, y: 0 },
-      data: { subtype: t, label: t }
-    }]);
+      data: { subtype: t, label: t, state: { payload: null } },
+      type: result.type.value,
+    };
+    console.log('newNode', newNode);
+    setNodes([...nodes, newNode]);
 	};
 
   const [state, setState] = useLocalStorage(storageKey);
@@ -292,34 +356,28 @@ const Logicore2Editor = ({
   const lastSelectedThing = selectedNodes.length ? {type: "Node", value: selectedNodes[selectedNodes.length - 1]} : (
     selectedEdges.length ? {type: "Edge", value: selectedEdges[selectedEdges.length - 1]} : null
   );
-  let LastSelectedThingComponent = null;
-  const sourceAndTarget = {};
+  let lastSelectedThingKind = null, lastSelectedObjectCtor = null, lastSelectedObject = null, LastSelectedThingComponent = null;
   if (lastSelectedThing) {
-    LastSelectedThingComponent = (editableItems?.[lastSelectedThing?.type] || {})[lastSelectedThing?.value?.data?.subtype];
-    if (lastSelectedThing.type === "Edge") {
-      for (const k of ["source", "target"]) {
-        sourceAndTarget[k] = onPathPlus(
-          value,
-          onChange,
-          ["nodes", {matching: x => {
-            return x.id === lastSelectedThing.value[k];
-          }}, "data", "payload"]
-        );
+    lastSelectedThingKind = lastSelectedThing.type.toLowerCase() + "s";  // "nodes" or "edges"
+    lastSelectedObjectCtor = (lastSelectedThingKind === "nodes" ? NODE_CLASSES : EDGE_CLASSES).find(
+      (c) => {
+        console.log('compare', c.name, lastSelectedThing.value.type);
+        return c.name === lastSelectedThing.value.type;
       }
-    }
+    );
+    if (lastSelectedObjectCtor) lastSelectedObject = new lastSelectedObjectCtor(lastSelectedThing);
+    LastSelectedThingComponent = lastSelectedObjectCtor.editComponent;
   }
   let theProps = {};
-  if (lastSelectedThing) {
+  if (lastSelectedThing && LastSelectedThingComponent) {
     theProps = {
-      subtype: lastSelectedThing?.value?.data?.subtype,
-      ...onPathPlus(value, onChange, [lastSelectedThing.type.toLowerCase() + "s", {matching: x => x.id === lastSelectedThing.value.id}, "data", "payload"]),
-      ...sourceAndTarget
+      ...onPathPlus(value, onChange, [lastSelectedThingKind, {matching: x => x.id === lastSelectedThing.value.id}]),
     };
   }
 
-  return null;
-  /*return (
-	  <ReactFlowProvider>
+  console.log('LastSelectedThingComponent', LastSelectedThingComponent, theProps);
+
+  return (
     <div className="row align-items-stretch flex-grow-1">
       <div className="col d-flex flex-column">
         <div className="btn-group">
@@ -333,6 +391,8 @@ const Logicore2Editor = ({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          nodeTypes={NODE_TYPES}
+          edgeTypes={EDGE_TYPES}
         >
           <MiniMap />
           <Controls />
@@ -341,16 +401,21 @@ const Logicore2Editor = ({
     	</div>
       <div className="col d-flex flex-column">
         {LastSelectedThingComponent && (<>
-          {lastSelectedThing.type === "Edge" ? <BackAndForth {...theProps} /> : null}
           <LastSelectedThingComponent
             {...theProps}
           />
         </>)}
     	</div>
     </div>
-	  </ReactFlowProvider>
-  );*/
+  );
 };
+
+
+const Logicore2Editor = ({
+  ...props
+}) => {
+  return <ReactFlowProvider><InnerEditor {...props} /></ReactFlowProvider>;
+}
 
 export default {
   Editor: Logicore2Editor,
