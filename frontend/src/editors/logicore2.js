@@ -224,10 +224,10 @@ class Edge extends GraphComponent {
       sourcePosition,
       targetPosition,
     });
-    const label = displayLabel(props.label) + (props.data?.optional ? '?' : '');
+    const label = displayLabel(props.label);
     return (
         <>
-          <BaseEdge {...props} id={id} path={edgePath} labelX={labelX} labelY={labelY} label={label} animated={!!props.data?.optional} />
+          <BaseEdge {...props} id={id} path={edgePath} labelX={labelX} labelY={labelY} label={label} />
         </>
     );
   }
@@ -250,19 +250,11 @@ class FileSelectionEdge extends Edge {
             type: "Fields",
             fields: [
               {
-                type: 'SelectField',
+                type: 'TextField',
                 k: "type",
                 label: "Value",
                 required: false,
-                options: sourceTypes.map(({ value, label }) => ({ value, label })),
-              },
-              {
-                type: 'DefinedField',
-                k: "params",
-                label: "Value",
-                required: false,
-                master_field: 'type',
-                definitions: Object.fromEntries(sourceTypes.map(({ value, fields }) => ([ value, fields ]))),
+                options: [],
               },
             ],
           }}
@@ -351,7 +343,7 @@ const InnerEditor = ({
       modalSize: "md",
       value: {type: null},
     });
-    if (result) setEdges(addEdge(update(params, {data: {$auto: {type: {$set: result.type.value}}}}), edges));
+    if (result) setEdges(addEdge(update(params, {type: {$set: result.type.value}, data: {$set: {payload: null }}}), edges));
   }, [setEdges]);
 
 	const onNodesChange = (changes) => onChange(update(value, {nodes: {$apply: (v) => applyNodeChanges(changes, v)}}));
