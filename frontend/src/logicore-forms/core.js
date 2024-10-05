@@ -859,3 +859,80 @@ interceptors.recursiveFields = {
     return {...context, nodeById};
   },
 }
+
+const XYFlowField = ({
+  definition,
+  value,
+  onChange,
+  error,
+  onReset,
+  path,
+  context,
+}) => {
+  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null;
+  const id = "id_" + uuidv4();
+  const { label } = definition;
+  const vvalue = Array.isArray(value) ? value : [];
+  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper;
+  const newValue = definition?.new_value || {};
+  let processList = _ => {};
+  let extraContext = {}
+  if (interceptor?.processList) {
+    extraContext = interceptor?.processList(
+      { fields: definition.fields, definition, valueList: vvalue }
+    );
+  }
+  return (
+    <div>
+      <Wrapper
+        {...{ definition, value, onChange, error, onReset, path, context }}
+        addButton={<button
+          className="btn btn-success"
+          style={definition?.addButtonStyle || {}}
+          type="button"
+          onClick={(_) => onChange([...vvalue, {...newValue, uuid: uuidv4()}])}
+        >
+          Add {definition?.addWhat}
+        </button>}
+      >
+        {vvalue.map((item, i) => {
+          return (
+            <FormComponent
+              key={i}
+              definition={{
+                ...definition,
+                type: "Fields",
+                index: i,
+                parent: vvalue,
+                onChangeParent: onChange,
+              }}
+              value={item}
+              error={(error || [])[i]}
+              onChange={($set) => onChange(update(vvalue, { [i]: { $set } }))}
+              context={{ ...context, ...definition.context, ...extraContext }}
+              onReset={onReset}
+              path={[...path, i]}
+            />
+          );
+        })}
+      </Wrapper>
+    </div>
+  );
+};
+XYFlowField.isEmpty = (x) => !x || !x.length;
+XYFlowField.validatorRunner = (definition, value, parentValue, context) => {
+  if (definition.required && !value?.length) {
+    return "This is required";
+  }
+  return (value || []).map((v) =>
+    validateDefinition({ ...definition, type: "Fields" }, v, parentValue, context)
+  );
+};
+XYFlowField.validatorChecker = (definition, error, state, parentState, context) => {
+  if (typeof error === "string") return true;
+  for (const [e, s] of zipArrays(error || [], state || [])) {
+    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, parentState, context)) {
+      return true;
+    }
+  }
+};

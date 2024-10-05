@@ -174,20 +174,6 @@ class SourceNode extends Node {
   }
 };
 
-class FileNode extends Node {
-  static component(node) {
-    const { data, selected, isConnectable } = node;
-    return (
-      <div style={{width: 50, height: 50, borderRadius: 50, background: 'white', border: `2px solid ${selected ? 'red' : 'black'}`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <Handle id="arrowTarget" type="target" position={Position.Left} isConnectable={isConnectable} />
-        <div>File</div>
-        <Handle id="arrowTarget" type="source" position={Position.Right} isConnectable={isConnectable} />
-      </div>
-    );
-  }
-
-};
-
 class DataNode extends Node {
 };
 
@@ -235,33 +221,7 @@ class Edge extends GraphComponent {
 
 class FileSelectionEdge extends Edge {
   static sourceTypes = new Set(['SourceNode']);
-  static targetTypes = new Set(['FileNode']);
-
-  static editComponent({ value, onChange }) {
-    if (!value) return <div />; // TODO
-    return <div>
-      <h2>Select file</h2>
-      <div>
-        <GenericForm
-          key={value.id}
-          data={value.data.payload}
-          onChange={(payload) => onChange({...value, data: {...value.data, payload}, selected: false })}
-          fields={{
-            type: "Fields",
-            fields: [
-              {
-                type: 'TextField',
-                k: "type",
-                label: "Value",
-                required: false,
-                options: [],
-              },
-            ],
-          }}
-        />
-      </div>
-    </div>;
-  }
+  static targetTypes = new Set(['DataNode']);
 }
 
 class ManualSelectionEdge extends Edge {
@@ -276,7 +236,7 @@ class FunctionApplicationEdge extends Edge {
 
 }
 
-const NODE_CLASSES = [SourceNode, FileNode, DataNode];
+const NODE_CLASSES = [SourceNode, DataNode];
 const EDGE_CLASSES = [FileSelectionEdge, ManualSelectionEdge, GrammarApplicationEdge, FunctionApplicationEdge];
 
 
