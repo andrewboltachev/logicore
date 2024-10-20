@@ -32,6 +32,30 @@ import {
   modifyHelper,
 } from "../logicore-forms";
 
+import ReactFlow, {
+  addEdge,
+  MiniMap,
+  Controls,
+  Background,
+  //useNodesState,
+  //useEdgesState,
+  applyNodeChanges,
+  applyEdgeChanges,
+  useViewport,
+  ReactFlowProvider,
+  Handle, NodeProps, Position,
+  useKeyPress,
+  useOnSelectionChange,
+  useReactFlow,
+  getStraightPath,
+  BaseEdge,
+  EdgeLabelRenderer,
+  MarkerType,
+  useOnViewportChange,
+  getBezierPath, getMarkerEnd, getSimpleBezierPath,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+
 /*
 Data type:
 
@@ -39,14 +63,27 @@ Data type:
 
 const Editor = (props) => {
   return (
-      <div className="row align-items-stretch flex-grow-1">
-        <div className="col-md-3 d-flex flex-column bg-light">
-          111
-    <input value={props.value} onChange={e => props.onChange(e.target.value)} />
-          {props.saveButton}
-        </div>
-        <div className="col-md-9 d-flex flex-column">2</div>
+    <div className="row align-items-stretch flex-grow-1">
+      <div className="col-md-12">
+        <div className="btn-group">{props.saveButton}</div>
+        <ReactFlow
+          ref={ref}
+          onInit={onInit}
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          defaultEdgeOptions={{type: 'ArrowEdge'}}
+        >
+          <MiniMap />
+          <Controls />
+          <Background />
+        </ReactFlow>
       </div>
+    </div>
   );
 }
 
