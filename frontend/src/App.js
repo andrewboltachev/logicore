@@ -1577,6 +1577,17 @@ const FiddleWrapper = ({ result, onChange }) => {
               <Link className="nav-link" to={addLang("/toolbox/mine/")}>
                 <Trans>Mine</Trans>
               </Link>
+              <NavDropdown title="Python series" id="basic-nav-dropdown">
+                <NavDropdown.Item href="/python01explorer/">01 Explorer</NavDropdown.Item>
+                {/*<NavDropdown.Item href="#action/3.2">
+                  Another action
+                </NavDropdown.Item>
+                <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
+                <NavDropdown.Divider />
+                <NavDropdown.Item href="#action/3.4">
+                  Separated link
+                </NavDropdown.Item>*/}
+              </NavDropdown>
             </Nav>
             <Nav className={`ml-auto me-5 text-${result?.owner === result?.user?.username ? 'success' : 'danger'}`}>
               {result?.owner && <>Owner:<br /></>}
