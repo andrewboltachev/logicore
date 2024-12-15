@@ -23,6 +23,8 @@ import moment from "moment";
 import SelectFileField from "./selectFileField"; // register
 import PickFilePositionsField from "./pickFilePositionsField"; // register
 
+import Python01Explorer from "./python_01_explorer";
+
 import { ModalProvider, ModalContext } from "./runModal";
 
 import Container from "react-bootstrap/Container";
@@ -1533,6 +1535,7 @@ const mainComponents = {
   FiddleNotFound,
   Fiddle,
   // Fiddle end
+  Python01Explorer,
 };
 
 const MainWrapper = ({ result, onChange }) => {

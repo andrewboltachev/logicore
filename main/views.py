@@ -1401,3 +1401,17 @@ def embellishedMatchToFunnel(request):
 
     return JsonResponse({"error": "No such method"})
 """
+
+
+# Python explorer series
+class Python01Explorer(MainView):
+    in_menu = False
+    url_path = "/python01explorer/"
+    title = "Python 01 — explorer"
+    TEMPLATE = "Python01Explorer"
+    WRAPPER = "FiddleWrapper"
+
+    def get_data(self, request, *args, **kwargs):
+        return {
+            "foo": "bar",
+        }
