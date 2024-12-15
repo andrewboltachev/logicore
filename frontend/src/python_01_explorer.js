@@ -1,15 +1,47 @@
 import {onPath} from "./editors/commons";
-import React from "react";
+import React, {useContext, useState} from "react";
+import {getByPath, setByPath} from "./logicore-forms";
+import {ModalContext} from "./runModal";
+import _ from "lodash";
 
 const Python01Explorer = () => {
+    const [code, setCode] = useState("");
+    const { runModal } = useContext(ModalContext);
+    let t = _.identity;
     return (
         <div className="container-fluid align-items-stretch flex-grow-1 d-flex py-3">
         <div className="row align-items-stretch flex-grow-1">
             <div className="col d-flex flex-column">
                 <h5>
                     Grammar (Pseudo-Python){" "}
-                    <button className="btn btn-sm btn-primary">
-                        Grammar × Code -> Thin value
+                    <button className="btn btn-sm btn-primary" onClick={async (e) => {
+                        const result = await runModal({
+                            title: t("Insert Python code"),
+                            fields: {
+                                type: "Fields",
+                                fields: [
+                                    {
+                                        type: "TextField",
+                                        k: "val",
+                                        label: t("Code"),
+                                        required: false,
+                                    },
+                                ],
+                            },
+                            modalSize: "md",
+                            value: {
+                                val: k,
+                            },
+                        });
+                        if (result) {
+                            const current = { ...getByPath(value, path) };
+                            delete current[k];
+                            current[result.val] = v;
+                            onChange(setByPath(value, path, current));
+                        }
+                    }}
+                    >
+                       Insert Python Code 
                     </button>
                 </h5>
                 <textarea
