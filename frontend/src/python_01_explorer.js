@@ -13,9 +13,9 @@ const Python01Explorer = () => {
         <div className="row align-items-stretch flex-grow-1">
             <div className="col d-flex flex-column">
                 <h5>
-                    Grammar (Pseudo-Python){" "}
-                    <button className="btn btn-sm btn-primary" onClick={async (e) => {
-                        const result = await runModal({
+                    Grammar (Pseudo-Python)!{" "}
+                    <button className="btn btn-sm btn-primary" onClick={(e) => {
+                        /*const result = await runModal({
                             title: t("Insert Python code"),
                             fields: {
                                 type: "Fields",
@@ -30,15 +30,16 @@ const Python01Explorer = () => {
                             },
                             modalSize: "md",
                             value: {
-                                val: k,
+                                val: '',
                             },
                         });
                         if (result) {
-                            const current = { ...getByPath(value, path) };
+                            /*const current = { ...getByPath(value, path) };
                             delete current[k];
                             current[result.val] = v;
-                            onChange(setByPath(value, path, current));
-                        }
+                            onChange(setByPath(value, path, current));* /
+                        }*/
+                        console.log('ahah');
                     }}
                     >
                        Insert Python Code 
