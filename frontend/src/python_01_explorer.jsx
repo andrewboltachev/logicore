@@ -51,7 +51,7 @@ const Python01Explorer = () => {
                 <h5>
                     Thin value (JSON)
                     <button className="btn btn-sm btn-primary">
-                        Thin Value × Grammar -> Code
+                        Thin Value × Grammar -&gt; Code
                     </button>
                 </h5>
                 <textarea className="form-control flex-grow-1" value="No thin value" disabled/>

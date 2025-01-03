@@ -108,7 +108,7 @@ const PythonMatcherEditor = ({
         <h5>
           Grammar (Pseudo-Python){" "}
           <button className="btn btn-sm btn-primary" onClick={step1}>
-            Grammar × Code -> Thin value
+            Grammar × Code -&gt; Thin value
           </button>
         </h5>
         <textarea
@@ -118,7 +118,7 @@ const PythonMatcherEditor = ({
         <h5>
           Thin value (JSON)
           <button className="btn btn-sm btn-primary" onClick={step2}>
-            Thin Value × Grammar -> Code
+            Thin Value × Grammar -&gt; Code
           </button>
         </h5>
         {value?.thinValue ? <textarea
