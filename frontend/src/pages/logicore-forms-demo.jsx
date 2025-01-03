@@ -20,7 +20,7 @@ import {
   NotificationContainer,
   NotificationManager,
 } from "react-notifications";
-import { alert, confirm } from "react-bootstrap-confirmation-v2";
+import { alert, confirm } from "../react-bootstrap-confirmation";
 
 import {
   validateDefinition,

@@ -18,7 +18,7 @@ import {
   NotificationContainer,
   NotificationManager,
 } from "react-notifications";
-import { alert, confirm } from "react-bootstrap-confirmation-v2";
+import { alert, confirm } from "./react-bootstrap-confirmation";
 import moment from "moment";
 import SelectFileField from "./selectFileField"; // register
 import PickFilePositionsField from "./pickFilePositionsField"; // register
@@ -1842,6 +1842,7 @@ Object.assign(interceptors, {
 });
 
 function App() {
+  return 'ahaha';
   return (
     <ModalProvider>
       <Router>

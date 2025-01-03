@@ -23,7 +23,6 @@
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.7",
-    "react-bootstrap-confirmation-v2": "link:../../react-bootstrap-confirmation",
     "react-confirm": "0.3.0-7",
     "react-dom": "^18.3.1",
     "react-flow-renderer": "^10.3.17",
