@@ -9,7 +9,7 @@ import React, { useState, useContext, useRef, useEffect, useMemo, useCallback } 
 import { useTranslation, Trans } from "react-i18next";
 import { Button, Modal, Dropdown } from "react-bootstrap";
 import { useDraggable } from "react-use-draggable-scroll";
-import { NotificationManager } from "react-notifications";
+import { NotificationManager } from "../react-notifications";
 
 // Local React and general modules
 import { ModalProvider, ModalContext, modalComponents } from "../runModal";
@@ -47,8 +47,8 @@ import ReactFlow, {
   Handle, NodeProps, Position,
   useKeyPress,
   useOnSelectionChange,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 
 const eV = (e) => e.target.value || "";
 

@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 // React modules
 import { useTranslation, Trans } from "react-i18next";
 import { useDraggable } from "react-use-draggable-scroll";
-import { NotificationManager } from "react-notifications";
+import { NotificationManager } from "../react-notifications";
 import {Button, Dropdown, Modal} from "react-bootstrap";
 
 // Local React and general modules
@@ -33,7 +33,7 @@ import {
   modifyHelper,
 } from "../logicore-forms";
 
-import ReactFlow, {
+import {
   addEdge,
   MiniMap,
   Controls,
@@ -44,7 +44,7 @@ import ReactFlow, {
   applyEdgeChanges,
   useViewport,
   ReactFlowProvider,
-  Handle, NodeProps, Position,
+  Handle, Position,
   useKeyPress,
   useOnSelectionChange,
   useReactFlow,
@@ -53,9 +53,9 @@ import ReactFlow, {
   EdgeLabelRenderer,
   MarkerType,
   useOnViewportChange,
-  getBezierPath, getMarkerEnd, getSimpleBezierPath,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+  getBezierPath, getSimpleBezierPath,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 
 /*
 Data type:

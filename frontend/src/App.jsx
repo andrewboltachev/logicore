@@ -17,7 +17,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
   NotificationContainer,
   NotificationManager,
-} from "react-notifications";
+} from "../react-notifications";
 import { alert, confirm } from "./react-bootstrap-confirmation";
 import moment from "moment";
 import SelectFileField from "./selectFileField"; // register
@@ -40,7 +40,6 @@ import {
   Route,
   Link,
   useLocation,
-  useHistory,
   useNavigate,
 } from "react-router-dom";
 import {

@@ -25,7 +25,7 @@ import {
   modifyHelper,
 } from "./utils";
 import _ from "lodash";
-import { NotificationManager } from "react-notifications";
+import { NotificationManager } from "../react-notifications";
 
 export let validateDefinition, definitionIsInvalid;
 

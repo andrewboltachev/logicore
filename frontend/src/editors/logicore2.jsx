@@ -9,7 +9,7 @@ import React, { useState, useContext, useRef, useEffect, useCallback } from "rea
 import { useTranslation, Trans } from "react-i18next";
 import { Button, Modal, Dropdown } from "react-bootstrap";
 import { useDraggable } from "react-use-draggable-scroll";
-import { NotificationManager } from "react-notifications";
+import { NotificationManager } from "../react-notifications";
 
 // Local React and general modules
 import { ModalProvider, ModalContext, modalComponents } from "../runModal";
@@ -33,7 +33,7 @@ import {
   modifyHelper,
 } from "../logicore-forms";
 
-import ReactFlow, {
+import {
   addEdge,
   MiniMap,
   Controls,
@@ -44,19 +44,18 @@ import ReactFlow, {
 	applyEdgeChanges,
 	useViewport,
 	ReactFlowProvider,
-  Handle, NodeProps, Position,
+  Handle, Position,
   useKeyPress,
   useOnSelectionChange,
   BaseEdge,
-  getBezierPath, getMarkerEnd, getSimpleBezierPath,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+  getBezierPath, getSimpleBezierPath,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 
 // Module-local
 import "./logicore2.scss";
 
 import d2 from "./d2.json";
-import {BezierEdgeProps} from "reactflow";
 
 
 const walk = (value, post=_.identity, pre=_.identity) => {

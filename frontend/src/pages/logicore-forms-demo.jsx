@@ -8,18 +8,9 @@ import React, {
   useContext,
 } from "react";
 import {
-  BrowserRouter as Router,
-  Switch as Routes,
-  Route,
-  Link,
-  useLocation,
-  useHistory,
-} from "react-router-dom";
-
-import {
   NotificationContainer,
   NotificationManager,
-} from "react-notifications";
+} from "../react-notifications";
 import { alert, confirm } from "../react-bootstrap-confirmation";
 
 import {

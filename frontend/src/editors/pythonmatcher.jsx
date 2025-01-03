@@ -8,7 +8,7 @@ import React, { useState, useContext, useRef, useEffect } from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { Button, Modal } from "react-bootstrap";
 import { useDraggable } from "react-use-draggable-scroll";
-import { NotificationManager } from "react-notifications";
+import { NotificationManager } from "../react-notifications";
 
 // Local React and general modules
 import { ModalProvider, ModalContext, modalComponents } from "../runModal";

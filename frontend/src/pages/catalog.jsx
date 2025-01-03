@@ -8,14 +8,6 @@ import React, {
   useContext,
 } from "react";
 import {
-  BrowserRouter as Router,
-  Switch as Routes,
-  Route,
-  Link,
-  useLocation,
-  useHistory,
-} from "react-router-dom";
-import {
   useLocalStorage,
   useApi,
   moveUp,
