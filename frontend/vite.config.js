@@ -7,4 +7,17 @@ export default defineConfig({
   server: {
     hmr: { protocol: 'ws', clientPort: 5173 },
   },
+  resolve: {
+    alias: {
+      src: "/src",
+    },
+  },
+  optimizeDeps: {
+    force: true,
+    esbuildOptions: {
+      loader: {
+        ".js": "jsx",
+      },
+    },
+  },
 })
