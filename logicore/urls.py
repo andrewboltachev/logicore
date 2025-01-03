@@ -56,6 +56,8 @@ base_urls = [
 main_urls = i18n_patterns(*base_urls, prefix_default_language=False)
 
 urlpatterns = [
+    re_path(r"(?P<prefix>@react-refresh)", main_views.react_dev_data),  # last one. handle all 404
+    re_path(r"(?P<prefix>src|@vite|node_modules)/(?P<path>.*)", main_views.react_dev_data),  # last one. handle all 404
     path(
         "robots.txt",
         TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
@@ -79,7 +81,6 @@ pprint.pprint(urlpatterns)
 
 if settings.FRONTEND_DEV_MODE:
     urlpatterns = [
-        re_path(r'^(?P<path>.*\.hot-update\.(js|json))$', main_views.hot_update), # \.[0-9a-z]{20}
         re_path('^react-static/(?P<path>.+)$', main_views.react_static),
     ] + urlpatterns
 else:

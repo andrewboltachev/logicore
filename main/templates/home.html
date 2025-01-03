@@ -9,7 +9,9 @@
     <link href="/static/fontawesome-free-5.15.4-web/css/all.min.css" rel="stylesheet">
 
     <title>andrewboltachev.site</title>
-		{% if not FRONTEND_DEV_MODE %}
+    {% if FRONTEND_DEV_MODE %}
+      {% include_react_head %}
+    {% else %}
 			{% include "react/bundle_css.html" %}
 		{% endif %}
     <script>
@@ -36,7 +38,7 @@
     <div id="bootstrap-modals"></div>
 
   {% if FRONTEND_DEV_MODE %}
-    {% include_react %}
+    {% include_react_body %}
   {% else %}
     {% include "react/bundle_js.html" %}
   {% endif %}

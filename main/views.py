@@ -1,3 +1,4 @@
+import mimetypes
 import os
 import glob
 import json
@@ -39,7 +40,7 @@ from django.db.models import (
     Avg,
 )
 from django.db.models.functions import Concat, JSONObject, Now, Cast, Coalesce
-from django.http import JsonResponse as JsonResponseOriginal
+from django.http import JsonResponse as JsonResponseOriginal, HttpResponse, HttpResponseNotFound
 import datetime as python_datetime
 from django.utils.timezone import datetime, now, timedelta
 from django.views import View
@@ -48,6 +49,8 @@ from django.contrib.auth.password_validation import validate_password
 from proxy.views import proxy_view
 from typing import Generator
 from django.http import JsonResponse as JsonResponseOriginal, HttpResponseRedirect
+from urllib3.exceptions import NewConnectionError
+
 from .fiddles import FiddleType
 
 from . import models
@@ -69,16 +72,37 @@ from .utils import (
 
 
 def react_static(request, path):
-    if path.lower().endswith(".css") or path.lower().endswith(".js"):
-        remoteurl = "http://127.0.0.1:3008/static/" + path
-    else:
-        remoteurl = "http://127.0.0.1:3008/react-static/" + path
-    return proxy_view(request, remoteurl, {})
+    # check
+    is_production = not settings.DEBUG
+
+    if is_production:
+        try:
+            with open(
+                os.path.join(settings.PLNQ_APP_DIR.__str__(), "react", "build", "static", path),
+                "rb",
+            ) as f:
+                return HttpResponse(f.read(), content_type=mimetypes.guess_type(path)[0])
+        except FileNotFoundError:
+            return HttpResponseNotFound()
+
+    # handle for development mode
+    if not is_production:
+        remoteurl = "http://127.0.0.1:3000/static/" + path
+        try:
+            return proxy_view(request, remoteurl, {})
+        except NewConnectionError:
+            return HttpResponseNotFound()
 
 
-def hot_update(request, path):
-    remoteurl = "http://127.0.0.1:3008/" + path
-    return proxy_view(request, remoteurl, {})
+def react_dev_data(request, prefix, path=None):
+    print(f"React dev data {prefix} {path}")
+    remoteurl = f"http://localhost:5173/{prefix}"
+    if path:
+        remoteurl += f"/{path}"
+    try:
+        return proxy_view(request, remoteurl, {})
+    except NewConnectionError:
+        return HttpResponseNotFound()
 
 
 def default_json(x):

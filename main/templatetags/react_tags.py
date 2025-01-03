@@ -1,17 +1,24 @@
-from django import template
-from django.utils.safestring import SafeString
-import requests, os, re
-from django.conf import settings
+import os
+import re
 
+from django import template
+from django.conf import settings
+from django.utils.safestring import SafeString
+
+import requests
 
 register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
-def include_react(context):
+def include_react_head(context):
     if not settings.FRONTEND_DEV_MODE:
         return ''
-    return SafeString(
-        ' '.join(re.findall(r'<script [^>]+></script>', requests.get('http://localhost:3008/').text.replace('/static/', '/react-static/')))
-    )
+    return SafeString(" ".join(context["_REACT_SCRIPTS"].scripts[:3]))
 
+
+@register.simple_tag(takes_context=True)
+def include_react_body(context):
+    if not settings.FRONTEND_DEV_MODE:
+        return ''
+    return SafeString(" ".join(context["_REACT_SCRIPTS"].scripts[3:]))
