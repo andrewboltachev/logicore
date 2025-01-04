@@ -10,14 +10,13 @@ import React, {
 import logo from "./logo.svg";
 import "./App.scss";
 import classd from "classd";
-import "react-notifications/lib/notifications.css";
 import { axios, extend, update } from "./imports";
 import {Button, Dropdown, ButtonGroup, Modal} from "react-bootstrap";
 import { v4 as uuidv4 } from "uuid";
 import {
   NotificationContainer,
   NotificationManager,
-} from "../react-notifications";
+} from "./react-notifications";
 import { alert, confirm } from "./react-bootstrap-confirmation";
 import moment from "moment";
 import SelectFileField from "./selectFileField"; // register
@@ -1841,7 +1840,6 @@ Object.assign(interceptors, {
 });
 
 function App() {
-  return 'ahaha';
   return (
     <ModalProvider>
       <Router>

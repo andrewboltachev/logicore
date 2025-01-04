@@ -35,6 +35,7 @@ import {
 } from "../logicore-forms";
 
 import {
+  ReactFlow,
   addEdge,
   MiniMap,
   Controls,
