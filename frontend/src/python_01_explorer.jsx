@@ -1,5 +1,5 @@
 import {onPath} from "./editors/commons";
-import React, {useContext, useState} from "react";
+import React, {useContext, useState, useEffect, useRef, useCallback} from "react";
 import {getByPath, setByPath} from "./logicore-forms";
 import {ModalContext} from "./runModal";
 import _ from "lodash";
@@ -9,10 +9,25 @@ import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
 hljs.registerLanguage('python', python);
 
+/*function highlight(data_type, data) {
+  return new Promise((resolve, reject) => {
+    resolve()
+  }
+}*/
+
 
 const Python01Explorer = () => {
+  // Основной
     const [code, setCode] = useLocalStorage("PYTHON_01_EXPLORER_CODE", "");
+  // Производные
     const [tree, setTree] = useState(null);
+    const [highlighted, setHighlighted] = useState("");
+
+  useEffect(() => {
+    const highlighted = hljs.highlight("python", code);
+    setHighlighted(highlighted.value);
+  }, [code]);
+
     const { runModal } = useContext(ModalContext);
     let t = _.identity;
     return (
@@ -61,7 +76,7 @@ const Python01Explorer = () => {
                     </button>
                 </h5>
                 </div>
-                <textarea className="form-control flex-grow-1" readOnly value={code} />
+                <div id="python_01_explorer_code" className="form-control flex-grow-1" dangerouslySetInnerHTML={{__html: highlighted}}></div>
             </div>
         </div>
         </div>
