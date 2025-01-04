@@ -6,6 +6,7 @@ import _ from "lodash";
 
 const Python01Explorer = () => {
     const [code, setCode] = useState("");
+    const [tree, setTree] = useState(null);
     const { runModal } = useContext(ModalContext);
     let t = _.identity;
     return (
@@ -14,7 +15,16 @@ const Python01Explorer = () => {
             <div className="col d-flex flex-column">
                 <h5>
                     Grammar (Pseudo-Python)!{" "}
-                    <button className="btn btn-sm btn-primary" onClick={(e) => {
+                </h5>
+                <textarea
+                    className="form-control flex-grow-1"
+                />
+            </div>
+            <div className="col d-flex flex-column">
+                <div>
+                <h5>
+                  Python code
+                    <button className="btn btn-sm btn-primary mx-2" onClick={(e) => {
                         /*const result = await runModal({
                             title: t("Insert Python code"),
                             fields: {
@@ -45,26 +55,10 @@ const Python01Explorer = () => {
                        Insert Python Code 
                     </button>
                 </h5>
+                </div>
                 <textarea
                     className="form-control flex-grow-1"
                 />
-                <h5>
-                    Thin value (JSON)
-                    <button className="btn btn-sm btn-primary">
-                        Thin Value × Grammar -&gt; Code
-                    </button>
-                </h5>
-                <textarea className="form-control flex-grow-1" value="No thin value" disabled/>
-            </div>
-            <div className="col d-flex flex-column">
-                <h5>
-                Python code
-                </h5>
-                <textarea
-                    className="form-control flex-grow-1"
-                />
-                <h5>Funnel Result</h5>
-                <div className="form-control flex-grow-1"/>
             </div>
         </div>
         </div>
