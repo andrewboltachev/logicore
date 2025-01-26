@@ -1556,7 +1556,7 @@ const FiddleWrapper = ({ result, onChange }) => {
   return (
     <div
       className="d-flex flex-column"
-      style={{ height: "calc(max(100vh, 700px))" }}
+      style={{ height: "calc(max(100vh, 700px))", overflow: "hidden" }}
     >
       <Navbar bg="light" expand="lg">
         <div className="container-fluid">

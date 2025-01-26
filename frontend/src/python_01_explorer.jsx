@@ -31,8 +31,8 @@ const Python01Explorer = () => {
     const { runModal } = useContext(ModalContext);
     let t = _.identity;
     return (
-        <div className="container-fluid align-items-stretch flex-grow-1 d-flex py-3">
-        <div className="row align-items-stretch flex-grow-1">
+        <div className="container-fluid flex-grow-1 d-flex py-3" style={{overflow: "hidden"}}>
+        <div className="row align-items-stretch flex-grow-1" style={{overflow: "hidden"}}>
             <div className="col d-flex flex-column">
                 <h5>
                     Grammar (Pseudo-Python)!{" "}
@@ -41,8 +41,8 @@ const Python01Explorer = () => {
                     className="form-control flex-grow-1"
                 />
             </div>
-            <div className="col d-flex flex-column">
-                <div>
+            <div className="col d-flex flex-column" style={{overflow: "hidden"}}>
+                <div style={{overflow: "hidden"}}>
                 <h5>
                   Python code
                     <button className="btn btn-sm btn-primary mx-2" onClick={(e) => {
@@ -76,7 +76,11 @@ const Python01Explorer = () => {
                     </button>
                 </h5>
                 </div>
-                <div id="python_01_explorer_code" className="form-control flex-grow-1" dangerouslySetInnerHTML={{__html: highlighted}}></div>
+                <div className="form-control flex-grow-1" style={{flex: 1, position: "relative", overflow: "auto"}}>
+                  <div style={{position: "absolute", top: 0, left: 0, right: 0, bottom: 0, margin: "6px 12px" }}>
+                    <div id="python_01_explorer_code" dangerouslySetInnerHTML={{__html: highlighted}}></div>
+                  </div>
+                </div>
             </div>
         </div>
         </div>
