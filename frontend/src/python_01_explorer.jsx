@@ -15,6 +15,10 @@ hljs.registerLanguage('python', python);
   }
 }*/
 
+function getRectParams(r) {
+  const {top, left, width, height} = {...r.toJSON()};
+  return {top, left, width, height};
+}
 
 const Python01Explorer = () => {
   // Основной
@@ -30,6 +34,18 @@ const Python01Explorer = () => {
 
     const { runModal } = useContext(ModalContext);
     let t = _.identity;
+    const [selection, setSelection] = useState(null);
+    const onSelectionChange = useCallback((e) => {
+      setSelection(_ => window.getSelection());
+    })
+    const codeRef = useRef(null);
+    useEffect(() => {
+      console.log('curr', codeRef.current);
+        document.addEventListener('selectionchange', onSelectionChange);
+        return () => {
+          document.removeEventListener('selectionchange', onSelectionChange);
+        };
+    }, []);
     return (
         <div className="container-fluid flex-grow-1 d-flex py-3" style={{overflow: "hidden"}}>
         <div className="row align-items-stretch flex-grow-1" style={{overflow: "hidden"}}>
@@ -78,7 +94,8 @@ const Python01Explorer = () => {
                 </div>
                 <div className="form-control flex-grow-1" style={{flex: 1, position: "relative", overflow: "auto"}}>
                   <div style={{position: "absolute", top: 0, left: 0, right: 0, bottom: 0, margin: "6px 12px" }}>
-                    <div id="python_01_explorer_code" dangerouslySetInnerHTML={{__html: highlighted}}></div>
+                    {selection && <div style={{backgroundColor: 'yellow', position: 'fixed', ...getRectParams(selection.getRangeAt(0).getBoundingClientRect())}} />}
+                    <div ref={codeRef} id="python_01_explorer_code" dangerouslySetInnerHTML={{__html: highlighted}}></div>
                   </div>
                 </div>
             </div>
