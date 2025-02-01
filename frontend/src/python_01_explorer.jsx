@@ -95,9 +95,10 @@ const Python01Explorer = () => {
                     <div className="form-control flex-grow-1" style={{flex: 1, position: "relative", overflow: "auto"}}>
                       <div style={{position: "absolute", top: 0, left: 0, right: 0, bottom: 0, margin: "6px 12px" }}>
                           <div style={{position: "absolute", whiteSpace: "pre"}}>{Array.from(code).map((ch, i) => (<span key={i} style={{
-                              color: "transparent", cursor: "pointer"
+                              color: "transparent",
+                              cursor: "pointer"
                           }} data-index={i} onClick={spanClick}>{ch}</span>))}</div>
-                          {<div style={{pointerEvents: "none"}} ref={codeRef} id="python_01_explorer_code" dangerouslySetInnerHTML={{__html: highlighted}}></div>}
+                          {<div style={{pointerEvents: "none", whiteSpace: "pre"}} ref={codeRef} id="python_01_explorer_code" dangerouslySetInnerHTML={{__html: highlighted}}></div>}
                       </div>
                     </div>
                 </div>
