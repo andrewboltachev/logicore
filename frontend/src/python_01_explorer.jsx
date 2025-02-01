@@ -7,6 +7,7 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 
 import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
+import {axios} from "./imports.jsx";
 hljs.registerLanguage('python', python);
 
 /*function highlight(data_type, data) {
@@ -30,6 +31,13 @@ const Python01Explorer = () => {
       useEffect(() => {
         const highlighted = hljs.highlight("python", code);
         setHighlighted(highlighted.value);
+
+        axios.post(
+           "/python-to-match_result/",
+            {
+                code
+            }
+        )
       }, [code]);
 
         const { runModal } = useContext(ModalContext);
