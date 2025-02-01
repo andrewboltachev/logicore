@@ -29,7 +29,7 @@ const Python01Explorer = () => {
     const [highlighted, setHighlighted] = useState("");
 
       useEffect(() => {
-        const highlighted = hljs.highlight("python", code);
+        const highlighted = hljs.highlight(code, {language: "python"});
         setHighlighted(highlighted.value);
 
         axios.post(
