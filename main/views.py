@@ -1454,5 +1454,6 @@ def python_to_match_result(request, *args, **kwargs):
             json={"value": serialized},
         )
     except Exception as e:
-        result = str(e)
-    return JsonResponse(resp.json(), safe=False)
+        return JsonResponse({"error": str(e)}, safe=False, status=400)
+    else:
+        return JsonResponse(resp.json(), safe=False)

@@ -143,3 +143,14 @@
   white-space-collapse: preserve;
   min-height: calc(1.5em + 0.75rem + calc(var(--bs-border-width) * 2));
 }
+
+
+.code-textarea::selection {
+  background-color: rgba(10, 83, 190, 0.2);
+}
+//-webkit- (Chrome, Safari, newer versions of Opera):
+.code-textarea::-webkit-scrollbar { width: 0 !important }
+//-moz- (Firefox):
+.code-textarea { overflow: -moz-scrollbars-none; }
+//-ms- (Internet Explorer +10):
+.code-textarea { -ms-overflow-style: none; }
