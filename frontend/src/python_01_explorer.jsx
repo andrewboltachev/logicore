@@ -1,5 +1,5 @@
 import {onPath} from "./editors/commons";
-import React, {useContext, useState, useEffect, useRef, useCallback, forwardRef} from "react";
+import React, {useContext, useState, useEffect, useRef, useCallback, forwardRef, useMemo} from "react";
 import {getByPath, setByPath} from "./logicore-forms";
 import {ModalContext} from "./runModal";
 import _ from "lodash";
@@ -21,7 +21,7 @@ function getRectParams(r) {
   return {top, left, width, height};
 }
 
-hljs.addPlugin( {
+/*hljs.addPlugin( {
     'after:highlightElement': (...args) => {
         // move the language from the result into the dataset
         console.log('afterHighlight', args);
@@ -30,7 +30,7 @@ hljs.addPlugin( {
         // move the language from the result into the dataset
         console.log('afterHighlight', args);
     },
-})
+})*/
 
 function mouseUpHandler(
     event,
@@ -42,98 +42,16 @@ function mouseUpHandler(
     parentRef,
     lineHeight,
 ) {
-    if (!shouldUseCursor || event.defaultPrevented || !cursorClickStartRef) return
-
-    if (event.button === 2) {
-        event.preventDefault()
-        event.stopPropagation()
-        //it was a right click
-    } else if (event.button === 0) {
-        setTextOverlayShouldBeVisible(false)
-
-        const screenSize = getCurrentSize(window.innerWidth)
-
-        const isSmallScreen = screenSize < ScreenSize.medium
-        const scrollTopOffset = parentRef.current?.getBoundingClientRect().top
-            ? window.scrollY + parentRef.current?.getBoundingClientRect().top
-            : isSmallScreen
-                ? approximateBlobYOffsetMobile
-                : approximateBlobYOffsetDesktop
-        // Check if it the click is in the lines excluding the scroll bar
-        if (parentRef.current && event.pageY > scrollTopOffset + parentRef.current?.clientHeight) {
-            cursorClickStartRef.current = {startX: -2, startY: -2}
-            return
-        }
-        const lineNumberOfClick = calculateLineNumberFromOffset(event.pageY, scrollTopOffset, lineHeight)
-        const leftClickOffset = parentRef.current?.getBoundingClientRect().left || 0
-        const xOffset = event.clientX - leftClickOffset - minLeftOffsetBlob
-
-        let displayAtStart = false
-        if (
-            lineNumberOfClick < cursorClickStartRef.current.startY ||
-            (lineNumberOfClick === cursorClickStartRef.current.startY && xOffset < cursorClickStartRef.current.startX)
-        ) {
-            displayAtStart = true
-        }
-        setTimeout(() => {
-            if (textAreaRef && textAreaRef.current) {
-                setTextSelection({
-                    start: textAreaRef.current.selectionStart,
-                    end: textAreaRef.current.selectionEnd,
-                    keyboard: false,
-                    displayStart: displayAtStart,
-                })
-            }
-        }, 0)
-    }
 }
 function mouseDownHandler(
     event,
-    parentRef,
-    shouldUseCursor,
-    cursorClickStartRef,
-    lineHeight,
 ) {
-    if (!shouldUseCursor || event.defaultPrevented || !cursorClickStartRef) return
-    if (event.button === 2) {
-        event.preventDefault()
-        event.stopPropagation()
-        return
-        //it was a right click
-    } else if (event.button === 0) {
-        //it was a left click
-
-        // eslint-disable-next-line @github-ui/ui-commands/no-manual-shortcut-logic
-        if (event.ctrlKey) {
-            //it was a right click essentially
-            event.preventDefault()
-            event.stopPropagation()
-            return
-        }
-
-        const screenSize = getCurrentSize(window.innerWidth)
-
-        const isSmallScreen = screenSize < ScreenSize.medium
-        const scrollTopOffset = parentRef.current?.getBoundingClientRect().top
-            ? window.scrollY + parentRef.current?.getBoundingClientRect().top
-            : isSmallScreen
-                ? approximateBlobYOffsetMobile
-                : approximateBlobYOffsetDesktop
-        // Check if it the click is in the lines excluding the scroll bar
-        if (parentRef.current && event.pageY > scrollTopOffset + parentRef.current?.clientHeight) {
-            cursorClickStartRef.current = {startX: -2, startY: -2}
-            return
-        }
-        const lineNumberOfClick = calculateLineNumberFromOffset(event.pageY, scrollTopOffset, lineHeight)
-        const leftClickOffset = parentRef.current?.getBoundingClientRect().left || 0
-        const xOffset = event.clientX - leftClickOffset - minLeftOffsetBlob
-        cursorClickStartRef.current = {startX: xOffset, startY: lineNumberOfClick}
-    }
 }
 
 
 const CodeDisplay = ({code, highlighted}) => {
     const codeRef = useRef(null);
+    const [position, setPosition] = useState({x: 0, y: 0});
     /*const spans = useEffect(() => {
         let node = codeRef.current;
         [...node.children].forEach(c => c.remove());
@@ -150,27 +68,45 @@ const CodeDisplay = ({code, highlighted}) => {
             node.appendChild(span);
         });
     }, [code]);*/
+    const lines = useMemo(() => {
+        return code.split('\n').map((s) => s.length + 1);
+    }, [code]);
+    const handleMovement = useCallback(() => {
+        if (!lines) return;
+        if (!codeRef.current) return;
+        //console.log(codeRef.current.selectionEnd);
+        let s = 0;
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const left = codeRef.current.selectionEnd - s;
+            if (left < line) {
+                setPosition({y: i, x: left});
+                return;
+            }
+            s += line;
+        }
+    }, [lines]);
     const handleKeydownWithinTextArea = useCallback((e) => {
-        //e.preventDefault();
+        //
+        handleMovement();
     });
-    return (
-        <div className="form-control flex-grow-1" style={{flex: 1, position: "relative", overflow: "auto"}}>
+    return (<>
+        <pre>{JSON.stringify([codeRef?.current?.selectionEnd, position])}</pre>
+    <div className="form-control flex-grow-1" style={{flex: 1, position: "relative", overflow: "auto"}}>
                 <div style={{position: "absolute", top: 0, left: 0}}>
                     <textarea
+                        id="code-textarea"
+                        ref={codeRef}
                         className="code-textarea"
+                        onSelect={() => {
+                            handleMovement();
+                        }}
                         onMouseUp={event =>
                             mouseUpHandler(
                                 event,
-                                textAreaRef,
-                                setTextOverlayShouldBeVisible,
-                                setTextSelection,
-                                cursorClickStartRef,
-                                shouldUseCursor,
-                                parentRef,
-                                lineHeight,
                             )
                         }
-                        onMouseDown={event => mouseDownHandler(event, parentRef, shouldUseCursor, cursorClickStartRef, lineHeight)}
+                        onMouseDown={event => mouseDownHandler(event)}
                         aria-label={'file content'}
                         aria-readonly
                         //this prevents the virtual keyboard from being popped up when a user is on mobile
@@ -189,6 +125,7 @@ const CodeDisplay = ({code, highlighted}) => {
                             //caretColor: "transparent",
                             //columnRuleColor: "transparent",
                             color: "transparent",
+                            caretColor: "black",
                             //color: "transparent",
                             display: "inline-block",
                             outlineColor: "transparent",
@@ -232,11 +169,22 @@ const CodeDisplay = ({code, highlighted}) => {
                             //setIsTextAreaFocused(true)
                         }}
                     />
-                {<div style={{pointerEvents: "none", whiteSpace: "pre", padding: "6px 12px"}} id="python_01_explorer_code"
+                    {<div style={{pointerEvents: "none", userSelect: "none", whiteSpace: "pre", padding: "6px 12px"}} id="python_01_explorer_code"
                       dangerouslySetInnerHTML={{__html: highlighted}}></div>}
+                    <div className="caret" style={{
+                        position: "absolute",
+                        top: 6 + 23.992 * position.y,
+                        left: 12 - 1 + 9.602 * position.x,
+                        width: 2,
+                        height: 24,
+                        backgroundColor: "black",
+                        zIndex: 9999,
+                        pointerEvents: "none",
+                        userSelect: "none"
+                    }}/>
                 </div>
         </div>
-    );
+    </>);
 };
 
 const Python01Explorer = () => {
