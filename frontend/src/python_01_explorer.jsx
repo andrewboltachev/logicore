@@ -173,7 +173,7 @@ const CodeDisplay = ({code, highlighted}) => {
                       dangerouslySetInnerHTML={{__html: highlighted}}></div>}
                     <div className="caret" style={{
                         position: "absolute",
-                        top: 6 + 23.992 * position.y,
+                        top: 6 + 24 * position.y,
                         left: 12 - 1 + 9.602 * position.x,
                         width: 2,
                         height: 24,
@@ -243,6 +243,7 @@ const Python01Explorer = () => {
                                 },
                             });
                             if (result) {
+                                setHighlighted(null);
                                 setCode(result.val);
                             }
                           })();
@@ -252,7 +253,7 @@ const Python01Explorer = () => {
                         </button>
                     </h5>
                     </div>
-                    <CodeDisplay code={code} highlighted={highlighted} />
+                    {highlighted && <CodeDisplay code={code} highlighted={highlighted}/>}
                 </div>
             </div>
             </div>
