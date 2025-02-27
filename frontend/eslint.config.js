@@ -28,6 +28,10 @@ export default [
     },
     rules: {
       ...pluginReactHooks.configs.recommended.rules,
+      ...{
+        "react/prop-types": "off",
+        "no-unused-vars": "off",
+      },
     },
   },
 ]

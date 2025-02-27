@@ -58,7 +58,7 @@ const CodeDisplay = ({ code }) => {
   const handleKeydownWithinTextArea = useCallback((e) => {
     //
     handleMovement()
-  })
+  }, [handleMovement])
   useEffect(() => {
     const highlighted = hljs.highlight(code, { language: 'python' })
     setHighlighted(highlighted.value)
