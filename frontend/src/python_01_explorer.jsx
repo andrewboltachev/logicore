@@ -29,6 +29,7 @@ function mouseUpHandler(
 function mouseDownHandler(
     event,
 ) {
+
 }
 
 
@@ -75,7 +76,7 @@ const CodeDisplay = ({code}) => {
     </>);
     return (<>
         <pre>{JSON.stringify([codeRef?.current?.selectionEnd, position])}</pre>
-    <div className="form-control flex-grow-1" style={{flex: 1, position: "relative", overflow: "auto"}}>
+        <div className="form-control flex-grow-1" style={{flex: 1, position: "relative", overflow: "auto"}}>
                 <div style={{position: "absolute", top: 0, left: 0}}>
                     <textarea
                         id="code-textarea"
