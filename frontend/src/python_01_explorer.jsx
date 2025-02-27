@@ -63,7 +63,7 @@ const CodeDisplay = ({ code }) => {
     const highlighted = hljs.highlight(code, { language: 'python' })
     setHighlighted(highlighted.value)
     axios.post(
-      '/python-to-match_result/',
+      '/python-to-describe-result/',
       {
         code
       }

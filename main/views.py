@@ -1442,7 +1442,7 @@ class Python01Explorer(MainView):
 
 
 @csrf_exempt
-def python_to_match_result(request, *args, **kwargs):
+def python_to_describe_result(request, *args, **kwargs):
     import libcst
     from main.parser.python import serialize_dc
     code = json.loads(request.body)["code"]
@@ -1450,10 +1450,13 @@ def python_to_match_result(request, *args, **kwargs):
     serialized = serialize_dc(module)
     try:
         resp = requests.post(
-            "http://localhost:3042/valueToExactGrammar",
+            "http://localhost:3042/valueToDescribePattern",
             json={"value": serialized},
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, safe=False, status=400)
     else:
-        return JsonResponse(resp.json(), safe=False)
+        if resp.status_code != 200:
+            return JsonResponse({"error": f"Status returned {resp.status_code}"}, safe=False, status=400)
+        else:
+            return JsonResponse(resp.json(), safe=False)
