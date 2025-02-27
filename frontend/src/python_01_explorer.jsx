@@ -10,27 +10,10 @@ import python from 'highlight.js/lib/languages/python';
 import {axios} from "./imports.jsx";
 hljs.registerLanguage('python', python);
 
-/*function highlight(data_type, data) {
-  return new Promise((resolve, reject) => {
-    resolve()
-  }
-}*/
-
 function getRectParams(r) {
   const {top, left, width, height} = {...r.toJSON()};
   return {top, left, width, height};
 }
-
-/*hljs.addPlugin( {
-    'after:highlightElement': (...args) => {
-        // move the language from the result into the dataset
-        console.log('afterHighlight', args);
-    },
-    'after:highlight': (...args) => {
-        // move the language from the result into the dataset
-        console.log('afterHighlight', args);
-    },
-})*/
 
 function mouseUpHandler(
     event,
@@ -49,25 +32,11 @@ function mouseDownHandler(
 }
 
 
-const CodeDisplay = ({code, highlighted}) => {
+const CodeDisplay = ({code}) => {
+    const [highlighted, setHighlighted] = useState("");
+
     const codeRef = useRef(null);
     const [position, setPosition] = useState({x: 0, y: 0});
-    /*const spans = useEffect(() => {
-        let node = codeRef.current;
-        [...node.children].forEach(c => c.remove());
-        if (!code) return;
-        const spanClick = (e) => {
-            console.log(e.target.dataset.i);
-        };
-        Array.from(code).forEach((ch, i) => {
-            const span = document.createElement('span');
-            span.innerText = ch;
-            span.dataset['i'] = i;
-            span.style.fontWeight = 'bold';
-            span.onclick = spanClick;
-            node.appendChild(span);
-        });
-    }, [code]);*/
     const lines = useMemo(() => {
         return code.split('\n').map((s) => s.length + 1);
     }, [code]);
@@ -90,6 +59,20 @@ const CodeDisplay = ({code, highlighted}) => {
         //
         handleMovement();
     });
+    useEffect(() => {
+        const highlighted = hljs.highlight(code, {language: "python"});
+        setHighlighted(highlighted.value);
+        axios.post(
+            "/python-to-match_result/",
+            {
+                code
+            }
+        )
+    }, [code]);
+    if (!highlighted) return (<>
+        <pre>{JSON.stringify([codeRef?.current?.selectionEnd, position])}</pre>
+        <div className="form-control flex-grow-1" style={{flex: 1, position: "relative", overflow: "auto"}}></div>
+    </>);
     return (<>
         <pre>{JSON.stringify([codeRef?.current?.selectionEnd, position])}</pre>
     <div className="form-control flex-grow-1" style={{flex: 1, position: "relative", overflow: "auto"}}>
@@ -192,18 +175,6 @@ const Python01Explorer = () => {
     const [code, setCode] = useLocalStorage("PYTHON_01_EXPLORER_CODE", "");
     // Производные
     const [tree, setTree] = useState(null);
-    const [highlighted, setHighlighted] = useState("");
-
-    useEffect(() => {
-        const highlighted = hljs.highlight(code, {language: "python"});
-        setHighlighted(highlighted.value);
-        axios.post(
-            "/python-to-match_result/",
-            {
-                code
-            }
-        )
-    }, [code]);
 
     const {runModal} = useContext(ModalContext);
     let t = _.identity;
@@ -253,7 +224,7 @@ const Python01Explorer = () => {
                         </button>
                     </h5>
                     </div>
-                    {highlighted && <CodeDisplay code={code} highlighted={highlighted}/>}
+                    <CodeDisplay code={code} />
                 </div>
             </div>
             </div>
