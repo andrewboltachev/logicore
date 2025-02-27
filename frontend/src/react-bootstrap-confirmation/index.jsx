@@ -1,21 +1,25 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import {Modal, Button} from 'react-bootstrap';
-import {confirmable, createConfirmation} from 'react-confirm';
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Modal, Button } from 'react-bootstrap'
+import { confirmable, createConfirmation } from 'react-confirm'
 
-const Confirmation = ({show, proceed, dismiss, cancel, confirmation, title,
-  okText, cancelText, okButtonStyle, cancelButtonStyle, ...options}) => {
-  const header = title ? (
-    <Modal.Header>
-      <Modal.Title>{title}</Modal.Title>
-    </Modal.Header>
-  ) : undefined;
+const Confirmation = ({
+  show, proceed, dismiss, cancel, confirmation, title,
+  okText, cancelText, okButtonStyle, cancelButtonStyle, ...options
+}) => {
+  const header = title
+    ? (
+      <Modal.Header>
+        <Modal.Title>{title}</Modal.Title>
+      </Modal.Header>
+      )
+    : undefined
   return (
     <Modal
-      size="small"
+      size='small'
       show={show}
       onHide={() => proceed(false)}
-      backdrop="static"
+      backdrop='static'
       centered
     >
       {header}
@@ -35,8 +39,8 @@ const Confirmation = ({show, proceed, dismiss, cancel, confirmation, title,
         </Button>
       </Modal.Footer>
     </Modal>
-  );
-};
+  )
+}
 
 Confirmation.propTypes = {
   /** header title */
@@ -51,8 +55,8 @@ Confirmation.propTypes = {
   show: PropTypes.bool, // from confirmable.
   proceed: PropTypes.func, // from confirmable.
   cancel: PropTypes.func, // from confirmable.
-  dismiss: PropTypes.func, // from confirmable.
-};
+  dismiss: PropTypes.func // from confirmable.
+}
 
 Confirmation.defaultProps = {
   title: undefined,
@@ -64,30 +68,33 @@ Confirmation.defaultProps = {
   show: undefined,
   proceed: undefined,
   cancel: undefined,
-  dismiss: undefined,
-};
+  dismiss: undefined
+}
 
-const confirmLow = createConfirmation(confirmable(Confirmation));
+const confirmLow = createConfirmation(confirmable(Confirmation))
 
 export const confirm = (message, options = {}) => {
-  return confirmLow(Object.assign({confirmation: message}, options));
-};
+  return confirmLow(Object.assign({ confirmation: message }, options))
+}
 
-
-const Alert = ({show, proceed, dismiss, cancel, confirmation, title,
-  okText, okButtonStyle, ...options}) => {
-  const header = title ? (
-    <Modal.Header>
-      <Modal.Title>{title}</Modal.Title>
-    </Modal.Header>
-  ) : undefined;
+const Alert = ({
+  show, proceed, dismiss, cancel, confirmation, title,
+  okText, okButtonStyle, ...options
+}) => {
+  const header = title
+    ? (
+      <Modal.Header>
+        <Modal.Title>{title}</Modal.Title>
+      </Modal.Header>
+      )
+    : undefined
   return (
     <Modal
-      size="small"
+      size='small'
       show={show}
       onHide={() => proceed()}
-      keyboard={true}
-      backdrop="static"
+      keyboard
+      backdrop='static'
       centered
     >
       {header}
@@ -101,8 +108,8 @@ const Alert = ({show, proceed, dismiss, cancel, confirmation, title,
         </Button>
       </Modal.Footer>
     </Modal>
-  );
-};
+  )
+}
 
 Alert.propTypes = {
   /** header title */
@@ -114,8 +121,8 @@ Alert.propTypes = {
   show: PropTypes.bool, // from confirmable.
   proceed: PropTypes.func, // from confirmable.
   cancel: PropTypes.func, // from confirmable.
-  dismiss: PropTypes.func, // from confirmable.
-};
+  dismiss: PropTypes.func // from confirmable.
+}
 
 Alert.defaultProps = {
   title: undefined,
@@ -125,11 +132,11 @@ Alert.defaultProps = {
   show: undefined,
   proceed: undefined,
   cancel: undefined,
-  dismiss: undefined,
-};
+  dismiss: undefined
+}
 
-const alertLow = createConfirmation(confirmable(Alert));
+const alertLow = createConfirmation(confirmable(Alert))
 
 export const alert = (message, options = {}) => {
-  return alertLow(Object.assign({confirmation: message}, options));
-};
+  return alertLow(Object.assign({ confirmation: message }, options))
+}

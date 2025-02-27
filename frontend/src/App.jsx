@@ -5,33 +5,34 @@ import React, {
   useContext,
   useMemo,
   useCallback,
-  memo,
-} from "react";
-import logo from "./logo.svg";
-import "./App.scss";
-import classd from "classd";
-import { axios, extend, update } from "./imports";
-import {Button, Dropdown, ButtonGroup, Modal} from "react-bootstrap";
-import { v4 as uuidv4 } from "uuid";
+  memo
+  , ComponentType, ReactNode
+} from 'react'
+import logo from './logo.svg'
+import './App.scss'
+import classd from 'classd'
+import { axios, extend, update } from './imports'
+import { Button, Dropdown, ButtonGroup, Modal } from 'react-bootstrap'
+import { v4 as uuidv4 } from 'uuid'
 import {
   NotificationContainer,
-  NotificationManager,
-} from "./react-notifications";
-import { alert, confirm } from "./react-bootstrap-confirmation";
-import moment from "moment";
-import SelectFileField from "./selectFileField"; // register
-import PickFilePositionsField from "./pickFilePositionsField"; // register
+  NotificationManager
+} from './react-notifications'
+import { alert, confirm } from './react-bootstrap-confirmation'
+import moment from 'moment'
+import SelectFileField from './selectFileField' // register
+import PickFilePositionsField from './pickFilePositionsField' // register
 
-import Python01Explorer from "./python_01_explorer";
+import Python01Explorer from './python_01_explorer'
 
-import { ModalProvider, ModalContext } from "./runModal";
+import { ModalProvider, ModalContext } from './runModal'
 
-import Container from "react-bootstrap/Container";
-import Nav from "react-bootstrap/Nav";
-import Navbar from "react-bootstrap/Navbar";
-import NavDropdown from "react-bootstrap/NavDropdown";
+import Container from 'react-bootstrap/Container'
+import Nav from 'react-bootstrap/Nav'
+import Navbar from 'react-bootstrap/Navbar'
+import NavDropdown from 'react-bootstrap/NavDropdown'
 
-import { debounce } from "lodash";
+import { debounce } from 'lodash'
 
 import {
   BrowserRouter as Router,
@@ -39,8 +40,8 @@ import {
   Route,
   Link,
   useLocation,
-  useNavigate,
-} from "react-router-dom";
+  useNavigate
+} from 'react-router-dom'
 import {
   useLocalStorage,
   useApi,
@@ -55,17 +56,15 @@ import {
   useDebounce,
   changeURLParameter,
   removeLangFromPathName,
-  addLangToPathName,
-} from "./utils";
+  addLangToPathName
+} from './utils'
 
-import ClojureGraph1Field from "./flow/ClojureGraph1";
-import PythonRefactoring1Field from "./flow/PythonRefactoring1";
-import ZenDocument1Field from "./flow/ZenDocument1";
-import WebDashboard1Field from "./flow/WebDashboard1";
+import ClojureGraph1Field from './flow/ClojureGraph1'
+import PythonRefactoring1Field from './flow/PythonRefactoring1'
+import ZenDocument1Field from './flow/ZenDocument1'
+import WebDashboard1Field from './flow/WebDashboard1'
 
-import LogicoreFormsDemoView from "./pages/logicore-forms-demo";
-
-import { ComponentType, ReactNode } from "react";
+import LogicoreFormsDemoView from './pages/logicore-forms-demo'
 
 import {
   validateDefinition,
@@ -80,25 +79,25 @@ import {
   submitButtonWidgets,
   getByPath,
   setByPath,
-  modifyHelper,
-} from "./logicore-forms";
+  modifyHelper
+} from './logicore-forms'
 
-import { useTranslation, Trans } from "react-i18next";
-import "./i18n";
+import { useTranslation, Trans } from 'react-i18next'
+import './i18n'
 
 // Editors - the main part of the system
-import JSON_MATCHER from "./editors/jsonmatcher";
-import PYTHON_MATCHER from "./editors/pythonmatcher";
-import LOGICORE1 from "./editors/logicore1";
-import LOGICORE2 from "./editors/logicore2";
-import UI1 from "./editors/ui1";
+import JSON_MATCHER from './editors/jsonmatcher'
+import PYTHON_MATCHER from './editors/pythonmatcher'
+import LOGICORE1 from './editors/logicore1'
+import LOGICORE2 from './editors/logicore2'
+import UI1 from './editors/ui1'
 
-import hljs from 'highlight.js/lib/core';
-import typescript from 'highlight.js/lib/languages/typescript';
-import 'highlight.js/styles/github.css';
-hljs.registerLanguage('typescript', typescript);
+import hljs from 'highlight.js/lib/core'
+import typescript from 'highlight.js/lib/languages/typescript'
+import 'highlight.js/styles/github.css'
+hljs.registerLanguage('typescript', typescript)
 
-const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url);
+const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url)
 
 const FolderField = ({
   value,
@@ -108,16 +107,16 @@ const FolderField = ({
   context,
   onReset,
   path,
-  disabled,
+  disabled
 }) => {
-  const id = "id_" + uuidv4();
-  const { label } = definition;
+  const id = 'id_' + uuidv4()
+  const { label } = definition
   return (
     <FieldLabel definition={definition} id={id} context={context}>
-      {error && <div className="invalid-feedback d-block">{error}</div>}
+      {error && <div className='invalid-feedback d-block'>{error}</div>}
     </FieldLabel>
-  );
-};
+  )
+}
 
 Object.assign(formComponents, {
   PythonRefactoring1Field,
@@ -126,41 +125,41 @@ Object.assign(formComponents, {
   WebDashboard1Field,
   FolderField,
   SelectFileField,
-  PickFilePositionsField,
-});
+  PickFilePositionsField
+})
 
 const WithDeleteButton = ({ definition, renderedFields }) => {
   return (
-    <div className="card mb-1">
-      <div className="card-body d-flex align-items-start">
-        <div className="flex-grow-1">{renderedFields}</div>
+    <div className='card mb-1'>
+      <div className='card-body d-flex align-items-start'>
+        <div className='flex-grow-1'>{renderedFields}</div>
         <a
-          href="#"
-          className="btn btn-sm btn-outline-danger"
+          href='#'
+          className='btn btn-sm btn-outline-danger'
           style={{ marginLeft: 16 }}
           onClick={(e) => {
-            e.preventDefault();
+            e.preventDefault()
             definition.onChangeParent(
               definition.parent.filter((x, i) => i != definition.index)
-            );
+            )
           }}
         >
           ×
         </a>
       </div>
     </div>
-  );
-};
+  )
+}
 
 Object.assign(fieldsLayouts, {
-  WithDeleteButton,
-});
+  WithDeleteButton
+})
 
 const ListView = ({ title, create_form, items, onChange, baseUrl }) => {
-  const theBaseUrl = baseUrl || "/";
+  const theBaseUrl = baseUrl || '/'
   return (
-    <div className="container">
-      <div className="d-flex align-items-center justify-content-between">
+    <div className='container'>
+      <div className='d-flex align-items-center justify-content-between'>
         <h1>{title}</h1>
         <FormComponent
           path={[]}
@@ -171,7 +170,7 @@ const ListView = ({ title, create_form, items, onChange, baseUrl }) => {
           error={null}
         />
       </div>
-      <table className="table">
+      <table className='table'>
         <thead>
           <tr>
             <th>Name</th>
@@ -188,16 +187,15 @@ const ListView = ({ title, create_form, items, onChange, baseUrl }) => {
               <td>{item.kind}</td>
               <td>
                 <button
-                  className="btn btn-sm btn-outline-danger"
-                  type="button"
+                  className='btn btn-sm btn-outline-danger'
+                  type='button'
                   onClick={(_) =>
-                    confirm("Do you really want to delete this graph?").then(
+                    confirm('Do you really want to delete this graph?').then(
                       (value) =>
-                        value && onChange({ action: "delete", id: item.id })
-                    )
-                  }
+                        value && onChange({ action: 'delete', id: item.id })
+                    )}
                 >
-                  <i className="fa fa-times" />
+                  <i className='fa fa-times' />
                 </button>
               </td>
             </tr>
@@ -212,23 +210,23 @@ const ListView = ({ title, create_form, items, onChange, baseUrl }) => {
         </tbody>
       </table>
     </div>
-  );
-};
+  )
+}
 
 const FiddleListView = ({ title, create_form, items, onChange, baseUrl }) => {
-  const theBaseUrl = baseUrl || "/";
+  const theBaseUrl = baseUrl || '/'
   return (
-    <div className="container mt-3">
-      <div className="d-flex align-items-center justify-content-between mb-3">
+    <div className='container mt-3'>
+      <div className='d-flex align-items-center justify-content-between mb-3'>
         <div>
           <h3>{title}</h3>
-          <h5 className="text-muted">My explorations</h5>
+          <h5 className='text-muted'>My explorations</h5>
         </div>
-        <Link to={baseUrl + "new"} className="btn btn-lg btn-success">
-          <i className="fa fa-plus" /> New
+        <Link to={baseUrl + 'new'} className='btn btn-lg btn-success'>
+          <i className='fa fa-plus' /> New
         </Link>
       </div>
-      <table className="table">
+      <table className='table'>
         <thead>
           <tr>
             <th>Name</th>
@@ -244,23 +242,22 @@ const FiddleListView = ({ title, create_form, items, onChange, baseUrl }) => {
               <td>{item.kind}</td>
               <td>
                 <button
-                  className="btn btn-sm btn-outline-danger"
-                  type="button"
+                  className='btn btn-sm btn-outline-danger'
+                  type='button'
                   onClick={(_) =>
-                    confirm("Do you really want to delete this graph?").then(
+                    confirm('Do you really want to delete this graph?').then(
                       (value) =>
-                        value && onChange({ action: "delete", id: item.id })
-                    )
-                  }
+                        value && onChange({ action: 'delete', id: item.id })
+                    )}
                 >
-                  <i className="fa fa-times" />
+                  <i className='fa fa-times' />
                 </button>
               </td>
             </tr>
           ))}
           {!items?.length && (
             <tr>
-              <td colSpan="2">
+              <td colSpan='2'>
                 <em>None yet</em>
               </td>
             </tr>
@@ -268,94 +265,91 @@ const FiddleListView = ({ title, create_form, items, onChange, baseUrl }) => {
         </tbody>
       </table>
     </div>
-  );
-};
+  )
+}
 
 const EXAMPLE_TYPESCRIPT = `\
 type Pick<T, K extends keyof T> = {
     [P in K]: T[P];
 };
-`;
-
+`
 
 const TSView = ({ onChange }) => {
-  const [text, setText] = useState(EXAMPLE_TYPESCRIPT);
-  const [edit, setEdit] = useState(null);
-  const [result, setResult] = useState(null);
-  const [worker, setWorker] = useState(null);
-  const [html, setHtml] = useState('');
+  const [text, setText] = useState(EXAMPLE_TYPESCRIPT)
+  const [edit, setEdit] = useState(null)
+  const [result, setResult] = useState(null)
+  const [worker, setWorker] = useState(null)
+  const [html, setHtml] = useState('')
   useEffect(() => {
-    if (worker) return;
-    let workerObj = new Worker('/static/hljs/worker.js');
+    if (worker) return
+    const workerObj = new Worker('/static/hljs/worker.js')
     workerObj.onmessage = (evt) => {
-      console.log('worker response', evt);
-      setHtml(evt.data);
+      console.log('worker response', evt)
+      setHtml(evt.data)
     }
     workerObj.onerror = (evt) => {
-      console.warn('worker error', evt);
+      console.warn('worker error', evt)
     }
-    setWorker(workerObj);
-    //const code = document.querySelector('#code');
-  }, []);
+    setWorker(workerObj)
+    // const code = document.querySelector('#code');
+  }, [])
 
   useEffect(() => {
-    if (!worker) return;
-    setTimeout(() => worker.postMessage(text), 50);
+    if (!worker) return
+    setTimeout(() => worker.postMessage(text), 50)
+  }, [worker, text])
 
-
-
-  }, [worker, text]);
-
-  const ref = useRef(null);
-  const [selected, setSelected] = useState(null);
+  const ref = useRef(null)
+  const [selected, setSelected] = useState(null)
 
   return (
-    <div className="container-fluid my-4">
-      <div className="row">
-        <div className="col-md-6 d-flex justify-content-center">
+    <div className='container-fluid my-4'>
+      <div className='row'>
+        <div className='col-md-6 d-flex justify-content-center'>
           <h3>TypeScript</h3>
         </div>
-        <div className="col-md-6 d-flex justify-content-center">Result</div>
+        <div className='col-md-6 d-flex justify-content-center'>Result</div>
       </div>
-      <div className="row my-5">
-        <div className="col-md-6">
-    {selected && <div
-            className="form-control"
+      <div className='row my-5'>
+        <div className='col-md-6'>
+          {selected && <div
+            className='form-control'
             style={{
-              height: "75vh",
-              fontFamily: "Monaco, Menlo, Consolas, monospace",
-                whiteSpace: 'pre',
+              height: '75vh',
+              fontFamily: 'Monaco, Menlo, Consolas, monospace',
+              whiteSpace: 'pre'
             }}
-          >{JSON.stringify(selected, null, 2)}</div>}
+                       >{JSON.stringify(selected, null, 2)}
+                       </div>}
         </div>
-        <div className="col-md-6">
+        <div className='col-md-6'>
           Code:
           {(edit !== null) && <textarea
-            className="form-control"
+            className='form-control'
             style={{
-              height: "75vh",
-              fontFamily: "Monaco, Menlo, Consolas, monospace",
+              height: '75vh',
+              fontFamily: 'Monaco, Menlo, Consolas, monospace'
             }}
             value={edit}
             onChange={(e) => setEdit(e.target.value)}
-          ></textarea>}
+                              />}
           {(edit === null) && <div
-              className="form-control"
+            className='form-control'
+            style={{
+              height: '75vh',
+              position: 'relative',
+              fontFamily: 'Monaco, Menlo, Consolas, monospace'
+            }}
+                              >
+            <div
+              className='codeback'
               style={{
-                height: "75vh",
-                position: "relative",
-                fontFamily: "Monaco, Menlo, Consolas, monospace",
+                whiteSpace: 'pre',
+                position: 'absolute',
+                top: 6, // TODO
+                left: 12
               }}
-            >
-              <div
-                className="codeback"
-                style={{
-                  whiteSpace: 'pre',
-                  position: "absolute",
-                  top: 6, // TODO
-                  left: 12,
-                }}
-              >{/*text.split('\n').map((line, row) => <React.Fragment>
+            >{/* text.split('\n').map((line, row) => <React.Fragment>
                 {!!row && <br />}
                 {line.split('').map((ch, col) => <span
                   onClick={(e) => {
@@ -363,116 +357,88 @@ const TSView = ({ onChange }) => {
                     console.log(row, col, ch);
                   }}
                 >{' '}</span>)}
-              </React.Fragment>)*/}
+              </React.Fragment>) */}
               {text.split('').map((ch, num) => <span
-                  style={{display: 'inline', backgroundColor: (selected && (num >= selected.pos) && (num < selected.end)) ? 'yellow' : void 0}}
-                  key={num}
-                  onClick={(e) => {
-                    e.persist();
-                    //console.log(ch, num, text[num]);
+                style={{ display: 'inline', backgroundColor: (selected && (num >= selected.pos) && (num < selected.end)) ? 'yellow' : void 0 }}
+                key={num}
+                onClick={(e) => {
+                  e.persist();
+                  // console.log(ch, num, text[num]);
 
+                  (async () => {
+                    let resp
+                    const t = window._.identity
 
-
-
-
-
-
-
-
-    (async () => {
-
-
-
-
-    let resp;
-    let t = window._.identity;
-
-    try {
-      resp = await axios.post(`/javascript-api/ts-tree?`, {
-        code: text,
-        pos: num,
-      });
-      /*if (resp.data.error) {
+                    try {
+                      resp = await axios.post('/javascript-api/ts-tree?', {
+                        code: text,
+                        pos: num
+                      })
+                      /* if (resp.data.error) {
         NotificationManager.warning("", resp.data.error);
         return;
       } else {
         elements = resp.data.funnel;
-      }*/
-    } catch (e) {
-      NotificationManager.warning("", t("Unknown error"));
-      console.error(e);
-      return;
-    }
-    
-    setSelected(resp.data);
-    //console.log('ts-tree data', resp.data);
+      } */
+                    } catch (e) {
+                      NotificationManager.warning('', t('Unknown error'))
+                      console.error(e)
+                      return
+                    }
 
-
-
-
-    })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-                  }}
-                >{ch === '\n' ? ch : ' '}</span>)}
-              </div>
-              <div
-                className="typescript"
-                style={{
-                  whiteSpace: "pre",
-                  display: "inline-block",
-                  cursor: "pointer",
-                  pointerEvents: "none",
-                  position: "relative",
-                  zIndex: 1,
+                    setSelected(resp.data)
+                    // console.log('ts-tree data', resp.data);
+                  })()
                 }}
-                ref={ref}
-                dangerouslySetInnerHTML={{__html: html}}
-              />
-            </div>}
+                                               >{ch === '\n' ? ch : ' '}
+              </span>)}
+            </div>
+            <div
+              className='typescript'
+              style={{
+                whiteSpace: 'pre',
+                display: 'inline-block',
+                cursor: 'pointer',
+                pointerEvents: 'none',
+                position: 'relative',
+                zIndex: 1
+              }}
+              ref={ref}
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          </div>}
           {!edit && <button
-            type="button"
-            className="btn btn-success my-2"
+            type='button'
+            className='btn btn-success my-2'
             onClick={(_) => {
-              setEdit(text);
+              setEdit(text)
             }}
-          >
+                    >
             Edit
           </button>}
           {edit && <div>
             <button
-              type="button"
-              className="btn btn-success my-2"
+              type='button'
+              className='btn btn-success my-2'
               onClick={(_) => {
-                setText(edit);
-                setEdit(null);
+                setText(edit)
+                setEdit(null)
               }}
             >
               OK
             </button>
             <button
-              type="button"
-              className="btn btn-secondary my-2"
+              type='button'
+              className='btn btn-secondary my-2'
               onClick={(_) => {
-                setEdit(null);
+                setEdit(null)
               }}
             >
               Cancel
             </button>
           </div>}
         </div>
-        {/*typeof result === "string" ? (
+        {/* typeof result === "string" ? (
           <div className="col-md-6 text-danger">
             Error:
             <hr style={{ marginTop: 0 }} />
@@ -486,84 +452,86 @@ const TSView = ({ onChange }) => {
               {JSON.stringify(result, null, 2)}
             </code>
           </div>
-        )*/}
+        ) */}
       </div>
     </div>
-  );
-};
+  )
+}
 
 const LanguageView = ({ onChange }) => {
-  const [text, setText] = useState("");
-  const [result, setResult] = useState(null);
+  const [text, setText] = useState('')
+  const [result, setResult] = useState(null)
   return (
-    <div className="container-fluid my-4">
-      <div className="row">
-        <div className="col-md-6 d-flex justify-content-center">
+    <div className='container-fluid my-4'>
+      <div className='row'>
+        <div className='col-md-6 d-flex justify-content-center'>
           <h3>Language</h3>
         </div>
-        <div className="col-md-6 d-flex justify-content-center">Result</div>
+        <div className='col-md-6 d-flex justify-content-center'>Result</div>
       </div>
-      <div className="row my-5">
-        <div className="col-md-6">
+      <div className='row my-5'>
+        <div className='col-md-6'>
           Code:
           <textarea
-            className="form-control"
+            className='form-control'
             style={{
-              height: "75vh",
-              fontFamily: "Monaco, Menlo, Consolas, monospace",
+              height: '75vh',
+              fontFamily: 'Monaco, Menlo, Consolas, monospace'
             }}
             value={text}
             onChange={(e) => setText(e.target.value)}
-          ></textarea>
+          />
           <button
-            className="btn btn-primary my-2"
+            className='btn btn-primary my-2'
             onClick={(_) => {
-              setResult(null);
+              setResult(null)
               onChange({ value: text }, null, ({ result }) =>
                 setResult(result)
-              );
+              )
             }}
           >
             Update -&gt;
           </button>
         </div>
-        {typeof result === "string" ? (
-          <div className="col-md-6 text-danger">
-            Error:
-            <hr style={{ marginTop: 0 }} />
-            <code>{result}</code>
-          </div>
-        ) : (
-          <div className="col-md-6">
-            Result:
-            <hr style={{ marginTop: 0 }} />
-            <code style={{ whiteSpace: "pre" }}>
-              {JSON.stringify(result, null, 2)}
-            </code>
-          </div>
-        )}
+        {typeof result === 'string'
+          ? (
+            <div className='col-md-6 text-danger'>
+              Error:
+              <hr style={{ marginTop: 0 }} />
+              <code>{result}</code>
+            </div>
+            )
+          : (
+            <div className='col-md-6'>
+              Result:
+              <hr style={{ marginTop: 0 }} />
+              <code style={{ whiteSpace: 'pre' }}>
+                {JSON.stringify(result, null, 2)}
+              </code>
+            </div>
+            )}
       </div>
     </div>
-  );
-};
+  )
+}
 
 const CodeDisplay = (props) => {
   return (
-    <div className="my-1">
-      <span style={{ fontWeight: "bold" }}>{props?.definition?.label}</span>
+    <div className='my-1'>
+      <span style={{ fontWeight: 'bold' }}>{props?.definition?.label}</span>
       <textarea
-        id="id_8c8c87ea-0942-4fbd-97a9-7af3fb3504a5"
-        type="text"
-        className="form-control"
+        id='id_8c8c87ea-0942-4fbd-97a9-7af3fb3504a5'
+        type='text'
+        className='form-control'
         defaultValue={props?.value}
         readOnly
       />
     </div>
-  );
-};
+  )
+}
 CodeDisplay.validatorRunner = (definition, value, parentValue, context) => {
-  return null;
-};
+  return null
+}
 CodeDisplay.validatorChecker = (
   definition,
   error,
@@ -571,232 +539,232 @@ CodeDisplay.validatorChecker = (
   parentState,
   context
 ) => {
-  return false;
-};
+  return false
+}
 
 const MatchObjectDefinition = {
-  type: "Fields",
+  type: 'Fields',
   fields: [
     {
-      type: "UUIDListField",
-      k: "arg0",
-      label: "Array",
+      type: 'UUIDListField',
+      k: 'arg0',
+      label: 'Array',
       fields: [
         {
-          k: "key",
-          type: "TextField",
-          //"required": true,
-          //"label": "Key",
+          k: 'key',
+          type: 'TextField'
+          // "required": true,
+          // "label": "Key",
         },
         {
-          k: "value",
-          type: "RecursiveField",
-          definition_id: "grammar",
-        },
+          k: 'value',
+          type: 'RecursiveField',
+          definition_id: 'grammar'
+        }
       ],
-      layout: "ADTKeyValue",
-    },
-  ],
-};
+      layout: 'ADTKeyValue'
+    }
+  ]
+}
 
 const MatchArrayDefinition = {
-  type: "Fields",
+  type: 'Fields',
   fields: [
     {
-      k: "element",
-      type: "RecursiveField",
-      definition_id: "grammar",
-    },
-  ],
-};
+      k: 'element',
+      type: 'RecursiveField',
+      definition_id: 'grammar'
+    }
+  ]
+}
 
 const JSONMatchPattern = [
   {
-    label: "Containers",
-    color: "primary",
+    label: 'Containers',
+    color: 'primary',
     children: [
       {
-        key: "MatchObject",
-        label: "{ ! }",
-        title: "Object: All keys must match",
-        empty: [[["", null]]],
-        definition: MatchObjectDefinition,
+        key: 'MatchObject',
+        label: '{ ! }',
+        title: 'Object: All keys must match',
+        empty: [[['', null]]],
+        definition: MatchObjectDefinition
       },
       {
-        key: "MatchObjectPartial",
-        label: "{ ? }",
-        title: "Object: Only specified keys must match",
-        empty: [[["", null]]],
-        definition: MatchObjectDefinition,
+        key: 'MatchObjectPartial',
+        label: '{ ? }',
+        title: 'Object: Only specified keys must match',
+        empty: [[['', null]]],
+        definition: MatchObjectDefinition
       },
       {
-        key: "MatchArray",
-        label: "[ ! ]",
-        title: "Array: All elements must match",
+        key: 'MatchArray',
+        label: '[ ! ]',
+        title: 'Array: All elements must match',
         empty: [[null]],
-        definition: MatchArrayDefinition,
+        definition: MatchArrayDefinition
       },
       {
-        key: "MatchArraySome",
-        label: "[ ? ]",
-        title: "Array: Some of the elements must match",
+        key: 'MatchArraySome',
+        label: '[ ? ]',
+        title: 'Array: Some of the elements must match',
         empty: [[null]],
-        definition: MatchArrayDefinition,
+        definition: MatchArrayDefinition
       },
       {
-        key: "MatchArrayExact",
-        label: "[ , ]",
-        title: "Array: Literal (element-by-element) match",
+        key: 'MatchArrayExact',
+        label: '[ , ]',
+        title: 'Array: Literal (element-by-element) match',
         empty: [[null]],
         definition: {
-          type: "Fields",
+          type: 'Fields',
           fields: [
             {
-              type: "UUIDListField",
-              k: "arg0",
-              label: "Array",
+              type: 'UUIDListField',
+              k: 'arg0',
+              label: 'Array',
               fields: [
                 {
-                  k: "element",
-                  type: "RecursiveField",
-                  definition_id: "grammar",
-                },
+                  k: 'element',
+                  type: 'RecursiveField',
+                  definition_id: 'grammar'
+                }
               ],
-              layout: "ADTElement",
-            },
-          ],
-        },
-      },
-      /*{
+              layout: 'ADTElement'
+            }
+          ]
+        }
+      }
+      /* {
       key: "MatchArrayContextFree",
       label: "[ * ]",
       title: "Array: Match using context-free grammar",
       empty: [[null]],
-    },*/
-    ],
+    }, */
+    ]
   },
   {
-    label: "Literals",
-    color: "success",
+    label: 'Literals',
+    color: 'success',
     children: [
       {
-        key: "MatchString",
+        key: 'MatchString',
         label: '"abc"',
-        title: "Match String",
-        empty: ["wow!"],
+        title: 'Match String',
+        empty: ['wow!'],
         definition: {
-          type: "Fields",
+          type: 'Fields',
           fields: [
             {
-              type: "TextField",
-              k: "arg0",
-            },
-          ],
-        },
+              type: 'TextField',
+              k: 'arg0'
+            }
+          ]
+        }
       },
       {
-        key: "MatchNumber",
-        label: "123",
-        title: "Match Number",
+        key: 'MatchNumber',
+        label: '123',
+        title: 'Match Number',
         empty: [0],
         definition: {
-          type: "Fields",
+          type: 'Fields',
           fields: [
             {
-              type: "NumberField",
-              k: "arg0",
-            },
-          ],
-        },
+              type: 'NumberField',
+              k: 'arg0'
+            }
+          ]
+        }
       },
       {
-        key: "MatchBool",
-        label: "Y/N",
-        title: "Match Boolean",
+        key: 'MatchBool',
+        label: 'Y/N',
+        title: 'Match Boolean',
         empty: [false],
         definition: {
-          type: "Fields",
+          type: 'Fields',
           fields: [
             {
-              type: "BooleanField",
-              k: "arg0",
-            },
-          ],
-        },
+              type: 'BooleanField',
+              k: 'arg0'
+            }
+          ]
+        }
       },
       {
-        key: "MatchNull",
-        label: "Null",
-        title: "Match Null",
-      },
-    ],
+        key: 'MatchNull',
+        label: 'Null',
+        title: 'Match Null'
+      }
+    ]
   },
   {
-    label: "Conditions",
-    color: "warning",
+    label: 'Conditions',
+    color: 'warning',
     children: [
       {
-        key: "MatchSimpleOr",
-        label: "a|b",
-        title: "OR",
+        key: 'MatchSimpleOr',
+        label: 'a|b',
+        title: 'OR',
         definition: MatchObjectDefinition,
-        empty: [["option1", null]],
+        empty: [['option1', null]]
       },
       {
-        key: "MatchAny",
-        label: "?",
-        title: "OR",
+        key: 'MatchAny',
+        label: '?',
+        title: 'OR'
       },
       {
-        key: "MatchIfThen",
-        label: "If",
-        title: "«if-then» match",
+        key: 'MatchIfThen',
+        label: 'If',
+        title: '«if-then» match',
         definition: {
-          type: "Fields",
+          type: 'Fields',
           fields: [
             {
-              k: "arg0",
-              type: "RecursiveField",
-              definition_id: "grammar",
+              k: 'arg0',
+              type: 'RecursiveField',
+              definition_id: 'grammar'
             },
             {
-              k: "arg1",
-              type: "RecursiveField",
-              definition_id: "grammar",
+              k: 'arg1',
+              type: 'RecursiveField',
+              definition_id: 'grammar'
             },
             {
-              k: "arg2",
-              type: "TextField",
-            },
+              k: 'arg2',
+              type: 'TextField'
+            }
           ],
-          layout: "ADTIfThen",
+          layout: 'ADTIfThen'
         },
-        empty: [[null, null, ""]],
-      },
-    ],
+        empty: [[null, null, '']]
+      }
+    ]
   },
   {
-    label: "Funnel",
-    color: "dark",
+    label: 'Funnel',
+    color: 'dark',
     children: [
       {
-        key: "MatchFunnel",
-        label: "_",
-        title: "Regular funnel",
+        key: 'MatchFunnel',
+        label: '_',
+        title: 'Regular funnel'
       },
       {
-        key: "MatchFunnelKeys",
-        label: "k",
-        title: "Match keys to funnel",
+        key: 'MatchFunnelKeys',
+        label: 'k',
+        title: 'Match keys to funnel'
       },
       {
-        key: "MatchFunnelKeysU",
-        label: "kU",
-        title: "Match keys to funnel (unique)",
-      },
-    ],
-  },
-];
+        key: 'MatchFunnelKeysU',
+        label: 'kU',
+        title: 'Match keys to funnel (unique)'
+      }
+    ]
+  }
+]
 
 /*
 {
@@ -858,168 +826,170 @@ const ADTSelectField = ({
   onReset,
   path,
   context,
-  disabled,
+  disabled
 }) => {
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  let inner = null;
-  const [editing, setEditing] = useState(false);
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const inner = null
+  const [editing, setEditing] = useState(false)
   return (
     <div style={{ flexShrink: 0 }}>
-      {!value || editing ? (
-        <div>
-          <div className="d-flex" style={{ gridGap: 5 }}>
-            {adtDefintion.map((g) => {
-              return (
-                <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: "0.75rem" }}>{g.label}</div>
-                  <div className="btn-group">
-                    {g.children.map((t) => {
-                      const active = t.key === value;
-                      return (
-                        <button
-                          type="button"
+      {!value || editing
+        ? (
+          <div>
+            <div className='d-flex' style={{ gridGap: 5 }}>
+              {adtDefintion.map((g) => {
+                return (
+                  <div style={{ flexShrink: 0 }}>
+                    <div style={{ fontSize: '0.75rem' }}>{g.label}</div>
+                    <div className='btn-group'>
+                      {g.children.map((t) => {
+                        const active = t.key === value
+                        return (
+                  <button
+                          type='button'
                           className={classd`btn btn-sm btn${
-                            !active ? "-outline" : ""
+                            !active ? '-outline' : ''
                           }-${g.color} fw-bold`}
                           style={{ flexShrink: 0 }}
                           onClick={(_) => {
                             if (!active) {
-                              onChange(t.key);
+                              onChange(t.key)
                             }
-                            setEditing(false);
+                            setEditing(false)
                           }}
                         >
                           {t.label}
                         </button>
-                      );
-                    })}
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                )
+              })}
+            </div>
           </div>
-        </div>
-      ) : (
-        <button
-          className="btn btn-sm btn-outline-dark"
-          type="button"
-          onClick={(_) => setEditing(true)}
-          style={{ flexShrink: 0, whiteSpace: "nowrap" }}
-        >
-          {(adtDefintionItems.find((x) => x.key === value) || {}).label}
-        </button>
-      )}
-      {error && <div className="invalid-feedback d-block">{error}</div>}
+          )
+        : (
+          <button
+            className='btn btn-sm btn-outline-dark'
+            type='button'
+            onClick={(_) => setEditing(true)}
+            style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+          >
+            {(adtDefintionItems.find((x) => x.key === value) || {}).label}
+          </button>
+          )}
+      {error && <div className='invalid-feedback d-block'>{error}</div>}
     </div>
-  );
-};
-ADTSelectField.isEmpty = (x) => !x;
+  )
+}
+ADTSelectField.isEmpty = (x) => !x
 
 Object.assign(formComponents, {
   CodeDisplay,
-  //JSONMatchPatternField,
-  ADTSelectField,
-});
+  // JSONMatchPatternField,
+  ADTSelectField
+})
 
 const CodeSearchSubmit = ({}) => {
   return (
-    <div className="d-grid">
-      <button className="btn btn-primary" type="submit">
-        Save &amp; Run <i className="fas fa-play-circle" />
+    <div className='d-grid'>
+      <button className='btn btn-primary' type='submit'>
+        Save &amp; Run <i className='fas fa-play-circle' />
       </button>
     </div>
-  );
-};
+  )
+}
 
 Object.assign(submitButtonWidgets, {
-  CodeSearchSubmit,
-});
+  CodeSearchSubmit
+})
 
 const CodeSearchLayout = (props) => {
-  const { renderedFields } = props;
+  const { renderedFields } = props
   return (
     <>
       <div
-        className={classd`code-search ${{ "is-error": props.value.error }}`}
+        className={classd`code-search ${{ 'is-error': props.value.error }}`}
         style={{
-          minHeight: "calc(max(100vh - 156px, 600px))",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gridAutoRows: "1fr",
-          gridGap: 20,
+          minHeight: 'calc(max(100vh - 156px, 600px))',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gridAutoRows: '1fr',
+          gridGap: 20
         }}
       >
-        <div className="">{renderedFields[0]}</div>
-        <div className="">{renderedFields[1]}</div>
-        <div className="">{renderedFields[2]}</div>
-        <div className="">{renderedFields[3]}</div>
+        <div className=''>{renderedFields[0]}</div>
+        <div className=''>{renderedFields[1]}</div>
+        <div className=''>{renderedFields[2]}</div>
+        <div className=''>{renderedFields[3]}</div>
       </div>
     </>
-  );
-};
+  )
+}
 
 const ADTNodeFields = (props) => {
-  const { renderedFields } = props;
+  const { renderedFields } = props
   return (
     <>
       <div
         className={classd`d-grid align-items-start`}
         style={{
-          margin: "0 0 0 0",
+          margin: '0 0 0 0',
           flexShrink: 0,
           gridGap: 5,
-          gridAutoFlow: "column",
+          gridAutoFlow: 'column'
         }}
       >
         {renderedFields}
       </div>
     </>
-  );
-};
+  )
+}
 
 const ADTNodeFieldsWrapper = (props) => {
-  const { renderedFields } = props;
+  const { renderedFields } = props
   return (
     <>
       <strong>Grammar</strong>
       <div
-        className="form-control"
+        className='form-control'
         style={{
-          position: "relative",
-          minHeight: "40vh",
-          overflow: "auto",
+          position: 'relative',
+          minHeight: '40vh',
+          overflow: 'auto'
         }}
       >
         <div
           className={classd``}
           style={{
-            margin: "0 0 0 0",
-            position: "absolute",
+            margin: '0 0 0 0',
+            position: 'absolute'
           }}
         >
-          <div className="" style={{}}>
+          <div className='' style={{}}>
             {renderedFields}
           </div>
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
 const ADTKeyValue = (props) => {
-  const { renderedFields, definition } = props;
+  const { renderedFields, definition } = props
   return (
-    <div className="d-flex">
+    <div className='d-flex'>
       <a
-        href="#"
-        className="text-danger"
-        style={{ marginRight: 5, padding: "0.5rem" }}
+        href='#'
+        className='text-danger'
+        style={{ marginRight: 5, padding: '0.5rem' }}
         onClick={(e) => {
-          e.preventDefault();
+          e.preventDefault()
           definition.onChangeParent(
             definition.parent.filter((x, i) => i != definition.index)
-          );
+          )
         }}
       >
         ×
@@ -1027,9 +997,9 @@ const ADTKeyValue = (props) => {
       <div
         className={classd`d-flex`}
         style={{
-          margin: "0 0 0 0",
+          margin: '0 0 0 0',
           gridGap: 5,
-          gridAutoFlow: "column",
+          gridAutoFlow: 'column'
         }}
       >
         {renderedFields.map((f) => (
@@ -1037,22 +1007,22 @@ const ADTKeyValue = (props) => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
 const ADTElement = (props) => {
-  const { renderedFields, definition } = props;
+  const { renderedFields, definition } = props
   return (
-    <div className="d-flex">
+    <div className='d-flex'>
       <a
-        href="#"
-        className="text-danger"
-        style={{ marginRight: 5, padding: "0.5rem" }}
+        href='#'
+        className='text-danger'
+        style={{ marginRight: 5, padding: '0.5rem' }}
         onClick={(e) => {
-          e.preventDefault();
+          e.preventDefault()
           definition.onChangeParent(
             definition.parent.filter((x, i) => i != definition.index)
-          );
+          )
         }}
       >
         ×
@@ -1060,9 +1030,9 @@ const ADTElement = (props) => {
       <div
         className={classd`d-flex`}
         style={{
-          margin: "0 0 0 0",
+          margin: '0 0 0 0',
           gridGap: 5,
-          gridAutoFlow: "column",
+          gridAutoFlow: 'column'
         }}
       >
         {renderedFields.map((f) => (
@@ -1070,24 +1040,24 @@ const ADTElement = (props) => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
 const ADTIfThen = (props) => {
-  const { renderedFields, definition } = props;
+  const { renderedFields, definition } = props
   return (
     <div>
-      <label className="fw-bold">Pre-condition:</label>
+      <label className='fw-bold'>Pre-condition:</label>
       <div>{renderedFields[0]}</div>
-      <label className="fw-bold">Condition:</label>
+      <label className='fw-bold'>Condition:</label>
       <div>{renderedFields[1]}</div>
-      <div className="d-flex align-items-center">
-        <label className="fw-bold me-1">Error text:</label>
+      <div className='d-flex align-items-center'>
+        <label className='fw-bold me-1'>Error text:</label>
         <div>{renderedFields[2]}</div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 Object.assign(fieldsLayouts, {
   CodeSearchLayout,
@@ -1095,40 +1065,40 @@ Object.assign(fieldsLayouts, {
   ADTKeyValue,
   ADTElement,
   ADTIfThen,
-  ADTNodeFieldsWrapper,
-});
+  ADTNodeFieldsWrapper
+})
 
 const GenericForm2 = (props) => {
   return (
     <div>
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <div className="container-fluid">
-          <a className="navbar-brand" href="#">
+      <nav className='navbar navbar-expand-lg navbar-light bg-light'>
+        <div className='container-fluid'>
+          <a className='navbar-brand' href='#'>
             Logicore
           </a>
           <button
-            className="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
+            className='navbar-toggler'
+            type='button'
+            data-bs-toggle='collapse'
+            data-bs-target='#navbarSupportedContent'
+            aria-controls='navbarSupportedContent'
+            aria-expanded='false'
+            aria-label='Toggle navigation'
           >
-            <span className="navbar-toggler-icon" />
+            <span className='navbar-toggler-icon' />
           </button>
-          <div className="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-              <li className="nav-item">
+          <div className='collapse navbar-collapse' id='navbarSupportedContent'>
+            <ul className='navbar-nav me-auto mb-2 mb-lg-0'>
+              <li className='nav-item'>
                 <Link
-                  className="nav-link active"
-                  aria-current="page"
-                  to="/logicore-code/"
+                  className='nav-link active'
+                  aria-current='page'
+                  to='/logicore-code/'
                 >
                   Go Back
                 </Link>
               </li>
-              {/*<li className="nav-item">
+              {/* <li className="nav-item">
                 <a className="nav-link" href="#">Link</a>
               </li>
               <li className="nav-item dropdown">
@@ -1144,56 +1114,56 @@ const GenericForm2 = (props) => {
               </li>
               <li className="nav-item">
                 <a className="nav-link disabled">Disabled</a>
-              </li>*/}
+              </li> */}
             </ul>
-            {/*<form className="d-flex">
+            {/* <form className="d-flex">
               <input className="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
               <button className="btn btn-outline-success" type="submit">Search</button>
-            </form>*/}
+            </form> */}
           </div>
         </div>
       </nav>
-      <div className="container-fluid">
+      <div className='container-fluid'>
         <GenericForm {...props} />
       </div>
     </div>
-  );
-};
+  )
+}
 
 const JSONExplorerGadget = (props) => {
-  const [state, setState] = useLocalStorage("LOGICORE_JSON_EXPLORER_DATA", {});
-  const [result, setResult] = useState({});
-  const [i, setI] = useState(0);
+  const [state, setState] = useLocalStorage('LOGICORE_JSON_EXPLORER_DATA', {})
+  const [result, setResult] = useState({})
+  const [i, setI] = useState(0)
   return (
-    <div style={{ overflow: "auto", height: "100vh" }}>
+    <div style={{ overflow: 'auto', height: '100vh' }}>
       <div style={{ minWidth: 1200, minHeight: 800 }}>
-        <nav className="navbar navbar-expand-lg navbar-light bg-light">
-          <div className="container-fluid">
-            <a className="navbar-brand" href="#">
+        <nav className='navbar navbar-expand-lg navbar-light bg-light'>
+          <div className='container-fluid'>
+            <a className='navbar-brand' href='#'>
               JSON Explorer
             </a>
             <button
-              className="navbar-toggler"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#navbarSupportedContent"
-              aria-controls="navbarSupportedContent"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
+              className='navbar-toggler'
+              type='button'
+              data-bs-toggle='collapse'
+              data-bs-target='#navbarSupportedContent'
+              aria-controls='navbarSupportedContent'
+              aria-expanded='false'
+              aria-label='Toggle navigation'
             >
-              <span className="navbar-toggler-icon" />
+              <span className='navbar-toggler-icon' />
             </button>
             <div
-              className="collapse navbar-collapse"
-              id="navbarSupportedContent"
+              className='collapse navbar-collapse'
+              id='navbarSupportedContent'
             >
-              <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                <li className="nav-item">
-                  <Link className="nav-link active" aria-current="page" to="/">
+              <ul className='navbar-nav me-auto mb-2 mb-lg-0'>
+                <li className='nav-item'>
+                  <Link className='nav-link active' aria-current='page' to='/'>
                     Visit home page
                   </Link>
                 </li>
-                {/*<li className="nav-item">
+                {/* <li className="nav-item">
                 <a className="nav-link" href="#">Link</a>
               </li>
               <li className="nav-item dropdown">
@@ -1209,208 +1179,208 @@ const JSONExplorerGadget = (props) => {
               </li>
               <li className="nav-item">
                 <a className="nav-link disabled">Disabled</a>
-              </li>*/}
+              </li> */}
               </ul>
-              {/*<form className="d-flex">
+              {/* <form className="d-flex">
               <input className="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
               <button className="btn btn-outline-success" type="submit">Search</button>
-            </form>*/}
+            </form> */}
             </div>
           </div>
         </nav>
-        <div className="container-fluid">
+        <div className='container-fluid'>
           <GenericForm
             key={`s${i}`}
             notifyOnError
             data={{ ...state, ...result }}
             onChange={(newState) => {
-              setState(newState);
-              setResult({});
+              setState(newState)
+              setResult({})
               props.onChange(newState, null, (resp) => {
-                setResult(resp);
-                setI(i + 1);
-              });
+                setResult(resp)
+                setI(i + 1)
+              })
             }}
             fields={{
-              type: "Fields",
+              type: 'Fields',
               fields: [
-                { type: "TextareaField", k: "source", label: "Source JSON" },
-                { k: "result", type: "CodeDisplay", label: "Result" },
+                { type: 'TextareaField', k: 'source', label: 'Source JSON' },
+                { k: 'result', type: 'CodeDisplay', label: 'Result' },
                 {
-                  type: "Fields",
+                  type: 'Fields',
                   fields: [
                     {
-                      type: "Fields",
+                      type: 'Fields',
                       fields: [
                         {
-                          type: "ADTSelectField",
-                          k: "grammar_type",
-                          label: "Grammar",
+                          type: 'ADTSelectField',
+                          k: 'grammar_type',
+                          label: 'Grammar'
                         },
                         {
-                          type: "DefinedField",
-                          k: "grammar_data",
-                          label: "Grammar (structure)",
-                          master_field: "grammar_type",
+                          type: 'DefinedField',
+                          k: 'grammar_data',
+                          label: 'Grammar (structure)',
+                          master_field: 'grammar_type',
                           master_field_getter: (x) => x,
                           definitions: Object.fromEntries(
                             adtDefintionItems.map((x) => [
                               x.key,
-                              x.definition || { type: "Fields", fields: [] },
+                              x.definition || { type: 'Fields', fields: [] }
                             ])
-                          ),
-                        },
+                          )
+                        }
                       ],
-                      interceptor: "ADTNodeInterceptor",
+                      interceptor: 'ADTNodeInterceptor',
                       adtDefintion: JSONMatchPattern,
-                      id: "grammar",
-                      layout: "ADTNodeFields",
-                    },
+                      id: 'grammar',
+                      layout: 'ADTNodeFields'
+                    }
                   ],
-                  layout: "ADTNodeFieldsWrapper",
-                  interceptor: "recursiveFields",
-                  context: { formControlSm: true },
+                  layout: 'ADTNodeFieldsWrapper',
+                  interceptor: 'recursiveFields',
+                  context: { formControlSm: true }
                 },
-                { k: "funnel", type: "CodeDisplay", label: "Funnel" },
+                { k: 'funnel', type: 'CodeDisplay', label: 'Funnel' }
               ],
-              layout: "CodeSearchLayout",
+              layout: 'CodeSearchLayout'
             }}
-            submitButtonWidget="CodeSearchSubmit"
+            submitButtonWidget='CodeSearchSubmit'
           />
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const PageNotFound = () => {
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         top: 56,
         left: 0,
         right: 0,
         bottom: 0,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
       }}
     >
       <div>
-        <Trans>Page not found</Trans>.{" "}
-        <Link to="/">
+        <Trans>Page not found</Trans>.{' '}
+        <Link to='/'>
           <Trans>Visit Home</Trans>
         </Link>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const fiddleTypes = {
   JSON_MATCHER,
   PYTHON_MATCHER,
   LOGICORE1,
   LOGICORE2,
-  UI1,
-};
+  UI1
+}
 
 const Fiddle = (props) => {
-  const [val, setVal] = useState(props.val);
-  const [localChecked, setLocalChecked] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const [val, setVal] = useState(props.val)
+  const [localChecked, setLocalChecked] = useState(false)
+  const [dirty, setDirty] = useState(false)
 
-  const draftPrefix = props.uuid ? `${props.uuid}/` : "";
-  const draftKey = `${draftPrefix}${props.rev}`;
-  const prevDraftKey = props.rev > 1 ? `${draftPrefix}${props.rev - 1}` : null;
-  const draftId = `draft[${draftKey}]`;
+  const draftPrefix = props.uuid ? `${props.uuid}/` : ''
+  const draftKey = `${draftPrefix}${props.rev}`
+  const prevDraftKey = props.rev > 1 ? `${draftPrefix}${props.rev - 1}` : null
+  const draftId = `draft[${draftKey}]`
 
-  const { t } = useTranslation();
+  const { t } = useTranslation()
   const save = async () => {
-    const currentSaved = window.localStorage.getItem(draftId);
-    const currentDirty = dirty;
+    const currentSaved = window.localStorage.getItem(draftId)
+    const currentDirty = dirty
 
     // try the best
-    window.localStorage.removeItem(draftId);
-    setDirty(false);
+    window.localStorage.removeItem(draftId)
+    setDirty(false)
     try {
-      await props.onChange({ val });
+      await props.onChange({ val })
     } catch (e) {
-      NotificationManager.warning("", t("Unknown error"));
-      if (currentSaved) window.localStorage.setItem(draftId, currentSaved);
-      setDirty(currentDirty);
+      NotificationManager.warning('', t('Unknown error'))
+      if (currentSaved) window.localStorage.setItem(draftId, currentSaved)
+      setDirty(currentDirty)
     }
-  };
+  }
   useEffect(() => {
-    setLocalChecked(false);
-  }, [props.uuid]);
+    setLocalChecked(false)
+  }, [props.uuid])
 
-  const langChangeHookId = draftId + ".langChangeHook";
-  const normalizeNull = (x) => (x === null ? "null" : x);
+  const langChangeHookId = draftId + '.langChangeHook'
+  const normalizeNull = (x) => (x === null ? 'null' : x)
 
   useEffect(() => {
     if (localChecked) {
-      saveToLocal(val);
+      saveToLocal(val)
     } else {
       (async () => {
-        const rawV = window.localStorage.getItem(draftId) || "null";
-        const v = JSON.parse(rawV);
+        const rawV = window.localStorage.getItem(draftId) || 'null'
+        const v = JSON.parse(rawV)
         if (v) {
-          window.localStorage.removeItem(draftId);
+          window.localStorage.removeItem(draftId)
           if (rawV !== JSON.stringify(val)) {
             if (
               window.localStorage.getItem(langChangeHookId) ||
-              (await confirm(t("Unsaved changes exist. Apply?"), {
-                okText: t("Apply"),
-                cancelText: t("Discard"),
+              (await confirm(t('Unsaved changes exist. Apply?'), {
+                okText: t('Apply'),
+                cancelText: t('Discard')
               }))
             ) {
-              window.localStorage.removeItem(langChangeHookId);
-              setVal(v);
-              setDirty(true);
+              window.localStorage.removeItem(langChangeHookId)
+              setVal(v)
+              setDirty(true)
             }
           }
         }
-        setLocalChecked(true);
-      })();
+        setLocalChecked(true)
+      })()
     }
-  }, [val, localChecked]);
+  }, [val, localChecked])
 
   const saveToLocal = useCallback(
     debounce((val) => {
-      window.localStorage.setItem(draftId, JSON.stringify(val));
+      window.localStorage.setItem(draftId, JSON.stringify(val))
     }, 200),
     []
-  );
+  )
 
-  const valJSON = useMemo(() => JSON.stringify(val), [val]);
-  const topValJSON = useMemo(() => JSON.stringify(props.val), [props.val]);
+  const valJSON = useMemo(() => JSON.stringify(val), [val])
+  const topValJSON = useMemo(() => JSON.stringify(props.val), [props.val])
 
   const editVal = (v) => {
-    const vJson = JSON.stringify(v);
+    const vJson = JSON.stringify(v)
     if (vJson !== valJSON) {
-      setVal(v);
+      setVal(v)
     }
-    setDirty(vJson !== topValJSON);
-  };
+    setDirty(vJson !== topValJSON)
+  }
 
-  const { Editor } = fiddleTypes[props.kind];
+  const { Editor } = fiddleTypes[props.kind]
 
-  if (!Editor) return `Not implemented: ${props.kind}`;
+  if (!Editor) return `Not implemented: ${props.kind}`
 
   const saveButton = (
     <button
-      className="btn btn-primary mt-2"
-      type="button"
+      className='btn btn-primary mt-2'
+      type='button'
       onClick={save}
       disabled={!dirty}
     >
-      <i className="fas fa-save" /> <Trans>Save</Trans>
+      <i className='fas fa-save' /> <Trans>Save</Trans>
     </button>
-  );
+  )
 
   return (
-    <div className="container-fluid my-3 flex-grow-1 d-flex flex-column">
+    <div className='container-fluid my-3 flex-grow-1 d-flex flex-column'>
       <Editor
         revId={draftKey}
         prevRevId={prevDraftKey}
@@ -1419,37 +1389,37 @@ const Fiddle = (props) => {
         saveButton={saveButton}
       />
     </div>
-  );
-};
+  )
+}
 
 const FiddleNotFound = () => {
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         top: 56,
         left: 0,
         right: 0,
         bottom: 0,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
       }}
     >
       <div>
-        <Trans>Tool not found.</Trans>{" "}
-        <Link to={addLang("/toolbox/")}>
+        <Trans>Tool not found.</Trans>{' '}
+        <Link to={addLang('/toolbox/')}>
           <Trans>View available</Trans>
         </Link>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const FiddleTypes = ({ items }) => {
   return (
-    <div className="container">
-      <h3 className="my-3">
+    <div className='container'>
+      <h3 className='my-3'>
         <Trans>Tool types</Trans>
       </h3>
       <ul>
@@ -1458,20 +1428,20 @@ const FiddleTypes = ({ items }) => {
             <li>
               <Link to={addLang(`/toolbox/${item.url}/`)}>{item.title}</Link>
             </li>
-          );
+          )
         })}
       </ul>
     </div>
-  );
-};
+  )
+}
 
 const MyFiddleList = ({ user, items }) => {
   return (
-    <div className="container">
-      <h3 className="my-3">
+    <div className='container'>
+      <h3 className='my-3'>
         <Trans>My copies</Trans>
       </h3>
-      {/*<ul>
+      {/* <ul>
         {items?.map((item) => {
           return (
             <li>
@@ -1479,27 +1449,27 @@ const MyFiddleList = ({ user, items }) => {
             </li>
           );
         })}
-      </ul>*/}
-      {/*className="d-grid" style={{gridAutoFlow: 'column', gap: '15px', gridTemplateColumns: "repeat(auto-fit, 18rem)"}}*/}
-      <div 
-        style={{display: 'flex', flexWrap: 'wrap', margin: -10}}
-        >
+      </ul> */}
+      {/* className="d-grid" style={{gridAutoFlow: 'column', gap: '15px', gridTemplateColumns: "repeat(auto-fit, 18rem)"}} */}
+      <div
+        style={{ display: 'flex', flexWrap: 'wrap', margin: -10 }}
+      >
         {items?.map((item) => {
           return (
-            <div className="card" style={{ width: "18rem", margin: 10 }}>
-              {/*<img src="..." className="card-img-top" alt="..." />*/}
-              <div className="card-body">
-                <h5 className="card-title">{item.title}</h5>
-                <p className="card-text text-secondary fw-bold">
+            <div className='card' style={{ width: '18rem', margin: 10 }}>
+              {/* <img src="..." className="card-img-top" alt="..." /> */}
+              <div className='card-body'>
+                <h5 className='card-title'>{item.title}</h5>
+                <p className='card-text text-secondary fw-bold'>
                   {item.kind}
                 </p>
                 <p className={`card-text text-${item.owner === user.username ? 'success' : 'danger'} fw-bold`}>
                   {item.owner}<br />
                 </p>
-                <Dropdown as={ButtonGroup} drop={"down-centered"}>
-                  <Button href={addLang(item.url)} variant="primary">Rev ({item.rev}) - {item.time_ago}</Button>
+                <Dropdown as={ButtonGroup} drop='down-centered'>
+                  <Button href={addLang(item.url)} variant='primary'>Rev ({item.rev}) - {item.time_ago}</Button>
 
-                  {!!item.revs.length && <Dropdown.Toggle split variant="primary" id="dropdown-split-basic" />}
+                  {!!item.revs.length && <Dropdown.Toggle split variant='primary' id='dropdown-split-basic' />}
 
                   {!!item.revs.length && <Dropdown.Menu>
                     {item.revs.map(item => (
@@ -1509,12 +1479,12 @@ const MyFiddleList = ({ user, items }) => {
                 </Dropdown>
               </div>
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
-};
+  )
+}
 
 const mainComponents = {
   ListView,
@@ -1532,85 +1502,85 @@ const mainComponents = {
   FiddleNotFound,
   Fiddle,
   // Fiddle end
-  Python01Explorer,
-};
+  Python01Explorer
+}
 
 const MainWrapper = ({ result, onChange }) => {
-  const Component = mainComponents[result?.template];
+  const Component = mainComponents[result?.template]
   return (
     <>{Component && result && <Component {...{ ...result, onChange }} />}</>
-  );
-};
+  )
+}
 
 const FiddleWrapper = ({ result, onChange }) => {
-  let Component = mainComponents[result?.template];
-  const loc = useLocation();
+  const Component = mainComponents[result?.template]
+  const loc = useLocation()
   const getUrl = (lang) => {
-    const theUrl = loc.pathname + loc.search;
+    const theUrl = loc.pathname + loc.search
     return addLangToPathName(
       lang,
       removeLangFromPathName(window.CURRENT_LANGUAGE, theUrl)
-    );
-  };
-  const { t } = useTranslation();
+    )
+  }
+  const { t } = useTranslation()
   return (
     <div
-      className="d-flex flex-column"
-      style={{ height: "calc(max(100vh, 700px))", overflow: "hidden" }}
+      className='d-flex flex-column'
+      style={{ height: 'calc(max(100vh, 700px))', overflow: 'hidden' }}
     >
-      <Navbar bg="light" expand="lg">
-        <div className="container-fluid">
-          {/*<Navbar.Brand href="#home"><Trans>Tools</Trans></Navbar.Brand>*/}
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
-              <Link className="nav-link" to={addLang("/")}>
-                <i className="fas fa-arrow-circle-left"></i>{" "}
+      <Navbar bg='light' expand='lg'>
+        <div className='container-fluid'>
+          {/* <Navbar.Brand href="#home"><Trans>Tools</Trans></Navbar.Brand> */}
+          <Navbar.Toggle aria-controls='basic-navbar-nav' />
+          <Navbar.Collapse id='basic-navbar-nav'>
+            <Nav className='me-auto'>
+              <Link className='nav-link' to={addLang('/')}>
+                <i className='fas fa-arrow-circle-left' />{' '}
                 <Trans>Back to main website</Trans>
               </Link>
-              <Link className="nav-link" to={addLang("/toolbox/")}>
+              <Link className='nav-link' to={addLang('/toolbox/')}>
                 <Trans>All tools</Trans>
               </Link>
-              <Link className="nav-link" to={addLang("/toolbox/mine/")}>
+              <Link className='nav-link' to={addLang('/toolbox/mine/')}>
                 <Trans>Mine</Trans>
               </Link>
-              <NavDropdown title="Python series" id="basic-nav-dropdown">
-                <NavDropdown.Item href="/python01explorer/">01 Explorer</NavDropdown.Item>
-                {/*<NavDropdown.Item href="#action/3.2">
+              <NavDropdown title='Python series' id='basic-nav-dropdown'>
+                <NavDropdown.Item href='/python01explorer/'>01 Explorer</NavDropdown.Item>
+                {/* <NavDropdown.Item href="#action/3.2">
                   Another action
                 </NavDropdown.Item>
                 <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
                 <NavDropdown.Divider />
                 <NavDropdown.Item href="#action/3.4">
                   Separated link
-                </NavDropdown.Item>*/}
+                </NavDropdown.Item> */}
               </NavDropdown>
             </Nav>
             <Nav className={`ml-auto me-5 text-${result?.owner === result?.user?.username ? 'success' : 'danger'}`}>
               {result?.owner && <>Owner:<br /></>}
               {result?.owner}
             </Nav>
-            <Nav className="me-5">
+            <Nav className='me-5'>
               Logged in as<br />
-              {result?.user?.username || <span className="text-danger">Anonymous</span>}
+              {result?.user?.username || <span className='text-danger'>Anonymous</span>}
             </Nav>
             <Nav>
               <NavDropdown
                 title={
                   <>
-                    <i className="fas fa-language"></i>{" "}
+                    <i className='fas fa-language' />{' '}
                     {window.CURRENT_LANGUAGE_NAME}
                   </>
                 }
-                id="basic-nav-dropdown"
-                align="end"
+                id='basic-nav-dropdown'
+                align='end'
               >
                 {window.LANGUAGES.map(([code, name]) => {
                   return (
                     <NavDropdown.Item key={code} href={getUrl(code)}>
                       {name}
                     </NavDropdown.Item>
-                  );
+                  )
                 })}
               </NavDropdown>
             </Nav>
@@ -1619,169 +1589,168 @@ const FiddleWrapper = ({ result, onChange }) => {
       </Navbar>
       {Component && result && <Component {...{ ...result, onChange }} />}
     </div>
-  );
-};
+  )
+}
 
 const wrapperComponents = {
   MainWrapper,
-  FiddleWrapper,
-};
+  FiddleWrapper
+}
 
 const result_worth_processing = ({ result, loc, navigate }) => {
   if (result?.notification) {
-    NotificationManager[result.notification.type]("", result.notification.text);
+    NotificationManager[result.notification.type]('', result.notification.text)
   }
   if (result?.redirect) {
-    window.location.href = result.redirect;
-    return false;
+    window.location.href = result.redirect
+    return false
   }
   if (result?.navigate) {
-    navigate(result.navigate);
-    return false;
+    navigate(result.navigate)
+    return false
   }
-  return true;
-};
+  return true
+}
 
 const gatherFileUids = (data) => {
-  if (Array.isArray(data))
-    return data.reduce((a, b) => ({ ...a, ...gatherFileUids(b) }), null);
-  if (data && typeof data === "object") {
+  if (Array.isArray(data)) { return data.reduce((a, b) => ({ ...a, ...gatherFileUids(b) }), null) }
+  if (data && typeof data === 'object') {
     if (data.its_uid_for_file_to_upload_239r8h239rh239r) {
-      const uid = data.its_uid_for_file_to_upload_239r8h239rh239r;
-      return { [uid]: window[uid].file };
+      const uid = data.its_uid_for_file_to_upload_239r8h239rh239r
+      return { [uid]: window[uid].file }
     }
     return Object.entries(data).reduce(
       (a, [_, b]) => ({ ...a, ...gatherFileUids(b) }),
       null
-    );
+    )
   }
-};
+}
 
 const BaseLayout = () => {
-  const loc = useLocation();
-  const navigate = useNavigate();
-  const lang = window.CURRENT_LANGUAGE;
-  const { t, i18n } = useTranslation();
+  const loc = useLocation()
+  const navigate = useNavigate()
+  const lang = window.CURRENT_LANGUAGE
+  const { t, i18n } = useTranslation()
   useEffect(() => {
-    i18n.changeLanguage(lang);
-  }, [i18n.resolvedLanguage === lang]);
-  let apiUrl = addLangToPathName(
+    i18n.changeLanguage(lang)
+  }, [i18n.resolvedLanguage === lang])
+  const apiUrl = addLangToPathName(
     lang,
-    "/api" + removeLangFromPathName(lang, loc.pathname + loc.search)
-  );
+    '/api' + removeLangFromPathName(lang, loc.pathname + loc.search)
+  )
   //
-  const [result, loading, _] = useApi(apiUrl, loc.key);
-  const [show, setShow] = useState(false);
+  const [result, loading, _] = useApi(apiUrl, loc.key)
+  const [show, setShow] = useState(false)
 
   const reload = () => {
-    navigate(loc.pathname);
-  };
+    navigate(loc.pathname)
+  }
   useEffect(
     (_) => {
-      console.log("GET API returned", result, window.actionToConsume);
-      if (result?.current_date) window.current_date = result.current_date;
-      if (!result_worth_processing({ result, loc, navigate })) return;
+      console.log('GET API returned', result, window.actionToConsume)
+      if (result?.current_date) window.current_date = result.current_date
+      if (!result_worth_processing({ result, loc, navigate })) return
       if (window.actionToConsume) {
       }
     },
     [result]
-  );
+  )
 
   const onChange = async (data, setErrors, customHandler) => {
-    let resp;
+    let resp
     if (window._react_form_has_files) {
-      //console.log(gatherFileUids(data)); return;
-      const formData = new FormData();
+      // console.log(gatherFileUids(data)); return;
+      const formData = new FormData()
       for (const [k, v] of Object.entries(gatherFileUids(data))) {
-        formData.append(k, v);
+        formData.append(k, v)
       }
-      formData.append("data", JSON.stringify(data));
+      formData.append('data', JSON.stringify(data))
       /*
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         }
       */
-      resp = await axios.post(apiUrl, formData);
+      resp = await axios.post(apiUrl, formData)
     } else {
       resp = await axios.post(apiUrl, {
-        data,
-      });
+        data
+      })
     }
-    const result = resp.data;
-    console.log("POST API returned", resp);
+    const result = resp.data
+    console.log('POST API returned', resp)
     if (customHandler) {
-      customHandler(result);
+      customHandler(result)
     } else {
-      if (setErrors) setErrors(null, null);
-      if (!result_worth_processing({ result, loc, navigate })) return;
-      if (result?.action === "setErrors") {
-        if (setErrors) setErrors(result.errors, result.error);
+      if (setErrors) setErrors(null, null)
+      if (!result_worth_processing({ result, loc, navigate })) return
+      if (result?.action === 'setErrors') {
+        if (setErrors) setErrors(result.errors, result.error)
       }
-      if (result?.action === "closeWindow") {
-        window.the_msg = result?.the_msg;
-        window.close();
+      if (result?.action === 'closeWindow') {
+        window.the_msg = result?.the_msg
+        window.close()
       }
     }
-    return resp.data;
-  };
+    return resp.data
+  }
 
-  const Wrapper = wrapperComponents[result?.wrapper];
+  const Wrapper = wrapperComponents[result?.wrapper]
 
-  if (result?.navigate || result?.redirect || !Wrapper) return <div />;
+  if (result?.navigate || result?.redirect || !Wrapper) return <div />
 
   return (
     <>
       <Wrapper {...{ loc, navigate, result, apiUrl, onChange }} />
     </>
-  );
-};
+  )
+}
 
 const updateFieldsByPath = (fields, path, f) => {
   if (path.length) {
-    const [pathHead, ...nextPath] = path;
-    if (!fields.fields) return fields;
+    const [pathHead, ...nextPath] = path
+    if (!fields.fields) return fields
     const fields2 = fields.fields.map((field) =>
       field?.k === pathHead ? updateFieldsByPath(field, nextPath, f) : field
-    );
-    console.log("reassemble", fields2);
-    return { ...fields, fields: fields2 };
+    )
+    console.log('reassemble', fields2)
+    return { ...fields, fields: fields2 }
   } else {
-    return f(fields);
+    return f(fields)
   }
-};
+}
 
 const RefsInterceptor = {
-  processFields({ fields, definition, value }) {
+  processFields ({ fields, definition, value }) {
     const options = value[definition.refsSource].map((item) => ({
       value: item.uuid,
-      label: definition.refsLabel(item),
-    }));
+      label: definition.refsLabel(item)
+    }))
     const ff = updateFieldsByPath(
       { fields },
       [...definition.refsNest, ...definition.refsTarget],
       (field) => ({ ...field, options })
-    ).fields;
-    return ff;
+    ).fields
+    return ff
   },
-  onChange(newValue, oldValue, definition, context) {
-    let v = { ...newValue };
+  onChange (newValue, oldValue, definition, context) {
+    const v = { ...newValue }
     if (newValue[definition.refsSource] !== oldValue[definition.refsSource]) {
       const available = Object.fromEntries(
         newValue[definition.refsSource].map((item) => [item.uuid, item])
-      );
+      )
       const r = modifyHelper(definition.refsNest, v, (items) =>
         items
           .map((item) => {
-            const v = getByPath(item, definition.refsTarget);
-            const found = available[v?.value];
-            if (!found || !v?.value) return null;
+            const v = getByPath(item, definition.refsTarget)
+            const found = available[v?.value]
+            if (!found || !v?.value) return null
             const vv = v?.value
               ? { value: v.value, label: definition.refsLabel(found) }
-              : null;
-            return modifyHelper(definition.refsTarget, item, (_) => vv);
+              : null
+            return modifyHelper(definition.refsTarget, item, (_) => vv)
           })
           .filter((x) => x)
-      ); /*setByPath(
+      ) /* setByPath(
         v,
         definition.refsNest,
         (getByPath(v, definition.refsNest) || []).map(
@@ -1793,63 +1762,63 @@ const RefsInterceptor = {
             return setByPath(item, definition.refsTarget, vv);
           }
         ).filter(x => x)
-      );*/
-      return r;
+      ); */
+      return r
     }
-    return v;
-  },
-};
+    return v
+  }
+}
 
-const adtDefintion = JSONMatchPattern;
+const adtDefintion = JSONMatchPattern
 
 const adtDefintionItems = adtDefintion
   .map((x) => x.children)
-  .reduce((a, b) => a.concat(b));
+  .reduce((a, b) => a.concat(b))
 
 console.log(
-  "!!!",
+  '!!!',
   Object.fromEntries(
     adtDefintionItems.map((x) => [
       x.key,
-      x.definition || { type: "Fields", fields: [] },
+      x.definition || { type: 'Fields', fields: [] }
     ])
   )
-);
+)
 
 const ADTNodeInterceptor = {
-  processFields({ fields, definition, value }) {
-    return fields;
+  processFields ({ fields, definition, value }) {
+    return fields
   },
-  onChange(newValue, oldValue, definition, context) {
-    const v = { ...newValue };
+  onChange (newValue, oldValue, definition, context) {
+    const v = { ...newValue }
     if (oldValue?.grammar_type?.value !== newValue?.grammar_type?.value) {
       const e =
         adtDefintionItems.find((x) => x.key === newValue?.grammar_type?.value)
-          ?.empty || [];
-      //console.log('search in', definition?.adtDefintion.map(x=>x.children));
-      v.grammar_data = Object.fromEntries(e.map((a, i) => [`arg${i}`, a]));
-      //console.log(`selected empty for ${newValue?.grammar_type?.value}`, v.grammar_data);
+          ?.empty || []
+      // console.log('search in', definition?.adtDefintion.map(x=>x.children));
+      v.grammar_data = Object.fromEntries(e.map((a, i) => [`arg${i}`, a]))
+      // console.log(`selected empty for ${newValue?.grammar_type?.value}`, v.grammar_data);
     }
-    return v;
-  },
-};
+    return v
+  }
+}
 
 Object.assign(interceptors, {
   RefsInterceptor,
-  ADTNodeInterceptor,
-});
+  ADTNodeInterceptor
+})
 
-function App() {
+function App () {
   return (
     <ModalProvider>
       <Router>
         <Routes>
-          <Route path="*" element={<BaseLayout />} />
+          <Route path='*' element={<BaseLayout />} />
         </Routes>
       </Router>
       <NotificationContainer enterTimeout={10} leaveTimeout={10} />
     </ModalProvider>
-  );
+  )
 }
 
-export default App;
+export default App

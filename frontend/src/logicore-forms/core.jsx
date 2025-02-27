@@ -1,4 +1,4 @@
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom'
 import React, {
   useState,
   useEffect,
@@ -6,11 +6,11 @@ import React, {
   forwardRef,
   useMemo,
   useRef,
-  useContext,
-} from "react";
-import { v4 as uuidv4 } from "uuid";
-import update, { extend } from "immutability-helper";
-import classd from "classd";
+  useContext
+} from 'react'
+import { v4 as uuidv4 } from 'uuid'
+import update, { extend } from 'immutability-helper'
+import classd from 'classd'
 import {
   moveUp,
   moveDown,
@@ -22,36 +22,36 @@ import {
   zipArrays,
   getByPath,
   setByPath,
-  modifyHelper,
-} from "./utils";
-import _ from "lodash";
-import { NotificationManager } from "../react-notifications";
+  modifyHelper
+} from './utils'
+import _ from 'lodash'
+import { NotificationManager } from '../react-notifications'
 
-export let validateDefinition, definitionIsInvalid;
+export let validateDefinition, definitionIsInvalid
 
 // Main extension point
 
-export let formComponents, FormComponent;
+export let formComponents, FormComponent
 
-export let fieldsLayouts = {};
+export const fieldsLayouts = {}
 
-export let interceptors = {};
+export const interceptors = {}
 
-export let formDisplays = {};
+export const formDisplays = {}
 
-export let formValidators = {};
+export const formValidators = {}
 
-export let submitButtonWidgets = {};
+export const submitButtonWidgets = {}
 
 // Core field types
 
 const FieldsBasicLayout = ({ definition, renderedFields }) => {
-  return <>{renderedFields}</>;
-};
+  return <>{renderedFields}</>
+}
 
 const Fields = (fieldsProps) => {
-  const interceptor = fieldsProps.definition?.interceptor ? interceptors[fieldsProps.definition?.interceptor] : null;
-  let {
+  const interceptor = fieldsProps.definition?.interceptor ? interceptors[fieldsProps.definition?.interceptor] : null
+  const {
     definition,
     value,
     error,
@@ -59,65 +59,65 @@ const Fields = (fieldsProps) => {
     path,
     context,
     disabled,
-    formValue,
-  } = fieldsProps;
-  function onChange(v) {
-    let vv = v;
-    if (interceptor?.onChange) vv = interceptor.onChange(vv, value, definition, context);
+    formValue
+  } = fieldsProps
+  function onChange (v) {
+    let vv = v
+    if (interceptor?.onChange) vv = interceptor.onChange(vv, value, definition, context)
     if (vv.then) { // contraversial
-      vv.then(fieldsProps.onChange);
+      vv.then(fieldsProps.onChange)
     } else {
-      fieldsProps.onChange(vv);
+      fieldsProps.onChange(vv)
     }
   };
-  let Layout = FieldsBasicLayout;
+  let Layout = FieldsBasicLayout
   if (definition.layout) {
-    Layout = fieldsLayouts[definition.layout];
-    if (!Layout) throw new Error("Layout doesn't exist: " + definition.layout);
+    Layout = fieldsLayouts[definition.layout]
+    if (!Layout) throw new Error("Layout doesn't exist: " + definition.layout)
   }
-  let ItemWrapper = React.Fragment;
+  let ItemWrapper = React.Fragment
   if (definition.itemWrapper) {
-    ItemWrapper = fieldsLayouts[definition.itemWrapper];
+    ItemWrapper = fieldsLayouts[definition.itemWrapper]
   }
-  let theFields = definition.fields;
+  let theFields = definition.fields
   if (interceptor && interceptor.processFields) {
-    theFields = interceptor.processFields({ fields: definition.fields, definition, value, context });
+    theFields = interceptor.processFields({ fields: definition.fields, definition, value, context })
   }
-  let interceptorContext = {};
+  let interceptorContext = {}
   if (interceptor && interceptor.fieldsContext) {
-    interceptorContext = interceptor.fieldsContext({ fields: theFields, definition, value, context, onChange });
+    interceptorContext = interceptor.fieldsContext({ fields: theFields, definition, value, context, onChange })
   }
-  function doOnChange(child_k, v) {
-    const newV = { ...(value || {}), ...(!!child_k ? { [child_k]: v } : v) };
+  function doOnChange (child_k, v) {
+    const newV = { ...(value || {}), ...(child_k ? { [child_k]: v } : v) }
     if (child_k) {
       theFields.forEach(ff => {
         if (ff.type === 'DefinedField' && ff.master_field === child_k) {
-          const master_field_getter = ff.master_field_getter || (x => x?.value);
+          const master_field_getter = ff.master_field_getter || (x => x?.value)
           if (master_field_getter(value?.[child_k]) !== master_field_getter(v)) {
-            newV[ff.k] = {};
+            newV[ff.k] = {}
           }
         }
-      });
+      })
     }
     onChange(
       newV,
       definition.constraints || []
-    );
+    )
   }
   const renderedFields = theFields.map((child, i) => {
-    const vvalue = !!child.k ? value?.[child.k] : value;
-    const additionalProps = {};
-    let imposed_value = void 0; // TODO use undefined
-    const master_field_getter = child.master_field_getter || (x => x?.value);
+    const vvalue = child.k ? value?.[child.k] : value
+    const additionalProps = {}
+    let imposed_value = void 0 // TODO use undefined
+    const master_field_getter = child.master_field_getter || (x => x?.value)
     if (child.type === 'DefinedField' && child.master_field) {
-      //console.log('CURRENT FOR', (value?.[child?.master_field] || {}).value);
-      additionalProps.current =  child.definitions[
+      // console.log('CURRENT FOR', (value?.[child?.master_field] || {}).value);
+      additionalProps.current = child.definitions[
         master_field_getter((value?.[child?.master_field] || {}))
-      ] || {type: 'Fields', fields: []}; // TODO assumption
+      ] || { type: 'Fields', fields: [] } // TODO assumption
     } else if (child.impositions) {
       imposed_value = child?.impositions?.[
         master_field_getter((value?.[child.master_field] || {}))
-      ]; // TODO assumption
+      ] // TODO assumption
     }
     return (
       <ItemWrapper key={i}>
@@ -128,54 +128,54 @@ const Fields = (fieldsProps) => {
             parent: definition.parent,
             onChangeParent: definition.onChangeParent,
             ...child,
-            ...additionalProps,
+            ...additionalProps
           }}
           value={(imposed_value !== void 0) ? imposed_value : vvalue}
-          error={!!child.k ? error?.[child.k] : error}
+          error={child.k ? error?.[child.k] : error}
           context={{ ...context, ...definition.context, ...child.context, ...interceptorContext }}
-          onChange={(imposed_value !== void 0) ? (_ => null) : ((v) => doOnChange(child.k, v))}
+          onChange={(imposed_value !== void 0) ? _ => null : (v) => doOnChange(child.k, v)}
           onReset={onReset}
-          path={[...path, ...(!!child.k ? [child.k] : [])]}
+          path={[...path, ...(child.k ? [child.k] : [])]}
           disabled={(imposed_value !== void 0) ? true : !!disabled}
         />
       </ItemWrapper>
-    );
-  });
+    )
+  })
   return (
     <Layout
       {...{ definition, value, onChange, error, onReset, path, context }}
       renderedFields={renderedFields}
     />
-  );
-};
+  )
+}
 Fields.validatorRunner = (definition, value, parentValue, context) => {
-  let result = {};
+  let result = {}
   if (definition.validators) {
-    result.__own = validatorsValidatorRunner(definition, value, parentValue, context);
+    result.__own = validatorsValidatorRunner(definition, value, parentValue, context)
   }
   for (const f of definition.fields || []) {
     if (f.k) {
-      result[f.k] = validateDefinition(f, value?.[f.k], value, context);
+      result[f.k] = validateDefinition(f, value?.[f.k], value, context)
     } else {
-      result = { ...result, ...validateDefinition(f, value, parentValue, context) };
+      result = { ...result, ...validateDefinition(f, value, parentValue, context) }
     }
   }
-  return result;
-};
+  return result
+}
 Fields.validatorChecker = (definition, error, state, parentState, context) => {
-  if (error?.__own) return true;
+  if (error?.__own) return true
   for (const f of definition.fields || []) {
     if (definitionIsInvalid(
       f,
-      !!f.k ? error?.[f.k] : error,
-      !!f.k ? state?.[f.k] : state,
-      !!f.k ? state : parentState,
+      f.k ? error?.[f.k] : error,
+      f.k ? state?.[f.k] : state,
+      f.k ? state : parentState,
       context
     )) {
-      return true;
+      return true
     }
   }
-};
+}
 
 const DefinedField = ({
   value,
@@ -185,68 +185,72 @@ const DefinedField = ({
   context,
   onReset,
   path,
-  current,
+  current
 }) => {
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const labelStyle = {};
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const labelStyle = {}
   if (context.labelColor) {
-    labelStyle.style = { color: context.labelColor };
+    labelStyle.style = { color: context.labelColor }
   }
   // TODO
-  let newCurrent = definition.current;
-  return (<>
-    <FormComponent
-      context={{...context, ...definition.context}}
-      value={value}
-      onChange={x => {onChange(x); onReset(path);}}
-      onReset={_ => {}}
-      path={[]}
-      error={(error && typeof error === 'object') ? error : null}
-      definition={{...newCurrent, layout: newCurrent?.layout || definition?.layout, itemWrapper: definition.itemWrapper}}
-    />
-    {(error && typeof error === 'string') ? <div className="invalid-feedback d-block">{error + ''}</div> : null}
+  const newCurrent = definition.current
+  return (
+    <>
+      <FormComponent
+        context={{ ...context, ...definition.context }}
+        value={value}
+        onChange={x => { onChange(x); onReset(path) }}
+        onReset={_ => {}}
+        path={[]}
+        error={(error && typeof error === 'object') ? error : null}
+        definition={{ ...newCurrent, layout: newCurrent?.layout || definition?.layout, itemWrapper: definition.itemWrapper }}
+      />
+      {(error && typeof error === 'string') ? <div className='invalid-feedback d-block'>{error + ''}</div> : null}
     </>
-  );
-};
-DefinedField.isEmpty = (x) => false; // TODO remove
+  )
+}
+DefinedField.isEmpty = (x) => false // TODO remove
 DefinedField.validatorRunner = (definition, value, parentValue, context) => {
-  let result = {};
-  const current = definition?.current ? definition.current : definition?.definitions?.[
-    (parentValue?.[definition?.master_field] || {}).value
-  ];
-  if (!current || !current.fields) return null;
+  let result = {}
+  const current = definition?.current
+    ? definition.current
+    : definition?.definitions?.[
+      (parentValue?.[definition?.master_field] || {}).value
+    ]
+  if (!current || !current.fields) return null
   for (const f of current.fields) {
     if (f.k) {
-      result[f.k] = validateDefinition(f, value?.[f.k], value, context);
+      result[f.k] = validateDefinition(f, value?.[f.k], value, context)
     } else {
-      result = { ...result, ...validateDefinition(f, value, parentValue, context) };
+      result = { ...result, ...validateDefinition(f, value, parentValue, context) }
     }
   }
-  return result;
-};
+  return result
+}
 DefinedField.validatorChecker = (definition, error, value, parentValue, context) => {
-  const current = definition?.current ? definition.current : definition?.definitions?.[
-    (parentValue?.[definition?.master_field] || {}).value
-  ];
+  const current = definition?.current
+    ? definition.current
+    : definition?.definitions?.[
+      (parentValue?.[definition?.master_field] || {}).value
+    ]
 
   for (const f of (current?.fields || [])) {
     if (definitionIsInvalid(
       f,
-      !!f.k ? error?.[f.k] : error,
-      !!f.k ? value?.[f.k] : value,
-      !!f.k ? value : parentValue,
+      f.k ? error?.[f.k] : error,
+      f.k ? value?.[f.k] : value,
+      f.k ? value : parentValue,
       context
     )) {
-      return true;
+      return true
     }
   }
-};
-
+}
 
 const DefaultListFieldWrapper = ({ children, addButton }) => (
   <div>{children}{addButton}</div>
-);
+)
 
 const ForeignKeyListField = ({
   definition,
@@ -255,31 +259,31 @@ const ForeignKeyListField = ({
   error,
   onReset,
   path,
-  context,
+  context
 }) => {
-  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null;
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const vvalue = value || [];
-  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper;
-  const newValue = definition?.new_value || {};
-  let processList = _ => {};
+  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const vvalue = value || []
+  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper
+  const newValue = definition?.new_value || {}
+  const processList = _ => {}
   let extraContext = {}
   if (interceptor?.processList) {
     extraContext = interceptor?.processList(
       { fields: definition.fields, definition, valueList: vvalue }
-    );
+    )
   }
   return (
     <div>
       <Wrapper
         {...{ definition, value, onChange, error, onReset, path, context }}
         addButton={<button
-          className="btn btn-success"
+          className='btn btn-success'
           style={definition?.addButtonStyle || {}}
-          type="button"
+          type='button'
           onClick={(_) => onChange([...vvalue, newValue])}
-        >
+                   >
           Add {definition?.addWhat}
         </button>}
       >
@@ -289,10 +293,10 @@ const ForeignKeyListField = ({
               key={i}
               definition={{
                 ...definition,
-                type: "Fields",
+                type: 'Fields',
                 index: i,
                 parent: vvalue,
-                onChangeParent: onChange,
+                onChangeParent: onChange
               }}
               value={item}
               error={(error || [])[i]}
@@ -301,29 +305,29 @@ const ForeignKeyListField = ({
               onReset={onReset}
               path={[...path, i]}
             />
-          );
+          )
         })}
       </Wrapper>
     </div>
-  );
-};
-ForeignKeyListField.isEmpty = (x) => !x || !x.length;
+  )
+}
+ForeignKeyListField.isEmpty = (x) => !x || !x.length
 ForeignKeyListField.validatorRunner = (definition, value, parentValue, context) => {
   if (definition.required && !value?.length) {
-    return "This is required";
+    return 'This is required'
   }
   return (value || []).map((v) =>
-    validateDefinition({ ...definition, type: "Fields" }, v, parentValue, context)
-  );
-};
+    validateDefinition({ ...definition, type: 'Fields' }, v, parentValue, context)
+  )
+}
 ForeignKeyListField.validatorChecker = (definition, error, state, parentState, context) => {
-  if (typeof error === "string") return true;
+  if (typeof error === 'string') return true
   for (const [e, s] of zipArrays(error || [], state || [])) {
-    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, parentState, context)) {
-      return true;
+    if (definitionIsInvalid({ ...definition, type: 'Fields' }, e, s, parentState, context)) {
+      return true
     }
   }
-};
+}
 
 const UUIDListField = ({
   definition,
@@ -332,31 +336,31 @@ const UUIDListField = ({
   error,
   onReset,
   path,
-  context,
+  context
 }) => {
-  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null;
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const vvalue = Array.isArray(value) ? value : [];
-  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper;
-  const newValue = definition?.new_value || {};
-  let processList = _ => {};
+  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const vvalue = Array.isArray(value) ? value : []
+  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper
+  const newValue = definition?.new_value || {}
+  const processList = _ => {}
   let extraContext = {}
   if (interceptor?.processList) {
     extraContext = interceptor?.processList(
       { fields: definition.fields, definition, valueList: vvalue }
-    );
+    )
   }
   return (
     <div>
       <Wrapper
         {...{ definition, value, onChange, error, onReset, path, context }}
         addButton={<button
-          className="btn btn-success"
+          className='btn btn-success'
           style={definition?.addButtonStyle || {}}
-          type="button"
-          onClick={(_) => onChange([...vvalue, {...newValue, uuid: uuidv4()}])}
-        >
+          type='button'
+          onClick={(_) => onChange([...vvalue, { ...newValue, uuid: uuidv4() }])}
+                   >
           Add {definition?.addWhat}
         </button>}
       >
@@ -366,10 +370,10 @@ const UUIDListField = ({
               key={i}
               definition={{
                 ...definition,
-                type: "Fields",
+                type: 'Fields',
                 index: i,
                 parent: vvalue,
-                onChangeParent: onChange,
+                onChangeParent: onChange
               }}
               value={item}
               error={(error || [])[i]}
@@ -378,29 +382,29 @@ const UUIDListField = ({
               onReset={onReset}
               path={[...path, i]}
             />
-          );
+          )
         })}
       </Wrapper>
     </div>
-  );
-};
-UUIDListField.isEmpty = (x) => !x || !x.length;
+  )
+}
+UUIDListField.isEmpty = (x) => !x || !x.length
 UUIDListField.validatorRunner = (definition, value, parentValue, context) => {
   if (definition.required && !value?.length) {
-    return "This is required";
+    return 'This is required'
   }
   return (value || []).map((v) =>
-    validateDefinition({ ...definition, type: "Fields" }, v, parentValue, context)
-  );
-};
+    validateDefinition({ ...definition, type: 'Fields' }, v, parentValue, context)
+  )
+}
 UUIDListField.validatorChecker = (definition, error, state, parentState, context) => {
-  if (typeof error === "string") return true;
+  if (typeof error === 'string') return true
   for (const [e, s] of zipArrays(error || [], state || [])) {
-    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, parentState, context)) {
-      return true;
+    if (definitionIsInvalid({ ...definition, type: 'Fields' }, e, s, parentState, context)) {
+      return true
     }
   }
-};
+}
 
 const RecursiveListField = ({
   definition,
@@ -409,36 +413,36 @@ const RecursiveListField = ({
   error,
   onReset,
   path,
-  context,
+  context
 }) => {
-  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null;
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const vvalue = value || [];
-  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper;
-  const newValue = definition?.new_value || {};
-  let processList = _ => {};
+  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const vvalue = value || []
+  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper
+  const newValue = definition?.new_value || {}
+  const processList = _ => {}
   let extraContext = {}
-  const fields = context?.nodeById?.[definition.definition_id]?.fields;
+  const fields = context?.nodeById?.[definition.definition_id]?.fields
   if (!fields) {
-    return <div className="text-danger">No definition_id found</div>;
+    return <div className='text-danger'>No definition_id found</div>
   }
-  console.log('fields', fields);
+  console.log('fields', fields)
   if (interceptor?.processList) {
     extraContext = interceptor?.processList(
       { fields, definition, valueList: vvalue }
-    );
+    )
   }
   return (
     <div>
       <Wrapper
         {...{ definition, value, onChange, error, onReset, path, context }}
         addButton={<button
-          className="btn btn-success"
+          className='btn btn-success'
           style={definition?.addButtonStyle || {}}
-          type="button"
-          onClick={(_) => onChange([...vvalue, {...newValue, uuid: uuidv4()}])}
-        >
+          type='button'
+          onClick={(_) => onChange([...vvalue, { ...newValue, uuid: uuidv4() }])}
+                   >
           Add {definition?.addWhat}
         </button>}
       >
@@ -447,11 +451,11 @@ const RecursiveListField = ({
             <FormComponent
               key={i}
               definition={{
-                ...{...definition, fields},
-                type: "Fields",
+                ...{ ...definition, fields },
+                type: 'Fields',
                 index: i,
                 parent: vvalue,
-                onChangeParent: onChange,
+                onChangeParent: onChange
               }}
               value={item}
               error={(error || [])[i]}
@@ -460,33 +464,33 @@ const RecursiveListField = ({
               onReset={onReset}
               path={[...path, i]}
             />
-          );
+          )
         })}
       </Wrapper>
     </div>
-  );
-};
-RecursiveListField.isEmpty = (x) => !x || !x.length;
+  )
+}
+RecursiveListField.isEmpty = (x) => !x || !x.length
 RecursiveListField.validatorRunner = (definition, value, parentValue, context) => {
-  const fields = context?.nodeById?.[definition.definition_id]?.fields;
-  if (!fields) return null;
+  const fields = context?.nodeById?.[definition.definition_id]?.fields
+  if (!fields) return null
   if (definition.required && !value?.length) {
-    return "This is required";
+    return 'This is required'
   }
   return (value || []).map((v) =>
-    validateDefinition({ ...definition, fields, type: "Fields" }, v, parentValue, context)
-  );
-};
+    validateDefinition({ ...definition, fields, type: 'Fields' }, v, parentValue, context)
+  )
+}
 RecursiveListField.validatorChecker = (definition, error, state, parentState, context) => {
-  const fields = context?.nodeById?.[definition.definition_id]?.fields;
-  if (!fields) return null;
-  if (typeof error === "string") return true;
+  const fields = context?.nodeById?.[definition.definition_id]?.fields
+  if (!fields) return null
+  if (typeof error === 'string') return true
   for (const [e, s] of zipArrays(error || [], state || [])) {
-    if (definitionIsInvalid({ ...definition, fields, type: "Fields" }, e, s, parentState, context)) {
-      return true;
+    if (definitionIsInvalid({ ...definition, fields, type: 'Fields' }, e, s, parentState, context)) {
+      return true
     }
   }
-};
+}
 
 const RecursiveField = ({
   value,
@@ -496,67 +500,68 @@ const RecursiveField = ({
   context,
   onReset,
   path,
-  current,
+  current
 }) => {
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const labelStyle = {};
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const labelStyle = {}
   if (context.labelColor) {
-    labelStyle.style = { color: context.labelColor };
+    labelStyle.style = { color: context.labelColor }
   }
   // TODO
-  const newCurrent = context?.nodeById?.[definition.definition_id];
+  const newCurrent = context?.nodeById?.[definition.definition_id]
   if (!newCurrent || !newCurrent?.fields) {
-    return <div className="text-danger">No definition_id found</div>;
+    return <div className='text-danger'>No definition_id found</div>
   }
-  let layout = newCurrent?.layout;
+  let layout = newCurrent?.layout
   if (definition.hasOwnProperty('layout')) {
-    layout = definition?.layout;
+    layout = definition?.layout
   }
-  return (<>
-    <FormComponent
-      context={{...context, ...definition.context}}
-      value={value}
-      onChange={x => {onChange(x); onReset(path);}}
-      onReset={_ => {}}
-      path={[]}
-      error={(error && typeof error === 'object') ? error : null}
-      definition={{...newCurrent, layout, itemWrapper: definition.itemWrapper}}
-    />
-    {(error && typeof error === 'string') ? <div className="invalid-feedback d-block">{error + ''}</div> : null}
+  return (
+    <>
+      <FormComponent
+        context={{ ...context, ...definition.context }}
+        value={value}
+        onChange={x => { onChange(x); onReset(path) }}
+        onReset={_ => {}}
+        path={[]}
+        error={(error && typeof error === 'object') ? error : null}
+        definition={{ ...newCurrent, layout, itemWrapper: definition.itemWrapper }}
+      />
+      {(error && typeof error === 'string') ? <div className='invalid-feedback d-block'>{error + ''}</div> : null}
     </>
-  );
-};
-RecursiveField.isEmpty = (x) => false; // TODO remove
+  )
+}
+RecursiveField.isEmpty = (x) => false // TODO remove
 RecursiveField.validatorRunner = (definition, value, parentValue, context) => {
-  let result = {};
-  const current = context?.nodeById?.[definition.definition_id];
-  if (!current || !current.fields) return null;
+  let result = {}
+  const current = context?.nodeById?.[definition.definition_id]
+  if (!current || !current.fields) return null
   for (const f of current.fields) {
     if (f.k) {
-      result[f.k] = validateDefinition(f, value?.[f.k], value, context);
+      result[f.k] = validateDefinition(f, value?.[f.k], value, context)
     } else {
-      result = { ...result, ...validateDefinition(f, value, parentValue, context) };
+      result = { ...result, ...validateDefinition(f, value, parentValue, context) }
     }
   }
-  return result;
-};
+  return result
+}
 RecursiveField.validatorChecker = (definition, error, value, parentValue, context) => {
-  const current = context?.nodeById?.[definition.definition_id];
-  if (!current || !current.fields) return null;
+  const current = context?.nodeById?.[definition.definition_id]
+  if (!current || !current.fields) return null
 
   for (const f of (current?.fields || [])) {
     if (definitionIsInvalid(
       f,
-      !!f.k ? error?.[f.k] : error,
-      !!f.k ? value?.[f.k] : value,
-      !!f.k ? value : parentValue,
+      f.k ? error?.[f.k] : error,
+      f.k ? value?.[f.k] : value,
+      f.k ? value : parentValue,
       context
     )) {
-      return true;
+      return true
     }
   }
-};
+}
 
 const HiddenField = ({
   value,
@@ -565,22 +570,22 @@ const HiddenField = ({
   definition,
   context,
   onReset,
-  path,
+  path
 }) => {
-  return <></>;
-};
-HiddenField.isEmpty = _ => false;
+  return <></>
+}
+HiddenField.isEmpty = _ => false
 
 const CustomDisplay = ({ definition, value, context }) => {
-  let Widget = definition.widget;
-  if (typeof Widget === 'string') Widget = formDisplays[Widget];
-  if (!Widget) { console.warn("missing widget", definition.widget); return ""; };
-  return <Widget definition={definition} value={value} context={context} />;
-};
-CustomDisplay.isEmpty = _ => false;
+  let Widget = definition.widget
+  if (typeof Widget === 'string') Widget = formDisplays[Widget]
+  if (!Widget) { console.warn('missing widget', definition.widget); return '' };
+  return <Widget definition={definition} value={value} context={context} />
+}
+CustomDisplay.isEmpty = _ => false
 CustomDisplay.validatorChecker = (definition, error) => {
-  return false;
-};
+  return false
+}
 
 formComponents = {
   // Collections/containers
@@ -592,8 +597,8 @@ formComponents = {
   RecursiveField,
   // Individual fields
   HiddenField,
-  CustomDisplay,
-};
+  CustomDisplay
+}
 
 // Core component
 
@@ -606,258 +611,267 @@ FormComponent = ({
   path,
   onReset,
   context = {},
-  disabled,
+  disabled
 }) => {
-  const Component = formComponents[definition.type];
-  if (!Component) return <div className="text-danger">
-    {`No field type ${definition.type || JSON.stringify(definition)}`}
-  </div>;
-    //throw new Error(`No field type ${definition.type || JSON.stringify(definition)}`);
+  const Component = formComponents[definition.type]
+  if (!Component) {
+    return (
+      <div className='text-danger'>
+        {`No field type ${definition.type || JSON.stringify(definition)}`}
+      </div>
+    )
+  }
+  // throw new Error(`No field type ${definition.type || JSON.stringify(definition)}`);
   return (
     <Component
       {...{ formValue: formValue || value, value, onChange, error, definition, context, path, onReset, disabled: disabled || definition?.disabled }}
     />
-  );
-};
+  )
+}
 
 // Validator runners
 const validatorsValidatorRunner = (definition, value, parentValue, context) => {
-  const { type, required, validators } = definition;
+  const { type, required, validators } = definition
   if (required && formComponents[type].isEmpty(value, definition)) {
-    return "This is required";
+    return 'This is required'
   } else {
     for (const validator of validators || []) {
       const validatorError = formValidators[validator.type](
         value,
         validator,
         definition
-      );
+      )
       if (validatorError) {
-        return validatorError;
+        return validatorError
       }
     }
   }
-};
+}
 
 validateDefinition = (definition, state, parentState, context) => {
   const validatorRunner =
-    formComponents[definition.type].validatorRunner || validatorsValidatorRunner;
-  let theFields = definition.fields;
-  const interceptor = definition?.interceptor ? interceptors[definition?.interceptor] : null;
+    formComponents[definition.type].validatorRunner || validatorsValidatorRunner
+  let theFields = definition.fields
+  const interceptor = definition?.interceptor ? interceptors[definition?.interceptor] : null
   if (interceptor && interceptor.processFields) {
-    theFields = interceptor.processFields({ fields: theFields, definition, value: state });
+    theFields = interceptor.processFields({ fields: theFields, definition, value: state })
   }
-  let interceptorContext = {};
+  let interceptorContext = {}
   if (interceptor && interceptor.fieldsContext) {
-    interceptorContext = interceptor.fieldsContext({ fields: theFields, definition, value: state, context });
+    interceptorContext = interceptor.fieldsContext({ fields: theFields, definition, value: state, context })
   }
-  const theContext = {...context, ...interceptorContext};
-  return validatorRunner({...definition, fields: theFields}, state, parentState, theContext);
-};
+  const theContext = { ...context, ...interceptorContext }
+  return validatorRunner({ ...definition, fields: theFields }, state, parentState, theContext)
+}
 
 // Validator checkers
-const validatorsValidatorChecker = (definition, error, state, parentState, context) => !!error;
+const validatorsValidatorChecker = (definition, error, state, parentState, context) => !!error
 
 definitionIsInvalid = (definition, error, state, parentState, context) => {
   const validatorChecker =
-    formComponents[definition.type].validatorChecker || validatorsValidatorChecker;
-  let theFields = definition.fields;
-  const interceptor = definition?.interceptor ? interceptors[definition?.interceptor] : null;
+    formComponents[definition.type].validatorChecker || validatorsValidatorChecker
+  let theFields = definition.fields
+  const interceptor = definition?.interceptor ? interceptors[definition?.interceptor] : null
   if (interceptor && interceptor.processFields) {
-    theFields = interceptor.processFields({ fields: theFields, definition, value: state });
+    theFields = interceptor.processFields({ fields: theFields, definition, value: state })
   }
-  let interceptorContext = {};
+  let interceptorContext = {}
   if (interceptor && interceptor.fieldsContext) {
-    interceptorContext = interceptor.fieldsContext({ fields: theFields, definition, value: state, context });
+    interceptorContext = interceptor.fieldsContext({ fields: theFields, definition, value: state, context })
   }
-  const theContext = {...context, ...interceptorContext};
-  return validatorChecker(definition, error, state, parentState, theContext); 
-};
+  const theContext = { ...context, ...interceptorContext }
+  return validatorChecker(definition, error, state, parentState, theContext)
+}
 
-const DefaultSubmitButtonWidget = _ => <button type="submit">Submit</button>;
+const DefaultSubmitButtonWidget = _ => <button type='submit'>Submit</button>
 
 const externalInterceptors = {
-};
-
+}
 
 const interceptStateChange = _.debounce(({ oldState, newState, externalContext, setExternalContext, externalInterceptor, setState, serverContext }) => {
-  //console.log('check');
-  const intcpt = externalInterceptors[externalInterceptor];
+  // console.log('check');
+  const intcpt = externalInterceptors[externalInterceptor]
   if (intcpt) {
-    const newExternalContext = intcpt.getExternalContext({ state: newState, serverContext });
-    setExternalContext(newExternalContext);
+    const newExternalContext = intcpt.getExternalContext({ state: newState, serverContext })
+    setExternalContext(newExternalContext)
     if (JSON.stringify(externalContext) !== JSON.stringify()) {
-      setState(state => intcpt.updateState({ state: newState, context: newExternalContext }));
+      setState(state => intcpt.updateState({ state: newState, context: newExternalContext }))
     }
   }
-}, 100, { leading: true, trailing: true });
+}, 100, { leading: true, trailing: true })
 
-const GenericFormContext = React.createContext({});
+const GenericFormContext = React.createContext({})
 
 const addOptionById = (node, id, option) => {
-  const result = {...node};
+  const result = { ...node }
   if (node.fields?.length) {
     result.fields = node.fields.map(field => addOptionById(field, id, option))
   } else if (node?.id === id) {
-    result.options.push(option); // TODO optgroup
+    result.options.push(option) // TODO optgroup
   }
-  return result;
-};
+  return result
+}
 
-const DefaultContainer = ({ children }) => <div>{children}</div>;
+const DefaultContainer = ({ children }) => <div>{children}</div>
 
 // Form with validation
 export const GenericForm = (props) => {
-  const { serverErrors, data, onChange, externalInterceptor, serverContext, validate } = props;
-  const [fields, setFields] = useState(props.fields);
+  const { serverErrors, data, onChange, externalInterceptor, serverContext, validate } = props
+  const [fields, setFields] = useState(props.fields)
 
-  const [state, setState] = useState(data || {});
-  const [externalContext, setExternalContext] = useState({});
-  window.state = state; /// XXX hack
-  const [errors, setErrors1] = useState(serverErrors || {});
-  const [formWideError, setFormWideError] = useState(null);
+  const [state, setState] = useState(data || {})
+  const [externalContext, setExternalContext] = useState({})
+  window.state = state /// XXX hack
+  const [errors, setErrors1] = useState(serverErrors || {})
+  const [formWideError, setFormWideError] = useState(null)
   const setErrors = (es, e) => {
-    setErrors1(es);
-    setFormWideError(e);
-  };
+    setErrors1(es)
+    setFormWideError(e)
+  }
   const onReset = (path) => {
-    setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
-  };
-  const SubmitContainerWrapper = React.Fragment;
-  let SubmitButtonWidget = null;
-  if (props.submitButtonWidget) SubmitButtonWidget = submitButtonWidgets[props.submitButtonWidget];
+    setErrors(update(errors, pathToUpdate(path, { $set: null })), null)
+  }
+  const SubmitContainerWrapper = React.Fragment
+  let SubmitButtonWidget = null
+  if (props.submitButtonWidget) SubmitButtonWidget = submitButtonWidgets[props.submitButtonWidget]
   const onSubmit = (onChange) => {
-    const error = validateDefinition(fields, state);
-    let outerError = null;
-    let isError = false;
+    const error = validateDefinition(fields, state)
+    let outerError = null
+    let isError = false
     if (definitionIsInvalid(fields, error, state)) {
-      setErrors(error, null);
-      isError = true;
+      setErrors(error, null)
+      isError = true
     } else if (validate) {
-      outerError = validate(state);
+      outerError = validate(state)
       if (outerError) {
-        setErrors(outerError);
-        isError = true;
+        setErrors(outerError)
+        isError = true
       }
     }
     if (!isError) {
       // ok
-      onChange(state, setErrors);
+      onChange(state, setErrors)
     } else {
       if (props.notifyOnError) {
         NotificationManager.error(
-          "Please fix the errors below",
-          "Error"
-        );
+          'Please fix the errors below',
+          'Error'
+        )
         setTimeout(() => {
           try {
             document
-              .getElementsByClassName("invalid-feedback d-block")[0]
-              .parentNode.scrollIntoViewIfNeeded();
+              .getElementsByClassName('invalid-feedback d-block')[0]
+              .parentNode.scrollIntoViewIfNeeded()
           } catch (e) {
-            console.warn(e);
+            console.warn(e)
           }
-        }, 50);
+        }, 50)
       }
     }
-  };
-  let ControlsClass = _ => null;
-  const Container = DefaultContainer;
+  }
+  const ControlsClass = _ => null
+  const Container = DefaultContainer
 
-  //useEffect(() => {
+  // useEffect(() => {
   //  console.log('state changed', state);
-  //}, [state]);
-
+  // }, [state]);
 
   const interceptSetState = (newState) => {
-    setState(newState);
-    interceptStateChange({ oldState: state, newState, externalContext, setExternalContext, externalInterceptor, setState, serverContext });
-  };
+    setState(newState)
+    interceptStateChange({ oldState: state, newState, externalContext, setExternalContext, externalInterceptor, setState, serverContext })
+  }
 
   useEffect(() => {
-    interceptStateChange({ oldState: null, newState: state, externalContext, setExternalContext, externalInterceptor, setState, serverContext });
-  }, []);
-  
-  return (<GenericFormContext.Provider value={{
-    onChange,
-    addOptionById: (id, option) => {
-      setFields(addOptionById(fields, id, option))
-    },
-  }}>
-  <Container
-    title={props.title}
-    controls={<ControlsClass {...props} />}
-    contentOutside={props.boxLayoutContentOutside}>
-    <form
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit(onChange);
-        return false;
-      }}
-    >
-    {formWideError && <div className="form-row normal-spacing"><div className="field-container">
-      <div style={
-        {border: '1px solid #E55934', borderRadius: 3, padding: 8, color: '#E55934', fontWeight: 'bold'}
-      }>{formWideError}</div>
-    </div></div>}
-      <FormComponent
-        definition={fields}
-        value={state}
-        onChange={interceptSetState}
-        error={errors}
-        onReset={onReset}
-        path={[]}
-        context={externalContext}
-      />
-      {!props.noStandardSubmitButton && !props.submitButtonWidget && <SubmitContainerWrapper>
-        <div className="submit-button-container">
-          <button disabled={false} className="btn btn-green" type="submit">
-            <i className="fas fa-arrow-circle-right" /> {props?.formAction || 'Save'}
-          </button>
-        </div>
-        </SubmitContainerWrapper>}
-      {SubmitButtonWidget  && <SubmitButtonWidget
-        {...props}
-        value={state}
-        onChange={setState}
-        onChangeTop={onChange}
-        onSubmit={onSubmit}
-      />}
-    </form>
-  </Container>
-  </GenericFormContext.Provider>);
-};
+    interceptStateChange({ oldState: null, newState: state, externalContext, setExternalContext, externalInterceptor, setState, serverContext })
+  }, [])
 
-function nodesIdMap(node) {
-  const result = {};
-  function doWalk(node) {
+  return (
+    <GenericFormContext.Provider value={{
+      onChange,
+      addOptionById: (id, option) => {
+        setFields(addOptionById(fields, id, option))
+      }
+    }}
+    >
+      <Container
+        title={props.title}
+        controls={<ControlsClass {...props} />}
+        contentOutside={props.boxLayoutContentOutside}
+      >
+        <form
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault()
+            onSubmit(onChange)
+            return false
+          }}
+        >
+          {formWideError && <div className='form-row normal-spacing'><div className='field-container'>
+            <div style={
+        { border: '1px solid #E55934', borderRadius: 3, padding: 8, color: '#E55934', fontWeight: 'bold' }
+      }
+            >{formWideError}
+            </div>
+                                                                     </div>
+                            </div>}
+          <FormComponent
+            definition={fields}
+            value={state}
+            onChange={interceptSetState}
+            error={errors}
+            onReset={onReset}
+            path={[]}
+            context={externalContext}
+          />
+          {!props.noStandardSubmitButton && !props.submitButtonWidget && <>
+            <div className='submit-button-container'>
+              <button disabled={false} className='btn btn-green' type='submit'>
+                <i className='fas fa-arrow-circle-right' /> {props?.formAction || 'Save'}
+              </button>
+            </div>
+                                                                         </>}
+          {SubmitButtonWidget && <SubmitButtonWidget
+            {...props}
+            value={state}
+            onChange={setState}
+            onChangeTop={onChange}
+            onSubmit={onSubmit}
+                                 />}
+        </form>
+      </Container>
+    </GenericFormContext.Provider>
+  )
+}
+
+function nodesIdMap (node) {
+  const result = {}
+  function doWalk (node) {
     if (node.id) {
-      result[node.id] = node;
+      result[node.id] = node
     }
     if (Array.isArray(node.fields)) {
-      node.fields.forEach(doWalk);
+      node.fields.forEach(doWalk)
     }
     if (node.type === 'DefinedField' && node.definitions) {
-      console.log('found definitions', node.definitions);
-      Object.values(node.definitions).forEach(doWalk);
+      console.log('found definitions', node.definitions)
+      Object.values(node.definitions).forEach(doWalk)
     }
   }
-  doWalk(node);
-  return result;
+  doWalk(node)
+  return result
 }
 
 interceptors.recursiveFields = {
-  onChange(newValue, value, definition, context) {
-    return newValue; // trivial
+  onChange (newValue, value, definition, context) {
+    return newValue // trivial
   },
-  processFields({ fields, definition, value }) {
-    return fields; // trivial
+  processFields ({ fields, definition, value }) {
+    return fields // trivial
   },
-  fieldsContext({ fields, definition, context }) {
-    const nodeById = nodesIdMap(definition);
-    return {...context, nodeById};
-  },
+  fieldsContext ({ fields, definition, context }) {
+    const nodeById = nodesIdMap(definition)
+    return { ...context, nodeById }
+  }
 }
 
 const XYFlowField = ({
@@ -867,31 +881,31 @@ const XYFlowField = ({
   error,
   onReset,
   path,
-  context,
+  context
 }) => {
-  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null;
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const vvalue = Array.isArray(value) ? value : [];
-  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper;
-  const newValue = definition?.new_value || {};
-  let processList = _ => {};
+  const interceptor = definition?.listInterceptor ? interceptors[definition?.listInterceptor] : null
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const vvalue = Array.isArray(value) ? value : []
+  const Wrapper = fieldsLayouts[definition.wrapper] || DefaultListFieldWrapper
+  const newValue = definition?.new_value || {}
+  const processList = _ => {}
   let extraContext = {}
   if (interceptor?.processList) {
     extraContext = interceptor?.processList(
       { fields: definition.fields, definition, valueList: vvalue }
-    );
+    )
   }
   return (
     <div>
       <Wrapper
         {...{ definition, value, onChange, error, onReset, path, context }}
         addButton={<button
-          className="btn btn-success"
+          className='btn btn-success'
           style={definition?.addButtonStyle || {}}
-          type="button"
-          onClick={(_) => onChange([...vvalue, {...newValue, uuid: uuidv4()}])}
-        >
+          type='button'
+          onClick={(_) => onChange([...vvalue, { ...newValue, uuid: uuidv4() }])}
+                   >
           Add {definition?.addWhat}
         </button>}
       >
@@ -901,10 +915,10 @@ const XYFlowField = ({
               key={i}
               definition={{
                 ...definition,
-                type: "Fields",
+                type: 'Fields',
                 index: i,
                 parent: vvalue,
-                onChangeParent: onChange,
+                onChangeParent: onChange
               }}
               value={item}
               error={(error || [])[i]}
@@ -913,26 +927,26 @@ const XYFlowField = ({
               onReset={onReset}
               path={[...path, i]}
             />
-          );
+          )
         })}
       </Wrapper>
     </div>
-  );
-};
-XYFlowField.isEmpty = (x) => !x || !x.length;
+  )
+}
+XYFlowField.isEmpty = (x) => !x || !x.length
 XYFlowField.validatorRunner = (definition, value, parentValue, context) => {
   if (definition.required && !value?.length) {
-    return "This is required";
+    return 'This is required'
   }
   return (value || []).map((v) =>
-    validateDefinition({ ...definition, type: "Fields" }, v, parentValue, context)
-  );
-};
+    validateDefinition({ ...definition, type: 'Fields' }, v, parentValue, context)
+  )
+}
 XYFlowField.validatorChecker = (definition, error, state, parentState, context) => {
-  if (typeof error === "string") return true;
+  if (typeof error === 'string') return true
   for (const [e, s] of zipArrays(error || [], state || [])) {
-    if (definitionIsInvalid({ ...definition, type: "Fields" }, e, s, parentState, context)) {
-      return true;
+    if (definitionIsInvalid({ ...definition, type: 'Fields' }, e, s, parentState, context)) {
+      return true
     }
   }
-};
+}

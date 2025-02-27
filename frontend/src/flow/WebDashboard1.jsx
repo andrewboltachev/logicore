@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, memo } from "react";
+import React, { useState, useEffect, useRef, memo } from 'react'
 import {
   FieldLabel,
   FormComponent,
   validateDefinition,
-  definitionIsInvalid,
-} from "../logicore-forms";
-import { v4 as uuidv4 } from "uuid";
+  definitionIsInvalid
+} from '../logicore-forms'
+import { v4 as uuidv4 } from 'uuid'
 
 /* Ideas
  * 1. Form definition as schema. Validation using it
@@ -65,222 +65,222 @@ import { v4 as uuidv4 } from "uuid";
           }
           */
 
-const FIELD_DEF = { 
-  "type": "Fields",
-  "fields": [
-    { 
-      "type": "Fields",
-      "fields": [
+const FIELD_DEF = {
+  type: 'Fields',
+  fields: [
+    {
+      type: 'Fields',
+      fields: [
         {
-          "type": "TextField",
-          "k": "k",
-          "label": "K",
-          "required": true, // TODO k not on fields?
+          type: 'TextField',
+          k: 'k',
+          label: 'K',
+          required: true // TODO k not on fields?
         },
         {
-          "type": "TextField",
-          "k": "label",
-          "label": "Label",
-          "required": false,
+          type: 'TextField',
+          k: 'label',
+          label: 'Label',
+          required: false
         },
         {
-          "type": "BooleanField",
-          "k": "required",
-          "label": "Required?",
-          "required": false,
+          type: 'BooleanField',
+          k: 'required',
+          label: 'Required?',
+          required: false
         },
         {
-          "type": "SelectField",
-          "k": "type",
-          "label": "Type",
-          "required": true,
-          "options": [
-            {"value": "Fields", "label": "Fields"},
-            {"value": "HiddenField", "label": "HiddenField"},
-            {"value": "TextField", "label": "TextField"},
-            {"value": "TextareaField", "label": "TextareaField"},
-            {"value": "BooleanField", "label": "BooleanField"},
-            {"value": "NumberField", "label": "NumberField"},
-            {"value": "SelectField", "label": "SelectField"},
-            {"value": "DefinedField", "label": "DefinedField"},
-            {"value": "ForeignKeyListField", "label": "ForeignKeyListField"},
-          ],
+          type: 'SelectField',
+          k: 'type',
+          label: 'Type',
+          required: true,
+          options: [
+            { value: 'Fields', label: 'Fields' },
+            { value: 'HiddenField', label: 'HiddenField' },
+            { value: 'TextField', label: 'TextField' },
+            { value: 'TextareaField', label: 'TextareaField' },
+            { value: 'BooleanField', label: 'BooleanField' },
+            { value: 'NumberField', label: 'NumberField' },
+            { value: 'SelectField', label: 'SelectField' },
+            { value: 'DefinedField', label: 'DefinedField' },
+            { value: 'ForeignKeyListField', label: 'ForeignKeyListField' }
+          ]
         },
         // TODO validators (type-dependant?)
         {
-          "type": "DefinedField",
-          "k": "definition",
-          "master_field": "type",
-          "definitions": {
-            "Fields": {
-              "type": "Fields",
-              "fields": [
+          type: 'DefinedField',
+          k: 'definition',
+          master_field: 'type',
+          definitions: {
+            Fields: {
+              type: 'Fields',
+              fields: [
                 {
-                  "type": "RecursiveListField",
-                  "k": "fields",
-                  "label": "Fields",
-                  "definition_id": "id_of_the_field",
-                  "layout": "WithDeleteButton",
+                  type: 'RecursiveListField',
+                  k: 'fields',
+                  label: 'Fields',
+                  definition_id: 'id_of_the_field',
+                  layout: 'WithDeleteButton'
                 },
                 {
-                  "type": "TextField",
-                  "k": "layout",
-                  "label": "Layout", // TODO pre-fill?
-                },
+                  type: 'TextField',
+                  k: 'layout',
+                  label: 'Layout' // TODO pre-fill?
+                }
               ],
-              "id": "id_of_the_fields",
+              id: 'id_of_the_fields'
             },
-            "HiddenField": {"type": "Fields", "fields": []},
-            "TextField": {
-              "type": "Fields",
-              "fields": [
+            HiddenField: { type: 'Fields', fields: [] },
+            TextField: {
+              type: 'Fields',
+              fields: [
                 {
-                  "type": "SelectField",
-                  "k": "subtype",
-                  "label": "Sub-type",
-                  "options": [
-                    {"value": "text", "label": "Text"},
-                    {"value": "password", "label": "Password"},
-                    {"value": "email", "label": "Email"},
+                  type: 'SelectField',
+                  k: 'subtype',
+                  label: 'Sub-type',
+                  options: [
+                    { value: 'text', label: 'Text' },
+                    { value: 'password', label: 'Password' },
+                    { value: 'email', label: 'Email' }
                   ]
                 },
                 {
-                  "type": "TextField",
-                  "k": "placeholder",
-                  "label": "Placeholder",
-                },
+                  type: 'TextField',
+                  k: 'placeholder',
+                  label: 'Placeholder'
+                }
               ]
             },
-            "TextareaField": {
-              "type": "Fields",
-              "fields": [
+            TextareaField: {
+              type: 'Fields',
+              fields: [
                 {
-                  "type": "TextField",
-                  "k": "placeholder",
-                  "label": "Placeholder",
-                },
+                  type: 'TextField',
+                  k: 'placeholder',
+                  label: 'Placeholder'
+                }
               ]
             },
-            "BooleanField": {"type": "Fields", "fields": []},
-            "NumberField": {
-              "type": "Fields",
-              "fields": [
+            BooleanField: { type: 'Fields', fields: [] },
+            NumberField: {
+              type: 'Fields',
+              fields: [
                 {
-                  "type": "TextField",
-                  "k": "placeholder",
-                  "label": "Placeholder",
-                },
-              ],
+                  type: 'TextField',
+                  k: 'placeholder',
+                  label: 'Placeholder'
+                }
+              ]
             },
-            "SelectField": {
-              "type": "Fields",
-              "fields": [
+            SelectField: {
+              type: 'Fields',
+              fields: [
                 {
-                  "type": "UUIDListField", // TODO
-                  "k": "options",
-                  "label": "Options",
-                  "fields": [
+                  type: 'UUIDListField', // TODO
+                  k: 'options',
+                  label: 'Options',
+                  fields: [
                     {
-                      "type": "TextField",
-                      "k": "value",
-                      "label": "Value",
-                      "required": true,
+                      type: 'TextField',
+                      k: 'value',
+                      label: 'Value',
+                      required: true
                       // TODO validate machine-readable value?
                       // TODO interceptor-validate uniqueness for value
                     },
                     {
-                      "type": "TextField",
-                      "k": "label",
-                      "label": "Label",
-                      "required": true,
-                    },
+                      type: 'TextField',
+                      k: 'label',
+                      label: 'Label',
+                      required: true
+                    }
                   ],
-                  "layout": "WithDeleteButton",
+                  layout: 'WithDeleteButton'
                 },
                 {
-                  "type": "TextField",
-                  "k": "placeholder",
-                  "label": "Placeholder",
-                  "required": false,
+                  type: 'TextField',
+                  k: 'placeholder',
+                  label: 'Placeholder',
+                  required: false
                 },
                 {
-                  "type": "BooleanField",
-                  "k": "multiple",
-                  "label": "Multiple?",
-                  "required": false,
-                },
-                /*{
+                  type: 'BooleanField',
+                  k: 'multiple',
+                  label: 'Multiple?',
+                  required: false
+                }
+                /* {
                   "type": "BooleanField",
                   "k": "disabled",
                   "label": "Disabled?"
                   "required": false,
-                },*/
+                }, */
               ]
             },
-            "DefinedField": {
-              "type": "Fields",
-              "fields": [
+            DefinedField: {
+              type: 'Fields',
+              fields: [
                 {
-                  "type": "TextField",
-                  "k": "master_field",
-                  "label": "Master field",
+                  type: 'TextField',
+                  k: 'master_field',
+                  label: 'Master field'
                 },
                 {
-                  "type": "UUIDListField", // MapField
-                  "k": "definitions",
-                  "label": "Definitions",
-                  "fields": [
+                  type: 'UUIDListField', // MapField
+                  k: 'definitions',
+                  label: 'Definitions',
+                  fields: [
                     {
-                      "type": "TextField",
-                      "k": "value",
-                      "label": "Value",
-                      "required": true,
+                      type: 'TextField',
+                      k: 'value',
+                      label: 'Value',
+                      required: true
                       // TODO validate machine-readable value?
                       // TODO define order of complex/dynamic validation?
                     },
                     {
-                      "type": "RecursiveField",
-                      "k": "definition",
-                      "label": "Definition",
-                      "definition_id": "id_of_the_field",
-                    },
+                      type: 'RecursiveField',
+                      k: 'definition',
+                      label: 'Definition',
+                      definition_id: 'id_of_the_field'
+                    }
                   ],
-                  "layout": "WithDeleteButton",
-                },
-              ],
+                  layout: 'WithDeleteButton'
+                }
+              ]
             },
-            "ForeignKeyListField": {
-              "type": "Fields",
-              "fields": [
+            ForeignKeyListField: {
+              type: 'Fields',
+              fields: [
                 {
-                  "type": "RecursiveListField",
-                  "k": "fields",
-                  "label": "Fields",
-                  "definition_id": "id_of_the_field",
-                  "layout": "WithDeleteButton",
+                  type: 'RecursiveListField',
+                  k: 'fields',
+                  label: 'Fields',
+                  definition_id: 'id_of_the_field',
+                  layout: 'WithDeleteButton'
                 },
                 {
-                  "type": "TextField",
-                  "k": "layout",
-                  "label": "Layout", // TODO pre-fill?
+                  type: 'TextField',
+                  k: 'layout',
+                  label: 'Layout' // TODO pre-fill?
                 },
                 {
-                  "type": "TextField",
-                  "k": "wrapper",
-                  "label": "Wrapper", // TODO pre-fill?
-                },
-              ],
-            },
-          },
-        },
+                  type: 'TextField',
+                  k: 'wrapper',
+                  label: 'Wrapper' // TODO pre-fill?
+                }
+              ]
+            }
+          }
+        }
       ],
-      "id": "id_of_the_field",
-    },
+      id: 'id_of_the_field'
+    }
   ],
-  "interceptor": "recursiveFields",
-};
+  interceptor: 'recursiveFields'
+}
 
-function WebDashboard1Field({
+function WebDashboard1Field ({
   value,
   onChange,
   error,
@@ -288,37 +288,38 @@ function WebDashboard1Field({
   context,
   onReset,
   path,
-  disabled,
+  disabled
 }) {
-  const id = "id_" + uuidv4();
-  return (<>
-    <FieldLabel definition={definition} id={id} context={context}>
-      <div className="container-fluid my-5">
-        <FormComponent
-          definition={FIELD_DEF}
-          value={value}
-          onChange={onChange}
-          path={path}
-          error={error}
-          onReset={onReset}
-        />
+  const id = 'id_' + uuidv4()
+  return (
+    <>
+      <FieldLabel definition={definition} id={id} context={context}>
+        <div className='container-fluid my-5'>
+          <FormComponent
+            definition={FIELD_DEF}
+            value={value}
+            onChange={onChange}
+            path={path}
+            error={error}
+            onReset={onReset}
+          />
         </div>
-        <div className="container my-5">
+        <div className='container my-5'>
           <code>{JSON.stringify(value)}</code>
         </div>
-    </FieldLabel>
+      </FieldLabel>
     </>
-  );
+  )
 };
 
-WebDashboard1Field.isEmpty = (x) => false; // TODO remove
+WebDashboard1Field.isEmpty = (x) => false // TODO remove
 WebDashboard1Field.validatorRunner = (definition, value, parentValue, context) => {
-  const current = FIELD_DEF;
-  console.log('call validateDefinition', validateDefinition(current, value, parentValue, context));
-  return validateDefinition(current, value, parentValue);
-};
+  const current = FIELD_DEF
+  console.log('call validateDefinition', validateDefinition(current, value, parentValue, context))
+  return validateDefinition(current, value, parentValue)
+}
 WebDashboard1Field.validatorChecker = (definition, error, value, parentValue, context) => {
-  const current = FIELD_DEF;
-  return definitionIsInvalid(current, error, value, parentValue, context);
-};
-export default WebDashboard1Field;
+  const current = FIELD_DEF
+  return definitionIsInvalid(current, error, value, parentValue, context)
+}
+export default WebDashboard1Field

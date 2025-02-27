@@ -5,19 +5,19 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   plugins: [react()],
   server: {
-    hmr: { protocol: 'ws', clientPort: 5173 },
+    hmr: { protocol: 'ws', clientPort: 5173 }
   },
   resolve: {
     alias: {
-      src: "/src",
-    },
+      src: '/src'
+    }
   },
   optimizeDeps: {
     force: true,
     esbuildOptions: {
       loader: {
-        ".js": "jsx",
-      },
-    },
-  },
+        '.js': 'jsx'
+      }
+    }
+  }
 })

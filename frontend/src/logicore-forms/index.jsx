@@ -1,4 +1,4 @@
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom'
 import React, {
   useState,
   useEffect,
@@ -6,12 +6,12 @@ import React, {
   forwardRef,
   useMemo,
   useRef,
-  useContext,
-} from "react";
-import { v4 as uuidv4 } from "uuid";
-import classd from "classd";
-import { Button, Modal } from "react-bootstrap";
-import Select, { components as reactSelectComponents } from "react-select";
+  useContext
+} from 'react'
+import { v4 as uuidv4 } from 'uuid'
+import classd from 'classd'
+import { Button, Modal } from 'react-bootstrap'
+import Select, { components as reactSelectComponents } from 'react-select'
 import {
   moveUp,
   moveDown,
@@ -19,8 +19,13 @@ import {
   capitalize,
   partition2,
   orderBy,
-  modifyHelper,
-} from "./utils";
+  modifyHelper
+  ,
+  pathToUpdate,
+  getByPath,
+  setByPath,
+  update
+} from './utils'
 
 import {
   formComponents,
@@ -31,53 +36,49 @@ import {
   formValidators,
   fieldsLayouts,
   interceptors,
-  submitButtonWidgets,
-} from "./core";
-
-import {
-  pathToUpdate,
-  getByPath,
-  setByPath,
-  update,
-} from "./utils";
+  submitButtonWidgets
+} from './core'
 
 Object.assign(formValidators, {
   maxLength: (s, { value }) =>
-    (s + "").length >= value &&
+    (s + '').length >= value &&
     `Length shouldn\'t exceed ${value} characters (now: ${
-      (s + "").length
+      (s + '').length
     })`,
   minNumber: (s, { value }, definition) => {
-    const f = parseFloat(s);
-    if (f < value) return `Minimum value — ${value}`;
+    const f = parseFloat(s)
+    if (f < value) return `Minimum value — ${value}`
   },
   maxNumber: (s, { value }, definition) => {
-    const f = parseFloat(s);
-    if (f > value) return `Maximum value — ${value}`;
-  },
-});
+    const f = parseFloat(s)
+    if (f > value) return `Maximum value — ${value}`
+  }
+})
 
 const RequiredWrapper = ({ required, children }) => (
-  required ? (
-    <span style={{ fontWeight: "bold" }}>
-      {children} <span className="text-red">*</span>
-    </span>
-  ) : (
-    <span style={{ fontWeight: "bold" }}>
-      {children || null}
-    </span>
-  )
-);
+  required
+    ? (
+      <span style={{ fontWeight: 'bold' }}>
+        {children} <span className='text-red'>*</span>
+      </span>
+      )
+    : (
+      <span style={{ fontWeight: 'bold' }}>
+        {children || null}
+      </span>
+      )
+)
 
 const FieldLabel = ({ definition, id, context, children }) => {
-  return (<div className="my-1">
-    <RequiredWrapper required={definition.required}>
-      {definition.label}
-    </RequiredWrapper>
-    {children}
-  </div>);
-};
-
+  return (
+    <div className='my-1'>
+      <RequiredWrapper required={definition.required}>
+        {definition.label}
+      </RequiredWrapper>
+      {children}
+    </div>
+  )
+}
 
 const BooleanField = ({
   value,
@@ -88,31 +89,31 @@ const BooleanField = ({
   path,
   disabled
 }) => {
-  const id = "id_" + uuidv4();
-  const { label } = definition;
+  const id = 'id_' + uuidv4()
+  const { label } = definition
   return (
-    <div className="form-check text-dark">
+    <div className='form-check text-dark'>
       <input
-        className="form-check-input"
-        type="checkbox"
+        className='form-check-input'
+        type='checkbox'
         checked={!!value}
         onChange={(e) => {
-          onChange(e.target.checked);
+          onChange(e.target.checked)
         }}
         id={id}
         disabled={!!disabled}
       />
-      <label className="form-check-label" htmlFor={id}>
+      <label className='form-check-label' htmlFor={id}>
         {definition.label}
       </label>
-      {error && <div className="invalid-feedback d-block">{error}</div>}
+      {error && <div className='invalid-feedback d-block'>{error}</div>}
     </div>
-  );
-};
-BooleanField.isEmpty = (x) => !x;
+  )
+}
+BooleanField.isEmpty = (x) => !x
 Object.assign(formComponents, {
-  BooleanField,
-});
+  BooleanField
+})
 
 const TextField = ({
   value,
@@ -122,34 +123,34 @@ const TextField = ({
   context,
   onReset,
   path,
-  disabled,
+  disabled
 }) => {
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const formControlSm = context?.formControlSm ? "form-control-sm" : null;
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const formControlSm = context?.formControlSm ? 'form-control-sm' : null
   return (
     <FieldLabel definition={definition} id={id} context={context}>
-    <input
+      <input
         id={id}
-        type={definition.subtype || "text"}
-        className={classd`form-control ${{ "is-invalid": error }} ${formControlSm}`}
-        value={value || ""}
+        type={definition.subtype || 'text'}
+        className={classd`form-control ${{ 'is-invalid': error }} ${formControlSm}`}
+        value={value || ''}
         onChange={(e) => {
-          onChange(e.target.value);
-          onReset(path);
+          onChange(e.target.value)
+          onReset(path)
         }}
         placeholder={definition.placeholder || ''}
         style={context.style}
         disabled={!!disabled}
       />
-      {error && <div className="invalid-feedback d-block">{error}</div>}
+      {error && <div className='invalid-feedback d-block'>{error}</div>}
     </FieldLabel>
-  );
-};
-TextField.isEmpty = (x) => !x;
+  )
+}
+TextField.isEmpty = (x) => !x
 Object.assign(formComponents, {
-  TextField,
-});
+  TextField
+})
 
 const TextareaField = ({
   value,
@@ -157,31 +158,31 @@ const TextareaField = ({
   error,
   definition,
   context,
-  path,
+  path
 }) => {
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const formControlSm = context?.formControlSm ? "form-control-sm" : null;
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const formControlSm = context?.formControlSm ? 'form-control-sm' : null
   return (
     <FieldLabel definition={definition} id={id} context={context}>
       <textarea
         id={id}
-        type="text"
-        className={classd`form-control ${{ "is-invalid": error }} ${formControlSm}`}
-        value={value || ""}
+        type='text'
+        className={classd`form-control ${{ 'is-invalid': error }} ${formControlSm}`}
+        value={value || ''}
         onChange={(e) => {
-          if (definition.readonly) return;
-          onChange(e.target.value);
+          if (definition.readonly) return
+          onChange(e.target.value)
         }}
       />
-      {error && <div className="invalid-feedback d-block">{error}</div>}
+      {error && <div className='invalid-feedback d-block'>{error}</div>}
     </FieldLabel>
-  );
-};
-TextareaField.isEmpty = (x) => !x;
+  )
+}
+TextareaField.isEmpty = (x) => !x
 Object.assign(formComponents, {
-  TextareaField,
-});
+  TextareaField
+})
 
 const NumberField = ({
   value,
@@ -189,67 +190,65 @@ const NumberField = ({
   error,
   definition,
   context,
-  path,
+  path
 }) => {
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const labelStyle = {};
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const labelStyle = {}
   if (context.labelColor) {
-    labelStyle.style = { color: context.labelColor };
+    labelStyle.style = { color: context.labelColor }
   }
-  const extra = {};
-  for (const k of ["min", "max"]) {
-    const v = (definition?.validators?.find(validator => validator.type === `${k}Number`) || {}).value;
-    if (typeof v === "number") {
-      extra[k] = v;
+  const extra = {}
+  for (const k of ['min', 'max']) {
+    const v = (definition?.validators?.find(validator => validator.type === `${k}Number`) || {}).value
+    if (typeof v === 'number') {
+      extra[k] = v
     }
   }
-  //const values = [7, 5, 11];
-  const formControlSm = context?.formControlSm ? "form-control-sm" : null;
+  // const values = [7, 5, 11];
+  const formControlSm = context?.formControlSm ? 'form-control-sm' : null
   return (
     <FieldLabel definition={definition} id={id} context={context}>
-      <div style={{display: "flex", alignItems: 'center'}} className="currency-input-wrapper">
+      <div style={{ display: 'flex', alignItems: 'center' }} className='currency-input-wrapper'>
         <input
           {...extra}
           id={id}
-          type="number"
-          className={classd`form-control ${{ "is-invalid": error }} ${formControlSm}`}
-          value={(value + "") || ""}
+          type='number'
+          className={classd`form-control ${{ 'is-invalid': error }} ${formControlSm}`}
+          value={(value + '') || ''}
           onChange={(e) => {
-            onChange(e.target.value);
+            onChange(e.target.value)
           }}
         />
-        {definition.is_percent && <div style={{marginLeft: '0.25rem', fontSize: '0.825rem'}}>%</div>}
-        {definition.suffix && <div style={{marginLeft: '0.25rem', fontSize: '0.825rem'}}>
+        {definition.is_percent && <div style={{ marginLeft: '0.25rem', fontSize: '0.825rem' }}>%</div>}
+        {definition.suffix && <div style={{ marginLeft: '0.25rem', fontSize: '0.825rem' }}>
           {definition.suffix}
         </div>}
       </div>
-      {error && <div className="invalid-feedback d-block">{error}</div>}
+      {error && <div className='invalid-feedback d-block'>{error}</div>}
     </FieldLabel>
-  );
-};
-NumberField.isEmpty = (x) => !x && (x !== 0);
+  )
+}
+NumberField.isEmpty = (x) => !x && (x !== 0)
 Object.assign(formComponents, {
-  NumberField,
-});
+  NumberField
+})
 
+export const selectCustomStyles = {}
 
-export let selectCustomStyles = {};
-
-export let selectCustomComponents = {};
+export const selectCustomComponents = {}
 
 const removeOptions = (options, notAllowedOptions) => {
   return options?.filter(({ value }) => {
-    return !value || !notAllowedOptions.has(value);
+    return !value || !notAllowedOptions.has(value)
   }).map(({ value, options, ...props }) => {
     if (options) {
-      return { ...props, options: removeOptions(options, notAllowedOptions) };
+      return { ...props, options: removeOptions(options, notAllowedOptions) }
     } else {
-      return { value, ...props };
+      return { value, ...props }
     }
-  });
-};
-
+  })
+}
 
 const SelectField = ({
   value,
@@ -259,51 +258,50 @@ const SelectField = ({
   onReset,
   path,
   context,
-  disabled,
+  disabled
 }) => {
-  const id = "id_" + uuidv4();
-  const { label } = definition;
-  const labelStyle = {};
-  const inputStyle = {};
+  const id = 'id_' + uuidv4()
+  const { label } = definition
+  const labelStyle = {}
+  const inputStyle = {}
   if (context.labelColor) {
-    labelStyle.style = { color: context.labelColor };
+    labelStyle.style = { color: context.labelColor }
   }
-  let options = definition.options;
+  let options = definition.options
   if (context?.exhaustOptions?.[definition.k]) {
-    //console.log('kkk', context);
-    const notAllowedOptions = new Set(context?.exhaustOptions?.[definition.k]);
-    if (value) notAllowedOptions.delete(value?.value);
-    options = removeOptions(options, notAllowedOptions);
+    // console.log('kkk', context);
+    const notAllowedOptions = new Set(context?.exhaustOptions?.[definition.k])
+    if (value) notAllowedOptions.delete(value?.value)
+    options = removeOptions(options, notAllowedOptions)
   }
   const applySortValue = (x) => {
-    if (definition.sort_value_by)
-      return orderBy(x, (i) => i[definition.sort_value_by]);
-    return x;
-  };
+    if (definition.sort_value_by) { return orderBy(x, (i) => i[definition.sort_value_by]) }
+    return x
+  }
   const additionalProps = {
     styles: {
       control: (provided, state) => {
-        const result = { ...provided };
-        if (error) result.borderColor = 'red';
-        return result;
+        const result = { ...provided }
+        if (error) result.borderColor = 'red'
+        return result
       },
       menu: (provided, state) => {
-        const result = { ...provided };
-        result.zIndex = 2; // intlTelInput glitch
-        return result;
-      },
-    },
-  };
+        const result = { ...provided }
+        result.zIndex = 2 // intlTelInput glitch
+        return result
+      }
+    }
+  }
   if (context.select_custom_styles) {
     additionalProps.styles = {
       ...additionalProps.styles,
-      ...selectCustomStyles[context.select_custom_styles],
-    };
+      ...selectCustomStyles[context.select_custom_styles]
+    }
     additionalProps.components =
-      selectCustomComponents[context.select_custom_styles];
+      selectCustomComponents[context.select_custom_styles]
   }
 
-    /*const ctx = useContext(GenericFormContext);
+  /* const ctx = useContext(GenericFormContext);
 
   // create_form
   const onSubmit = async (value) => {
@@ -312,34 +310,34 @@ const SelectField = ({
     const result = await ctx.onChange({...value, id: definition?.id});
     ctx.addOptionById(definition?.id, result.value);
     onChange(result.value);
-  };*/
-  const Wrapper = /*definition?.create_form ? ({ children }) => <div style={{display: "flex", alignItems: "center"}}>
+  }; */
+  const Wrapper = /* definition?.create_form ? ({ children }) => <div style={{display: "flex", alignItems: "center"}}>
     <div style={{flex: 1}}>
       {children[0]}
     </div>
     <div style={{flex: 0, marginLeft: "0.25rem"}}>
       {children[1]}
     </div>
-  </div> :*/ React.Fragment;
+  </div> : */ React.Fragment
   return (
-    <Wrapper>
+    <>
       <FieldLabel definition={definition} id={id} context={context}>
         <div
           style={{
-            margin: "0.6em 0",
-            ...(context.selectWidth ? { width: context.selectWidth } : {}),
+            margin: '0.6em 0',
+            ...(context.selectWidth ? { width: context.selectWidth } : {})
           }}
         >
           <Select
             id={id}
             isClearable={!definition.multiple && !definition.required && !definition.nonCleanable}
             isMulti={!!definition.multiple}
-            type="text"
-            className={classd`${{ "is-invalid": error }}`}
+            type='text'
+            className={classd`${{ 'is-invalid': error }}`}
             value={value || null}
             onChange={(x) => {
-              onChange(applySortValue(x));
-              onReset(path);
+              onChange(applySortValue(x))
+              onReset(path)
             }}
             placeholder={definition.placeholder}
             options={options}
@@ -349,9 +347,9 @@ const SelectField = ({
             {...additionalProps}
           />
         </div>
-        {error && <div className="invalid-feedback d-block">{error}</div>}
+        {error && <div className='invalid-feedback d-block'>{error}</div>}
       </FieldLabel>
-      {/*definition.create_form && <>
+      {/* definition.create_form && <>
         <FormComponent
           definition={{...definition.create_form.fields, layout: "ModalLayout", inside: ({ setShow }) => (
             <button type="button" className="el-button el-button--text" onClick={setShow}>
@@ -363,42 +361,42 @@ const SelectField = ({
           context={{}}
           path={[]}
         />
-      </>*/}
-    </Wrapper>
-  );
-};
-SelectField.isEmpty = (x) => !x?.value;
+      </> */}
+    </>
+  )
+}
+SelectField.isEmpty = (x) => !x?.value
 Object.assign(formComponents, {
-  SelectField,
-});
+  SelectField
+})
 
-const ModalLayoutWrapper = ({ children }) => <div className="field-container">{children}</div>;
+const ModalLayoutWrapper = ({ children }) => <div className='field-container'>{children}</div>
 
 const ModalLayout = (props) => {
-  const { value, onChange, definition, error, context, onReset, path } = props;
+  const { value, onChange, definition, error, context, onReset, path } = props
   /* this is Fields, but renderedFields are thrown away */
-	const [show, setShow] = useState(false);
-	const [state, setState] = useState(value);
-	const [errors, setErrors] = useState(null);
+  const [show, setShow] = useState(false)
+  const [state, setState] = useState(value)
+  const [errors, setErrors] = useState(null)
   useEffect(() => {
-    //console.log('reset to', value);
-    setState(value);
-    setErrors(null);
-  }, [show]);
+    // console.log('reset to', value);
+    setState(value)
+    setErrors(null)
+  }, [show])
   const onReset1 = (path) => {
-    setErrors(update(errors, pathToUpdate(path, { $set: null })), null);
-  };
-	const handleClose = _ => setShow(false);
+    setErrors(update(errors, pathToUpdate(path, { $set: null })), null)
+  }
+  const handleClose = _ => setShow(false)
   const handleSubmit = (state) => {
-    const error = validateDefinition(definition, state, state, context); // TODO parent state?
-    setErrors(error);
+    const error = validateDefinition(definition, state, state, context) // TODO parent state?
+    setErrors(error)
     if (!definitionIsInvalid(definition, error, state, state, context)) {
       // ok
-      onChange(state);
-      onReset(path);
-      handleClose();
+      onChange(state)
+      onReset(path)
+      handleClose()
     } else {
-      /*NotificationManager.error(
+      /* NotificationManager.error(
         "Please fix the errors below",
         "Error"
       );
@@ -410,60 +408,66 @@ const ModalLayout = (props) => {
         } catch (e) {
           console.warn(e);
         }
-      }, 50);*/
+      }, 50); */
     }
-  };
-  const { AddButton, hidePrimaryButton } = definition;
-  return (<div>
-    {AddButton ? <AddButton onClick={_ => {
-        setShow(true);
-      }} /> : <button
-      className="btn btn-primary"
-      type="button"
-      onClick={e => {
-        setShow(true);
-      }}>
-      <i className="fa fa-plus" />
-      {" "}
-      Add
-    </button>}
-		<Modal show={show} onHide={handleClose} animation={false} container={_ => document.getElementById('bootstrap-modals')} size={context?.modalSize || "lg"}>
-			<Modal.Header closeButton>
-				<Modal.Title>{definition.title || "Edit"}</Modal.Title>
-			</Modal.Header>
-			<Modal.Body>
-        <div>
-        <FormComponent
-          definition={{...definition, layout: void 0}}
-          value={state}
-          onChange={setState}
-          error={errors}
-          onReset={onReset1}
-          path={[]}
-          context={{
-            ...context,
-						forceLabelWidth: '100%',
-						labelPlacement: 'horizontalPlus',
-            handleSubmit
-					}}
-        />
-        </div>
-      </Modal.Body>
-			<Modal.Footer>
-				<Button variant="secondary" onClick={handleClose}>
-					Close
-				</Button>
-        {!hidePrimaryButton && <Button variant="primary" onClick={_ => handleSubmit(state)}>
-					OK
-				</Button>}
-			</Modal.Footer>
-    </Modal>
-    {error?.__own && <div className="invalid-feedback d-block">{error.__own + ''}</div>}
-  </div>);
-};
+  }
+  const { AddButton, hidePrimaryButton } = definition
+  return (
+    <div>
+      {AddButton
+        ? <AddButton onClick={_ => {
+          setShow(true)
+        }}
+          />
+        : <button
+            className='btn btn-primary'
+            type='button'
+            onClick={e => {
+              setShow(true)
+            }}
+          >
+          <i className='fa fa-plus' />
+          {' '}
+          Add
+        </button>}
+      <Modal show={show} onHide={handleClose} animation={false} container={_ => document.getElementById('bootstrap-modals')} size={context?.modalSize || 'lg'}>
+        <Modal.Header closeButton>
+          <Modal.Title>{definition.title || 'Edit'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div>
+            <FormComponent
+              definition={{ ...definition, layout: void 0 }}
+              value={state}
+              onChange={setState}
+              error={errors}
+              onReset={onReset1}
+              path={[]}
+              context={{
+                ...context,
+                forceLabelWidth: '100%',
+                labelPlacement: 'horizontalPlus',
+                handleSubmit
+              }}
+            />
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant='secondary' onClick={handleClose}>
+            Close
+          </Button>
+          {!hidePrimaryButton && <Button variant='primary' onClick={_ => handleSubmit(state)}>
+            OK
+          </Button>}
+        </Modal.Footer>
+      </Modal>
+      {error?.__own && <div className='invalid-feedback d-block'>{error.__own + ''}</div>}
+    </div>
+  )
+}
 Object.assign(fieldsLayouts, {
-  ModalLayout,
-});
+  ModalLayout
+})
 
 export {
   validateDefinition,
@@ -479,5 +483,5 @@ export {
   modifyHelper,
   fieldsLayouts,
   submitButtonWidgets,
-  formValidators,
-};
+  formValidators
+}
