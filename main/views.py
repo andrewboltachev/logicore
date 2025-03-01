@@ -1460,3 +1460,24 @@ def python_to_describe_result(request, *args, **kwargs):
             return JsonResponse({"error": f"Status returned {resp.status_code}"}, safe=False, status=400)
         else:
             return JsonResponse(resp.json(), safe=False)
+
+
+@csrf_exempt
+def python_to_match_result(request, *args, **kwargs):
+    import libcst
+    from main.parser.python import serialize_dc
+    code = json.loads(request.body)["code"]
+    module = libcst.parse_module(code)
+    serialized = serialize_dc(module)
+    try:
+        resp = requests.post(
+            "http://localhost:3042/valueToExactGrammar",
+            json={"value": serialized},
+        )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, safe=False, status=400)
+    else:
+        if resp.status_code != 200:
+            return JsonResponse({"error": f"Status returned {resp.status_code}"}, safe=False, status=400)
+        else:
+            return JsonResponse(resp.json(), safe=False)

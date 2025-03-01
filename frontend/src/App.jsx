@@ -846,21 +846,21 @@ const ADTSelectField = ({
                       {g.children.map((t) => {
                         const active = t.key === value
                         return (
-                  <button
-                          type='button'
-                          className={classd`btn btn-sm btn${
+                          <button
+                            type='button'
+                            className={classd`btn btn-sm btn${
                             !active ? '-outline' : ''
                           }-${g.color} fw-bold`}
-                          style={{ flexShrink: 0 }}
-                          onClick={(_) => {
-                            if (!active) {
-                              onChange(t.key)
-                            }
-                            setEditing(false)
-                          }}
-                        >
-                          {t.label}
-                        </button>
+                            style={{ flexShrink: 0 }}
+                            onClick={(_) => {
+                              if (!active) {
+                                onChange(t.key)
+                              }
+                              setEditing(false)
+                            }}
+                          >
+                            {t.label}
+                          </button>
                         )
                       })}
                     </div>

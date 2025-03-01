@@ -61,13 +61,7 @@ const CodeDisplay = ({ code }) => {
   }, [handleMovement])
   useEffect(() => {
     const highlighted = hljs.highlight(code, { language: 'python' })
-    setHighlighted(highlighted.value)
-    axios.post(
-      '/python-to-describe-result/',
-      {
-        code
-      }
-    )
+    setHighlighted(highlighted.value);
   }, [code])
   if (!highlighted) {
     return (
@@ -185,6 +179,18 @@ const Python01Explorer = () => {
   // Производные
   const [tree, setTree] = useState(null)
 
+  useEffect(() => {
+    (async () => {
+      const resp = await axios.post(
+        '/python-to-match-result/',
+        {
+          code
+        }
+      );
+      setTree(resp.data.grammar)
+    })()
+  }, [code])
+
   const { runModal } = useContext(ModalContext)
   const t = _.identity
   return (
@@ -194,9 +200,11 @@ const Python01Explorer = () => {
           <h5>
             Grammar (Pseudo-Python)!{' '}
           </h5>
-          <textarea
-            className='form-control flex-grow-1'
-          />
+          <div
+            style={{whiteSpace: 'pre', overflow: "hidden"}}
+            className='form-control flex-grow-1 position-relative'>
+            <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto'}}>{JSON.stringify(tree, null, 2)}</div>
+          </div>
         </div>
         <div className='col d-flex flex-column' style={{ overflow: 'hidden' }}>
           <div style={{ overflow: 'hidden' }}>

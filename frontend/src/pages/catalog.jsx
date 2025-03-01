@@ -286,24 +286,24 @@ export default function CatalogPage (props) {
                 <GridPair>
                   <LabeledWidget label='Выбранные подборки'>
                     <div className='th-tag'>
-                  Горные туры
-                    <Button.Icon icon='Cross' />
-                </div>
+                      Горные туры
+                      <Button.Icon icon='Cross' />
+                    </div>
                   </LabeledWidget>
                   <RawGenericForm
                     value={state1}
                     onChange={setState1}
                     definition={{
-                  type: 'Fields',
-                  fields: [
-                    { type: 'SelectField', k: 'name', label: 'Подборки' }
-                  ],
-                  context: {
-                    select_custom_styles: 'SelectionFilter',
-                    variant: 'selectionForm',
-                    labelPlacement: 'placeholder'
-                  }
-                }}
+                      type: 'Fields',
+                      fields: [
+                        { type: 'SelectField', k: 'name', label: 'Подборки' }
+                      ],
+                      context: {
+                        select_custom_styles: 'SelectionFilter',
+                        variant: 'selectionForm',
+                        labelPlacement: 'placeholder'
+                      }
+                    }}
                   />
                 </GridPair>
               </div>
@@ -312,31 +312,31 @@ export default function CatalogPage (props) {
                   <div className='th-tours-heading'>Наши туры</div>
                   <div className='th-tours-found'>
                     Найдено
-                  {' '}<span className='th-tours-found__inner'>24</span>{' '}
+                    {' '}<span className='th-tours-found__inner'>24</span>{' '}
                     тура
-                </div>
+                  </div>
                 </div>
                 <GridPair className='th-heading-row__right'>
                   <LabeledWidget label='Отображение'>
                     <div className='th-d-flex'>
-                  <Button.Square icon='ViewRows' variant='pastell' />
-                  <Button.Square icon='ViewGrid' variant='intense' />
-                </div>
+                      <Button.Square icon='ViewRows' variant='pastell' />
+                      <Button.Square icon='ViewGrid' variant='intense' />
+                    </div>
                   </LabeledWidget>
                   <RawGenericForm
                     value={state1}
                     onChange={setState1}
                     definition={{
-                  type: 'Fields',
-                  fields: [
-                    { type: 'SelectField', k: 'name', label: 'По популярности' }
-                  ],
-                  context: {
-                    select_custom_styles: 'SelectionFilter',
-                    variant: 'selectionForm',
-                    labelPlacement: 'placeholder'
-                  }
-                }}
+                      type: 'Fields',
+                      fields: [
+                        { type: 'SelectField', k: 'name', label: 'По популярности' }
+                      ],
+                      context: {
+                        select_custom_styles: 'SelectionFilter',
+                        variant: 'selectionForm',
+                        labelPlacement: 'placeholder'
+                      }
+                    }}
                   />
                 </GridPair>
               </div>
@@ -344,10 +344,10 @@ export default function CatalogPage (props) {
                 {(selection || global_search) && <div className='row'>
                   <div className='col-md-12'>
                     <div className='mt-3'>{selection && <><strong>Отображается подборка:</strong> <span className='badge bg-warning mx-1 text-dark' style={{ fontSize: '1rem' }}>
-                  <span style={{ position: 'relative', top: -1 }}>{selection.name} | <Link className='text-dark' to={linkWithoutExtraSelected}><i className='fa fa-times' /></Link></span>
-                                                                                              </span>
-                                                    </>}
-                </div>
+                      <span style={{ position: 'relative', top: -1 }}>{selection.name} | <Link className='text-dark' to={linkWithoutExtraSelected}><i className='fa fa-times' /></Link></span>
+                    </span>
+                    </>}
+                    </div>
                   </div>
                 </div>}
               </div>

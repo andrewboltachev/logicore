@@ -1871,31 +1871,31 @@ function Flow ({ storageKey, prevStorageKey, value, onChange, saveButton }) {
                   <React.Fragment key={type}>
                     {!!i && <Dropdown.Divider />}
                     {options.map(({ label, value, defaultValue, ...item }) => {
-                  let position = { x: 0, y: 0 }
-                  if (ref.current && viewport) {
-                    const { width, height } = ref.current.getBoundingClientRect()
-                    position = {
-                      x: (width / 2 - viewport.x) / viewport.zoom,
-                      y: (height / 2 - viewport.y) / viewport.zoom
-                    }
-                  }
-                  return (
-                      <Dropdown.Item
-                        key={label} href='#' onClick={(e) => {
-                          e.preventDefault()
-                          const id = 'id_' + uuidv4()
-                          setNodes([...nodes, {
-                            id,
-                            position,
-                            type,
-                            data: { value, state: defaultValue }
-                          }])
-                        }}
-                      >
-                        {label}
-                      </Dropdown.Item>
-                  )
-                })}
+                      let position = { x: 0, y: 0 }
+                      if (ref.current && viewport) {
+                        const { width, height } = ref.current.getBoundingClientRect()
+                        position = {
+                          x: (width / 2 - viewport.x) / viewport.zoom,
+                          y: (height / 2 - viewport.y) / viewport.zoom
+                        }
+                      }
+                      return (
+                        <Dropdown.Item
+                          key={label} href='#' onClick={(e) => {
+                            e.preventDefault()
+                            const id = 'id_' + uuidv4()
+                            setNodes([...nodes, {
+                              id,
+                              position,
+                              type,
+                              data: { value, state: defaultValue }
+                            }])
+                          }}
+                        >
+                          {label}
+                        </Dropdown.Item>
+                      )
+                    })}
                   </React.Fragment>
                 ))}
               </Dropdown.Menu>

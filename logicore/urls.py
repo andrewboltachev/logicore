@@ -68,6 +68,7 @@ urlpatterns = [
     path('rest-api/', include(router.urls)),
     path('media-upload/', main_views.media_upload), # TODO protect?
     path('python-to-describe-result/', main_views.python_to_describe_result),
+    path('python-to-match-result/', main_views.python_to_match_result),
     re_path('^python-api/(?P<proc>.+)$', main_views.python_api),
     re_path('^haskell-api/(?P<path>.+)$', main_views.haskell_api),
     re_path('^javascript-api/(?P<path>.+)$', main_views.javascript_api),
