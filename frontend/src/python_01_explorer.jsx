@@ -236,6 +236,11 @@ const Python01Explorer = () => {
           <h5>
             Grammar (Pseudo-Python)!{' '}
           </h5>
+          <code>
+            {tree ? selected : null}
+            {(selected === '') && '(root)'}
+            {selected === null && '(not selected)'}
+          </code>
           <div
             style={{whiteSpace: 'pre', overflow: "hidden"}}
             className='form-control flex-grow-1 position-relative'>
