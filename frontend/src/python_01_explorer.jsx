@@ -173,6 +173,32 @@ const CodeDisplay = ({ code }) => {
   )
 }
 
+const Node = ({value, level= 0}) => {
+  if (value === null) return '';
+  if (value === undefined) return 'undefined'
+  if (value.tag === 'MatchArrayContextFree' || value.tag === 'Char') {
+    return <>
+      <div>{_.repeat(' ', level)}{value.tag}</div>
+      <Node value={value.contents} level={level + 1} />
+    </>;
+  } else if (value.tag === 'MatchObjectWhole') {
+    console.assert(value.contents.type.tag === 'MatchStringExact')
+    console.assert(value.contents.body, 'body', value)
+    const body = Array.isArray(value.contents.body) ? value.contents.body : [value.contents.body];
+    return <>
+      <div>{_.repeat(' ', level)}{value.contents.type.contents}</div>
+      {body.map((child, index) => <Node value={child} level={level + 1} key={index} />)}
+    </>;
+  } else if (value.tag === 'Seq') {
+    return <>
+      <div>{_.repeat(' ', level)}{'Seq'}</div>
+      {value.contents.map((child, index) => <Node value={child} level={level + 1} key={index} />)}
+    </>;
+  } else {
+    console.assert(false, 'Unknown tag', value.tag);
+  }
+}
+
 const Python01Explorer = () => {
   // Основной
   const [code, setCode] = useLocalStorage('PYTHON_01_EXPLORER_CODE', '')
@@ -203,7 +229,10 @@ const Python01Explorer = () => {
           <div
             style={{whiteSpace: 'pre', overflow: "hidden"}}
             className='form-control flex-grow-1 position-relative'>
-            <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto'}}>{JSON.stringify(tree, null, 2)}</div>
+            <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto'}}>
+              {/*JSON.stringify(tree, null, 2)*/}
+              {tree ? <Node value={tree} /> : 'Loading...'}
+            </div>
           </div>
         </div>
         <div className='col d-flex flex-column' style={{ overflow: 'hidden' }}>

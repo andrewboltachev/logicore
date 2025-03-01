@@ -1480,4 +1480,4 @@ def python_to_match_result(request, *args, **kwargs):
         if resp.status_code != 200:
             return JsonResponse({"error": f"Status returned {resp.status_code}"}, safe=False, status=400)
         else:
-            return JsonResponse(resp.json(), safe=False)
+            return JsonResponse({**resp.json(), "value": serialized}, safe=False)
