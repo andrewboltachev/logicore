@@ -174,18 +174,23 @@ const CodeDisplay = ({ code }) => {
   )
 }
 
-const Node = ({value, level= 0, path = null, expanded, setExpanded}) => {
+const Node = ({value, level= 0, path = null, expanded, setExpanded, selected, setSelected}) => {
   if (path === null) path = '';
+  const isSelected = selected === path;
+  const toggleSelected = useCallback((e) => {
+    e.stopPropagation();
+    setSelected(isSelected ? null : path)
+  }, [isSelected, path, setSelected]);
   if (value === 'undefined') return 'Loading...';
   if (Array.isArray(value)) {
     // array
     if (!value.length) return '[]';
     return <>
-      {value.map((child, index) => <div key={index}>{_.repeat(' ', level)}- <Node value={child} path={`${path}.${index}`} level={level + 1} expanded={expanded} setExpanded={setExpanded} /></div>)}
+      {value.map((child, index) => <div style={{background: isSelected ? 'lightyellow' : 'transparent'}} onClick={toggleSelected} key={index}>{_.repeat(' ', level)}- <Node value={child} path={`${path}.${index}`} level={level + 1} expanded={expanded} setExpanded={setExpanded} selected={selected} setSelected={setSelected} /></div>)}
     </>;
-  } else if (value === null) {
-    // null
-    return <span style={{color: 'rgb(3, 47, 98)'}}>{JSON.stringify(value)}</span>
+  } else if (value === null || typeof value === 'boolean' || typeof value === 'string' || typeof value === 'number') {
+    //
+    return <span onClick={toggleSelected} style={{color: 'rgb(3, 47, 98)', background: isSelected ? 'lightyellow' : 'transparent'}}>{JSON.stringify(value)}</span>
   } else if (typeof value === 'object') {
     console.assert(value.type)
     // object
@@ -197,17 +202,8 @@ const Node = ({value, level= 0, path = null, expanded, setExpanded}) => {
         e.preventDefault();
         setExpanded(update(expanded, {$toggle: [path]}));
       }}>{isExpanded ? <>&#9660;</> : <>&#9654;</>} {value.type}</a></div>
-      {isExpanded && Object.entries(vvalue).map(([k, v]) => <div key={k}>{_.repeat(' ', level)}<strong>{k}</strong>: <Node value={v} path={`${path}.${k}`} level={level + 1} expanded={expanded} setExpanded={setExpanded} /></div>)}
+      {isExpanded && Object.entries(vvalue).map(([k, v]) => <div style={{background: isSelected ? 'lightyellow' : 'transparent'}} onClick={toggleSelected} key={k}>{_.repeat(' ', level)}<strong>{k}</strong>: <Node value={v} path={`${path}.${k}`} level={level + 1} expanded={expanded} setExpanded={setExpanded} selected={selected} setSelected={setSelected} /></div>)}
     </>;
-  } else if (typeof value === 'string') {
-    //
-    return <span style={{color: 'rgb(3, 47, 98)'}}>{JSON.stringify(value)}</span>
-  } else if (typeof value === 'number') {
-    //
-    return JSON.stringify(value);
-  } else if (typeof value === 'boolean') {
-    //
-    return <span style={{color: 'rgb(3, 47, 98)'}}>{JSON.stringify(value)}</span>
   }
 }
 
@@ -217,6 +213,7 @@ const Python01Explorer = () => {
   // Производные
   const [tree, setTree] = useState(null)
   const [expanded, setExpanded] = useState({})
+  const [selected, setSelected] = useState(null)
 
   useEffect(() => {
     (async () => {
@@ -244,7 +241,7 @@ const Python01Explorer = () => {
             className='form-control flex-grow-1 position-relative'>
             <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto'}}>
               {/*JSON.stringify(tree, null, 2)*/}
-              {tree ? <Node value={tree} expanded={expanded} setExpanded={setExpanded} /> : 'Loading...'}
+              {tree ? <Node value={tree} expanded={expanded} setExpanded={setExpanded} selected={selected} setSelected={setSelected} /> : 'Loading...'}
             </div>
           </div>
         </div>
