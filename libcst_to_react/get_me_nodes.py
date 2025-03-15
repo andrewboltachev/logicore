@@ -10,7 +10,6 @@ from main.parser.python import serialize_dc, unserialize_dc
 from libcst_to_react.nodes_params import nodes_params
 
 
-
 def clean_split(lines):
     return [x for x in [x.strip() for x in lines.split("\n")] if x]
 
@@ -21,13 +20,14 @@ def all_subclasses(cls):
             yield s
         yield c
 
+
 def read_file(filename):
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         return f.read()
 
 
 def write_file(filename, text):
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         return f.write(text)
 
 
@@ -42,14 +42,18 @@ for x in all_cst_nodes:
 
 module_cache = {}
 
+
 def rsetattr(obj, attr, val):
-    pre, _, post = attr.rpartition('.')
+    pre, _, post = attr.rpartition(".")
     return setattr(rgetattr(obj, pre) if pre else obj, post, val)
+
 
 def rgetattr(obj, attr, *args):
     def _getattr(obj_, attr_):
         return getattr(obj_, attr_, *args)
-    return reduce(_getattr, [obj] + attr.split('.'))
+
+    return reduce(_getattr, [obj] + attr.split("."))
+
 
 def load_module(module_name):
     found = module_cache.get(module_name, None)
@@ -64,6 +68,7 @@ def load_module(module_name):
     module_cache[module_name] = added
     return added
 
+
 def locate_class(class_name):
     found = None
     for x in leaf_cst_nodes:
@@ -74,23 +79,26 @@ def locate_class(class_name):
         raise Exception(f"{class_name} not found as CST node")
     return found
 
+
 def code_for_node(node):
     """
     Should work for simple nodes?
     """
-    s = CodegenState(default_indent='    ', default_newline='\n')
-    r1 =  node._codegen(s)
-    r2 = ''.join(s.tokens)
+    s = CodegenState(default_indent="    ", default_newline="\n")
+    r1 = node._codegen(s)
+    r2 = "".join(s.tokens)
     return r2
 
 
-#def is_ImportFrom_for_name(node, name):
+# def is_ImportFrom_for_name(node, name):
 #    if type(node) == libcst.ImportFrom and name in [code_for_node(x.name) for x in node.names]:
 #        return code_for_node(node.module)
+
 
 def is_a_class_of_name(node, name):
     if type(node) == libcst.ClassDef and code_for_node(node.name) == name:
         return node
+
 
 def find_node(tree, pred):
     r = pred(tree)
@@ -105,13 +113,22 @@ def find_node(tree, pred):
             if r:
                 return r
 
+
 def load_codegen_impl(klass):
     if type(klass) == str:
         klass = locate_class(klass)
     module = load_module(klass.__module__)
     cdef = find_node(module, lambda x: is_a_class_of_name(x, klass.__name__))
-    r = find_node(cdef, lambda x: x if type(x) == libcst.FunctionDef and code_for_node(x.name) == "_codegen_impl" else None)
-    #assert r, "Not found for " + klass.__name__
+    r = find_node(
+        cdef,
+        lambda x: (
+            x
+            if type(x) == libcst.FunctionDef
+            and code_for_node(x.name) == "_codegen_impl"
+            else None
+        ),
+    )
+    # assert r, "Not found for " + klass.__name__
     return r
 
 
@@ -141,8 +158,9 @@ def load_whole_class(klass):
 
 MATCH_PATTERN = r"^__[\d]+$"
 
+
 def node_by_name(pattern, name):
-    for node in all_subclasses(pattern.mro()[-2]): # TODO
+    for node in all_subclasses(pattern.mro()[-2]):  # TODO
         if node.__name__ == name:
             return node
 
@@ -177,15 +195,21 @@ def match_code(code, pattern):
                 r = match_code(code, ref_node)
                 if r:
                     if acc_param in acc:
-                        if acc[acc_param] != r: # TODO: just False, i.e. aviod usage twice?
+                        if (
+                            acc[acc_param] != r
+                        ):  # TODO: just False, i.e. aviod usage twice?
                             return False
                     else:
                         acc[acc_param] = r
                     return True
                 else:
                     return False
-            elif pattern.get("type") == "Name" and re.match(MATCH_PATTERN, pattern.get("value")):
-                if "value" not in code: # XXX "matchable" node must have different criteria
+            elif pattern.get("type") == "Name" and re.match(
+                MATCH_PATTERN, pattern.get("value")
+            ):
+                if (
+                    "value" not in code
+                ):  # XXX "matchable" node must have different criteria
                     # TODO: check what nodes have "value"
                     return False
                 if pattern["value"] not in acc:
@@ -194,10 +218,10 @@ def match_code(code, pattern):
                 elif acc[pattern["value"]] == code["value"]:
                     return True
                 else:
-                    #print(f"type mismatch. expected: {pattern.get('type')}, found: {code.get('type')}")
+                    # print(f"type mismatch. expected: {pattern.get('type')}, found: {code.get('type')}")
                     return False
             # XXX
-            if code == libcst.MaybeSentinel.DEFAULT: # TODO
+            if code == libcst.MaybeSentinel.DEFAULT:  # TODO
                 return True
             if code.get("type") != pattern.get("type"):
                 return False
@@ -205,25 +229,26 @@ def match_code(code, pattern):
             node_params = nodes_params[pattern["type"]]
             for k in node_params:
                 if k not in ["body"]:
-                    if not walk(code[k], pattern[k]): # TODO compare nodes vs. values - derive from types?
-                        #print(f"param mismatch: {k} expected to be {pattern[k]}, got {code[k]}")
+                    if not walk(
+                        code[k], pattern[k]
+                    ):  # TODO compare nodes vs. values - derive from types?
+                        # print(f"param mismatch: {k} expected to be {pattern[k]}, got {code[k]}")
                         return False
             # 3. body (dict/list)
             if "body" in pattern:
                 if type(pattern["body"]) != type(code.get("body")):
                     return False
                 if type(pattern["body"]) == dict:
-                    if (
-                        "body" in pattern["body"]
-                        and len(pattern["body"]["body"]) > 0
-                    ):
+                    if "body" in pattern["body"] and len(pattern["body"]["body"]) > 0:
                         m = match_code(pattern["body"]["body"][0], SelfRef)
                         if m and m[1]["__1"] == "__0":
                             reference = m[1]["__2"]
                             ref_node = node_by_name(orig_pattern, reference)
                             if ref_node.__dict__.get("kind") != "PlusOr":
                                 raise Exception(f"Not a PlusOr node: {ref_node}")
-                            body_match = match_code(code["body"], ref_node) # code is IntendedBlock
+                            body_match = match_code(
+                                code["body"], ref_node
+                            )  # code is IntendedBlock
                             if body_match:
                                 acc["__body"] = body_match
                                 return True
@@ -231,9 +256,9 @@ def match_code(code, pattern):
                                 return False
 
                     return walk(code["body"], pattern["body"])
-                else: # must be list
+                else:  # must be list
                     if len(pattern["body"]) != len(code["body"]):
-                        #print(f"list length mismatch. expected: {len(pattern['body'])}, found: {len(code['body'])}")
+                        # print(f"list length mismatch. expected: {len(pattern['body'])}, found: {len(code['body'])}")
                         return False
                     for c, p in zip(code["body"], pattern["body"]):
                         if not walk(c, p):
@@ -253,7 +278,7 @@ def match_code(code, pattern):
     if not kind:
         if hasattr(pattern, "pattern"):
             kind = "Pattern"
-        elif len(pattern.mro()) == 2: # TODO
+        elif len(pattern.mro()) == 2:  # TODO
             kind = "Top"
         else:
             kind = "Or"
@@ -264,9 +289,9 @@ def match_code(code, pattern):
             if r:
                 return (pattern, r)
         return False
-    elif kind == "PlusOr": # code is IntendedBlock...
+    elif kind == "PlusOr":  # code is IntendedBlock...
         result = []
-        for code1 in code['body']:
+        for code1 in code["body"]:
             for s in pattern.__subclasses__():
                 r = match_code(code1, s)
                 if r:
@@ -287,6 +312,7 @@ def match_code(code, pattern):
             return (orig_pattern, acc)
     else:
         raise Exception(f"Unknown node kind: {kind}")
+
 
 """
 Pattern
@@ -323,7 +349,7 @@ class VarSelfAssign(Main):
     pattern = """__1 = self.__1"""
 
 
-#class VarAssign(Main):
+# class VarAssign(Main):
 #    pattern = """__1 = __0(Expr)"""
 
 
@@ -345,11 +371,13 @@ for __2 in self.__1:
     __2._codegen(state)
     """
 
+
 class MultipleVarChildElements(Main):
     pattern = """\
 for __2 in __1:
     __2._codegen(state)
     """
+
 
 class Indent(Main):
     pattern = """\
@@ -357,16 +385,19 @@ if self.indent:
     state.add_indent_tokens()
     """
 
+
 class VarUse(Main):
     pattern = """\
 if __1 is not None:
     __1._codegen(state)
 """
 
+
 class Node01(Main):
     pattern = """\
 lastslice = len(self.slice) - 1
 """
+
 
 class Node02(Main):
     pattern = """\
@@ -392,7 +423,7 @@ else:
 
 
 class Node04(Main):
-	pattern = """\
+    pattern = """\
 for idx, el in enumerate(elements):
     el._codegen(
         state,
@@ -403,14 +434,14 @@ for idx, el in enumerate(elements):
 
 
 class Node05(Main):
-	pattern = """\
+    pattern = """\
 for __2 in self.__1:
     __2._codegen(state)
 """
 
 
 class Node06(Main):
-	pattern = """\
+    pattern = """\
 if isinstance(whitespace_after_lambda, MaybeSentinel):
     if not (
         len(self.params.posonly_params) == 0
@@ -425,19 +456,22 @@ elif isinstance(whitespace_after_lambda, BaseParenthesizableWhitespace):
     whitespace_after_lambda._codegen(state)
 """
 
+
 class Node07(Main):
-	pattern = """\
+    pattern = """\
 lastarg = len(self.args) - 1
 """
 
+
 class Node08(Main):
-	pattern = """\
+    pattern = """\
 for i, arg in enumerate(self.args):
     arg._codegen(state, default_comma=(i != lastarg))
 """
 
+
 class Node09(Main):
-	pattern = """\
+    pattern = """\
 if isinstance(whitespace_after_yield, BaseParenthesizableWhitespace):
     whitespace_after_yield._codegen(state)
 else:
@@ -446,34 +480,38 @@ else:
         state.add_token(" ")
 """
 
+
 class Node10(Main):
-	pattern = """\
+    pattern = """\
 if isinstance(value, From):
     value._codegen(state, default_space="")
 elif value is not None:
     value._codegen(state)
 """
 
+
 class Node12(Main):
-	pattern = """\
+    pattern = """\
 self._codegen_comma(state, default_comma, default_comma_whitespace)
 """
 
 
 class NotNoneCodegen(Main):
-	pattern = """\
+    pattern = """\
 if __1 is not None:
     __1._codegen(state)
 """
 
+
 class Node13(Main):
-	pattern = """\
+    pattern = """\
 for idx, __2 in enumerate(__1):
     __2._codegen(state, default_comma=(idx < len(__1) - 1))
 """
 
+
 class Node14(Main):
-	pattern = """\
+    pattern = """\
 __2 = self.__1
 """
 
@@ -509,11 +547,13 @@ class VarCodegen(Main):
 __1._codegen(state)
 """
 
+
 class Node18(Main):
     pattern = """\
 for idx, pat in enumerate(pats):
     pat._codegen(state, default_comma=idx + 1 < len(pats) + len(kwds))
 """
+
 
 class Node19(Main):
     pattern = """\
@@ -528,15 +568,16 @@ for idx, pat in enumerate(pats):
     pat._codegen(state, default_separator=idx + 1 < len(pats))
 """
 
+
 class Node21(Main):
-	pattern = """\
+    pattern = """\
 for spec in format_spec:
     spec._codegen(state)
 """
 
 
 class Node22(Main):
-	pattern = """\
+    pattern = """\
 if second_colon is MaybeSentinel.DEFAULT and self.step is not None:
     state.add_token(":")
 elif isinstance(second_colon, Colon):
@@ -545,7 +586,7 @@ elif isinstance(second_colon, Colon):
 
 
 class Node23(Main):
-	pattern = """\
+    pattern = """\
 if comma is MaybeSentinel.DEFAULT and default_comma:
     state.add_token(", ")
 elif isinstance(comma, Comma):
@@ -554,34 +595,35 @@ elif isinstance(comma, Comma):
 
 
 class InstanceCheck(Main):
-	pattern = """\
+    pattern = """\
 if isinstance(__1, __2):
     __0(MainL)
 """
 
 
 class VarToVarAssign(Main):
-	pattern = """\
+    pattern = """\
 __2 = __1
 """
 
 
 class VarToVarAssign(Main):
-	pattern = """\
+    pattern = """\
 __2 = __1
 """
 
 
 class CodegenErrorIfNone(Main):
-	pattern = """\
+    pattern = """\
 if __1 is None:
     raise CSTCodegenError(
         __2
     )
 """
 
+
 class Node25(Main):
-	pattern = """\
+    pattern = """\
 if isinstance(whitespace_before_indicator, BaseParenthesizableWhitespace):
     whitespace_before_indicator._codegen(state)
 elif isinstance(whitespace_before_indicator, MaybeSentinel):
@@ -593,7 +635,7 @@ else:
 
 
 class Node26(Main):
-	pattern = """\
+    pattern = """\
 if annotation is not None:
     annotation._codegen(state, default_indicator=":")
 """
@@ -625,6 +667,7 @@ for i, param in enumerate(self.posonly_params):
     param._codegen(state, default_star="", default_comma=True)
 """
 
+
 class Node30(Main):
     pattern = """\
 more_values = (
@@ -649,12 +692,14 @@ elif len(self.posonly_params) > 0:
         state.add_token("/")
 """
 
+
 class Node32(Main):
     pattern = """\
 more_values = (
     starincluded or len(self.kwonly_params) > 0 or self.star_kwarg is not None
 )
 """
+
 
 class Node33(Main):
     pattern = """\
@@ -699,6 +744,7 @@ if star_kwarg is not None:
     star_kwarg._codegen(state, default_star="**", default_comma=False)
 """
 
+
 class Node38(Main):
     pattern = """\
 if equal is MaybeSentinel.DEFAULT and self.keyword is not None:
@@ -741,17 +787,20 @@ with state.record_syntactic_position(self):
     __0(MainL)
 """
 
+
 class Parenthesize(Root):
     pattern = """\
 with self._parenthesize(state):
     __0(MainL)
 """
 
+
 class ParenthesizeBracketize(Root):
     pattern = """\
 with self._parenthesize(state), self._bracketize(state):
     __0(MainL)
 """
+
 
 class ParenthesizeBraceize(Root):
     pattern = """\
@@ -766,6 +815,7 @@ if __1 is not None:
     __0(MainL)
 """
 
+
 class WsIfDefault(Main):
     pattern = """\
 if __1 is MaybeSentinel.DEFAULT:
@@ -773,6 +823,7 @@ if __1 is MaybeSentinel.DEFAULT:
 elif isinstance(__1, BaseParenthesizableWhitespace):
     __1._codegen(state)
 """
+
 
 class DefaultName(Main):
     pattern = """\
@@ -785,8 +836,9 @@ else:
 
 # ...
 
+
 class Expr(Pattern):
-    pattern = """__1""" # TODO
+    pattern = """__1"""  # TODO
 
 
 cmd = None
@@ -801,34 +853,34 @@ if cmd == "1":
     for x in leaf_cst_nodes:
         if x.__name__ in seen:
             continue
-        seen.add(x.__name__) # FIXME what's that?
+        seen.add(x.__name__)  # FIXME what's that?
         impl = load_codegen_impl(x)
         if impl:
-            print('# ' + x.__name__)
-            print('->')
+            print("# " + x.__name__)
+            print("->")
             for line in impl.body.body:
                 # "normal" case
                 line_s = serialize_dc(line)
-                r = match_code({"body": [line_s]}, Root) # emulate IntendedBlock
+                r = match_code({"body": [line_s]}, Root)  # emulate IntendedBlock
                 if r:
                     print(r)
                 else:
-                    print('cannot match:\n\n' + code_for_node(line))
+                    print("cannot match:\n\n" + code_for_node(line))
                     sys.exit(1)
-            print('<-')
+            print("<-")
 elif cmd == "2":
     result = defaultdict(list)
     seen = set([])
     for x in all_cst_nodes:
         if x.__name__ in seen:
             continue
-        #print('# ' + x.__name__)
-        seen.add(x.__name__) # FIXME what's that?
+        # print('# ' + x.__name__)
+        seen.add(x.__name__)  # FIXME what's that?
         for r in load_statements(x):
-            #print('# ' + x.__name__)
-            #print(code_for_node(r.target))
+            # print('# ' + x.__name__)
+            # print(code_for_node(r.target))
             result[r.target.value].append(x.__name__)
-    #print('-*- ' * 20)
+    # print('-*- ' * 20)
     for k, v in result.items():
         print(k)
         for z in v:
@@ -839,21 +891,22 @@ elif cmd == "3":
     for x in all_cst_nodes:
         if x.__name__ in seen:
             continue
-        #print('# ' + x.__name__)
-        seen.add(x.__name__) # FIXME what's that?
+        # print('# ' + x.__name__)
+        seen.add(x.__name__)  # FIXME what's that?
         for r in load_statements(x):
-            #print('# ' + x.__name__)
-            #print(code_for_node(r.target))
+            # print('# ' + x.__name__)
+            # print(code_for_node(r.target))
             x = code_for_node(r)
             if x not in result[r.target.value]:
                 result[r.target.value].append(x)
-    #print('-*- ' * 20)
+    # print('-*- ' * 20)
     for k, v in result.items():
         print(k)
         for z in v:
             print(f"\t{z}")
 elif cmd == "4":
-    ignore_params = clean_split("""\
+    ignore_params = clean_split(
+        """\
     first_line
     empty_lines
     indent
@@ -865,25 +918,26 @@ elif cmd == "4":
     footer
     leading_lines
     lines_after_decorators
-    """)
+    """
+    )
     result = {}
     seen = set([])
     for x in all_cst_nodes:
         if x.__name__ in seen:
             continue
-        #print('# ' + x.__name__)
-        seen.add(x.__name__) # FIXME what's that?
+        # print('# ' + x.__name__)
+        seen.add(x.__name__)  # FIXME what's that?
         result[x.__name__] = []
         for r in load_statements(x):
-            if (
-                (r.target.value not in ignore_params)
-                and not re.match(r".*white.*", r.target.value)
+            if (r.target.value not in ignore_params) and not re.match(
+                r".*white.*", r.target.value
             ):
                 result[x.__name__].append(r.target.value)
     print(json.dumps(result, indent=4))
     # nodes params that ain't meaningful
 elif cmd == "5":
-    ignore_params = clean_split("""\
+    ignore_params = clean_split(
+        """\
     first_line
     empty_lines
     indent
@@ -895,15 +949,16 @@ elif cmd == "5":
     footer
     leading_lines
     lines_after_decorators
-    """)
+    """
+    )
     result = {}
     seen = set([])
     for x in all_cst_nodes:
         if x.__name__ in seen:
             continue
         print(x.__name__, file=sys.stderr)
-        #print('# ' + x.__name__)
-        seen.add(x.__name__) # FIXME what's that?
+        # print('# ' + x.__name__)
+        seen.add(x.__name__)  # FIXME what's that?
         result[x.__name__] = serialize_dc(load_whole_class(x))
     print(json.dumps(result, indent=4, default=str))
     # nodes params that ain't meaningful

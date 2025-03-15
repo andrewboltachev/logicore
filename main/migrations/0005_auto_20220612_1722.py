@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0004_stratagem_directory'),
+        ("main", "0004_stratagem_directory"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='stratagem',
-            name='directory',
+            model_name="stratagem",
+            name="directory",
         ),
         migrations.AddField(
-            model_name='stratagem',
-            name='params',
+            model_name="stratagem",
+            name="params",
             field=models.JSONField(default=dict),
         ),
     ]

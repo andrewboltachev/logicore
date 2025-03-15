@@ -6,23 +6,41 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0008_alter_stratagem_kind'),
+        ("main", "0008_alter_stratagem_kind"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CodeSearch',
+            name="CodeSearch",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=1024)),
-                ('kind', models.CharField(choices=[('PYTHONCODEFORMAT', 'Python (LibCST)'), ('JSONCODEFORMAT', 'WebDashboard1')], default=None, max_length=32)),
-                ('data', models.JSONField(default=dict)),
-                ('grammar', models.JSONField(default=dict)),
-                ('created_dt', models.DateTimeField(auto_now_add=True)),
-                ('modified_dt', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=1024)),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[
+                            ("PYTHONCODEFORMAT", "Python (LibCST)"),
+                            ("JSONCODEFORMAT", "WebDashboard1"),
+                        ],
+                        default=None,
+                        max_length=32,
+                    ),
+                ),
+                ("data", models.JSONField(default=dict)),
+                ("grammar", models.JSONField(default=dict)),
+                ("created_dt", models.DateTimeField(auto_now_add=True)),
+                ("modified_dt", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'ordering': ['-modified_dt'],
+                "ordering": ["-modified_dt"],
             },
         ),
     ]

@@ -10,25 +10,53 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('main', '0012_matcherfiddle'),
+        ("main", "0012_matcherfiddle"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Fiddle',
+            name="Fiddle",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('kind', models.CharField(choices=[('J_S_O_N_MATCHER', 'J S O N Matcher')], default=None, max_length=64)),
-                ('name', models.CharField(blank=True, default='', max_length=1024)),
-                ('uuid', models.UUIDField(default=uuid.uuid4)),
-                ('data', models.JSONField(default=dict)),
-                ('created_dt', models.DateTimeField(auto_now_add=True)),
-                ('modified_dt', models.DateTimeField(auto_now=True)),
-                ('session_id', models.CharField(blank=True, default=None, max_length=128, null=True)),
-                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[("J_S_O_N_MATCHER", "J S O N Matcher")],
+                        default=None,
+                        max_length=64,
+                    ),
+                ),
+                ("name", models.CharField(blank=True, default="", max_length=1024)),
+                ("uuid", models.UUIDField(default=uuid.uuid4)),
+                ("data", models.JSONField(default=dict)),
+                ("created_dt", models.DateTimeField(auto_now_add=True)),
+                ("modified_dt", models.DateTimeField(auto_now=True)),
+                (
+                    "session_id",
+                    models.CharField(
+                        blank=True, default=None, max_length=128, null=True
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-modified_dt'],
+                "ordering": ["-modified_dt"],
             },
         ),
     ]

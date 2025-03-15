@@ -1,21 +1,31 @@
 import copy
 from dataclasses import _is_dataclass_instance, fields
 
-dict_factory = lambda d: {f"{k}_param" if k == "type" else k: v for k, v in dict(d).items()}
+from libcst import Module, MetadataWrapper
 
-def serialize_dc(obj, *args, positions=None, path=None, **kwargs):
+from libcst.metadata import PositionProvider
+
+dict_factory = lambda d: {
+    f"{k}_param" if k == "type" else k: v for k, v in dict(d).items()
+}
+
+
+def serialize_dc(obj, *, positions=None, path=None, position_metadata=None, **kwargs):
+    if isinstance(obj, Module) and position_metadata is None:
+        position_metadata = MetadataWrapper(obj).resolve(PositionProvider)
     if path is None:
         path = []
     if positions is None:
         positions = {}
     from libcst import MaybeSentinel
+
     if _is_dataclass_instance(obj):
         result = []
         for f in fields(obj):
             value = serialize_dc(getattr(obj, f.name))
             result.append((f.name, value))
-        return {**dict_factory(result), 'type': obj.__class__.__name__}
-    elif isinstance(obj, tuple) and hasattr(obj, '_fields'):
+        return {**dict_factory(result), "type": obj.__class__.__name__}
+    elif isinstance(obj, tuple) and hasattr(obj, "_fields"):
         # obj is a namedtuple.  Recurse into it, but the returned
         # object is another namedtuple of the same type.  This is
         # similar to how other list- or tuple-derived classes are
@@ -40,12 +50,27 @@ def serialize_dc(obj, *args, positions=None, path=None, **kwargs):
         # Assume we can create an object of this type by passing in a
         # generator (which is not true for namedtuples, handled
         # above).
-        return type(obj)(serialize_dc(v, path=path + [i], positions=positions, **kwargs) for i, v in enumerate(obj))
+        return type(obj)(
+            serialize_dc(
+                v,
+                path=path + [i],
+                positions=positions,
+                position_metadata=position_metadata,
+                **kwargs,
+            )
+            for i, v in enumerate(obj)
+        )
     elif isinstance(obj, dict):
         return type(obj)(
             (
                 serialize_dc(k),
-                serialize_dc(v, path=path + [k], positions=positions, **kwargs),
+                serialize_dc(
+                    v,
+                    path=path + [k],
+                    positions=positions,
+                    position_metadata=position_metadata,
+                    **kwargs,
+                ),
             )
             for k, v in obj.items()
         )
@@ -54,25 +79,31 @@ def serialize_dc(obj, *args, positions=None, path=None, **kwargs):
     else:
         return copy.deepcopy(obj)
 
+
 def node_class(name):
     return getattr(__import__("libcst"), name)
 
 
 def unserialize_dc(s, k=None):
     from libcst import MaybeSentinel
+
     if s == "MaybeSentinel.DEFAULT":
         return MaybeSentinel.DEFAULT
     if type(s) == list:
         s = [unserialize_dc(x) for x in s]
-        if k in ['lpar', 'rpar']:
+        if k in ["lpar", "rpar"]:
             s = tuple(s)
         return s
     if type(s) == tuple:
         return tuple([unserialize_dc(x) for x in list(s)])
-    if type(s) != dict or not 'type' in s:
+    if type(s) != dict or not "type" in s:
         return s
-    args = {"type" if k == "type_param" else k: unserialize_dc(v, k) for k, v in s.items() if k != "type"}
-    klass = node_class(s['type'])
+    args = {
+        "type" if k == "type_param" else k: unserialize_dc(v, k)
+        for k, v in s.items()
+        if k != "type"
+    }
+    klass = node_class(s["type"])
     try:
         return klass(**args)
     except Exception as e:

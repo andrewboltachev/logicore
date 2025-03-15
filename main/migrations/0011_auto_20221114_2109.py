@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0010_auto_20221114_2108'),
+        ("main", "0010_auto_20221114_2108"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='codesearch',
-            name='data',
-            field=models.TextField(blank=True, default=''),
+            model_name="codesearch",
+            name="data",
+            field=models.TextField(blank=True, default=""),
         ),
         migrations.AddField(
-            model_name='codesearch',
-            name='grammar',
-            field=models.TextField(blank=True, default=''),
+            model_name="codesearch",
+            name="grammar",
+            field=models.TextField(blank=True, default=""),
         ),
     ]

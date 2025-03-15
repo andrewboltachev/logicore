@@ -15,7 +15,8 @@ class Command(BaseCommand):
             ids = [n["id"] for n in f.data["nodes"]]
             edges_before = len(f.data["edges"])
             f.data["edges"] = [
-                e for e in f.data["edges"] 
+                e
+                for e in f.data["edges"]
                 if (e["source"] in ids) and (e["target"] in ids)
             ]
             edges_after = len(f.data["edges"])

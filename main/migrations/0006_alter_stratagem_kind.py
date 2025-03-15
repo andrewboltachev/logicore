@@ -6,13 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0005_auto_20220612_1722'),
+        ("main", "0005_auto_20220612_1722"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='stratagem',
-            name='kind',
-            field=models.CharField(choices=[('CLOJUREGRAPH1', 'ClojureGraph1'), ('PYTHONREFACTORING1', 'PythonRefactoring1'), ('WEBPORTAL1', 'WebPortal1')], default='CLOJUREGRAPH1', max_length=32),
+            model_name="stratagem",
+            name="kind",
+            field=models.CharField(
+                choices=[
+                    ("CLOJUREGRAPH1", "ClojureGraph1"),
+                    ("PYTHONREFACTORING1", "PythonRefactoring1"),
+                    ("WEBPORTAL1", "WebPortal1"),
+                ],
+                default="CLOJUREGRAPH1",
+                max_length=32,
+            ),
         ),
     ]

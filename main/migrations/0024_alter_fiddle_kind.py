@@ -6,13 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0023_author_book'),
+        ("main", "0023_author_book"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='fiddle',
-            name='kind',
-            field=models.CharField(choices=[('JSON_MATCHER', 'JSON Matcher'), ('UI1', 'UI1'), ('PYTHON_MATCHER', 'Python Matcher'), ('LOGICORE1', 'Logicore1'), ('LOGICORE2', 'Logicore2')], default=None, max_length=64),
+            model_name="fiddle",
+            name="kind",
+            field=models.CharField(
+                choices=[
+                    ("JSON_MATCHER", "JSON Matcher"),
+                    ("UI1", "UI1"),
+                    ("PYTHON_MATCHER", "Python Matcher"),
+                    ("LOGICORE1", "Logicore1"),
+                    ("LOGICORE2", "Logicore2"),
+                ],
+                default=None,
+                max_length=64,
+            ),
         ),
     ]

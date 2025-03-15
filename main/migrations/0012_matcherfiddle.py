@@ -10,25 +10,46 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('main', '0011_auto_20221114_2109'),
+        ("main", "0011_auto_20221114_2109"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MatcherFiddle',
+            name="MatcherFiddle",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(blank=True, default='', max_length=1024)),
-                ('uuid', models.UUIDField(default=uuid.uuid4)),
-                ('data', models.TextField(blank=True, default='')),
-                ('grammar', models.TextField(blank=True, default='')),
-                ('created_dt', models.DateTimeField(auto_now_add=True)),
-                ('modified_dt', models.DateTimeField(auto_now=True)),
-                ('session_id', models.CharField(blank=True, default=None, max_length=128, null=True)),
-                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(blank=True, default="", max_length=1024)),
+                ("uuid", models.UUIDField(default=uuid.uuid4)),
+                ("data", models.TextField(blank=True, default="")),
+                ("grammar", models.TextField(blank=True, default="")),
+                ("created_dt", models.DateTimeField(auto_now_add=True)),
+                ("modified_dt", models.DateTimeField(auto_now=True)),
+                (
+                    "session_id",
+                    models.CharField(
+                        blank=True, default=None, max_length=128, null=True
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-modified_dt'],
+                "ordering": ["-modified_dt"],
             },
         ),
     ]

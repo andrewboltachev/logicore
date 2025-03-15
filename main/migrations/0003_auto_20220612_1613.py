@@ -6,17 +6,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0002_auto_20220530_1944'),
+        ("main", "0002_auto_20220530_1944"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='stratagem',
-            options={'ordering': ['-modified_dt']},
+            name="stratagem",
+            options={"ordering": ["-modified_dt"]},
         ),
         migrations.AddField(
-            model_name='stratagem',
-            name='kind',
-            field=models.CharField(choices=[('CLOJUREGRAPH1', 'ClojureGraph1'), ('PYTHONREFACTORING1', 'PythonRefactoring1')], default='CLOJUREGRAPH1', max_length=32),
+            model_name="stratagem",
+            name="kind",
+            field=models.CharField(
+                choices=[
+                    ("CLOJUREGRAPH1", "ClojureGraph1"),
+                    ("PYTHONREFACTORING1", "PythonRefactoring1"),
+                ],
+                default="CLOJUREGRAPH1",
+                max_length=32,
+            ),
         ),
     ]

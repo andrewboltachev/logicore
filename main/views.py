@@ -40,7 +40,11 @@ from django.db.models import (
     Avg,
 )
 from django.db.models.functions import Concat, JSONObject, Now, Cast, Coalesce
-from django.http import JsonResponse as JsonResponseOriginal, HttpResponse, HttpResponseNotFound
+from django.http import (
+    JsonResponse as JsonResponseOriginal,
+    HttpResponse,
+    HttpResponseNotFound,
+)
 import datetime as python_datetime
 from django.utils.timezone import datetime, now, timedelta
 from django.views import View
@@ -78,10 +82,14 @@ def react_static(request, path):
     if is_production:
         try:
             with open(
-                os.path.join(settings.PLNQ_APP_DIR.__str__(), "react", "build", "static", path),
+                os.path.join(
+                    settings.PLNQ_APP_DIR.__str__(), "react", "build", "static", path
+                ),
                 "rb",
             ) as f:
-                return HttpResponse(f.read(), content_type=mimetypes.guess_type(path)[0])
+                return HttpResponse(
+                    f.read(), content_type=mimetypes.guess_type(path)[0]
+                )
         except FileNotFoundError:
             return HttpResponseNotFound()
 
@@ -667,8 +675,7 @@ class PythonGrammarView(MainView):
     TEMPLATE = "TSView"
 
     def get_data(self, request, *args, **kwargs):
-        return {
-        }
+        return {}
 
 
 class CodeSearchsApiView(MainView):
@@ -1153,9 +1160,13 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
         items = list(
             qs.values("kind", "created_dt", "uuid", "rev")
             .annotate(
-                title=Coalesce("data__title", Value('"(no title)"'), output_field=CharField()),
-                owner=Coalesce("user__username", Value("Anonymous"), output_field=CharField()),
-                #Concat(
+                title=Coalesce(
+                    "data__title", Value('"(no title)"'), output_field=CharField()
+                ),
+                owner=Coalesce(
+                    "user__username", Value("Anonymous"), output_field=CharField()
+                ),
+                # Concat(
                 #    F("kind"),
                 #    Value(": "),
                 #    F("uuid"),
@@ -1164,12 +1175,15 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
                 #    Value(" - "),
                 #    F("created_dt"),
                 #    output_field=CharField(),
-                #)
+                # )
             )
             .order_by("-created_dt")
         )
         result = []
-        for uuid, items in groupby(sorted(items, key=lambda item: (item["uuid"], -item["rev"])), key=lambda item: item["uuid"]):
+        for uuid, items in groupby(
+            sorted(items, key=lambda item: (item["uuid"], -item["rev"])),
+            key=lambda item: item["uuid"],
+        ):
             items = list(items)
             for c in models.FiddleType.__subclasses__():
                 if c.as_choice_key() == items[0]["kind"]:
@@ -1181,10 +1195,15 @@ class MyFiddleListApiView(FiddleTypeMixin, MainView):
                 if item["rev"] > 1:
                     item["url"] += f"{item['rev']}/"
             item = items[0]
-            result.append({
-                **item,
-                "revs": [item for item in sorted(items[1:], key=lambda item: -item["rev"])],
-            })
+            result.append(
+                {
+                    **item,
+                    "revs": [
+                        item
+                        for item in sorted(items[1:], key=lambda item: -item["rev"])
+                    ],
+                }
+            )
         result = list(sorted(result, key=lambda item: item["created_dt"]))[::-1]
         return {"items": result}
 
@@ -1215,7 +1234,7 @@ class NewFiddleItemApiView(FiddleTypeMixin, MainView):
                     "template": "FiddleNotFound",
                 }
         return {
-            "owner": (obj.user.username if obj.user else 'Anonymous') if obj else None,
+            "owner": (obj.user.username if obj.user else "Anonymous") if obj else None,
             "kind": self.c.as_choice_key(),
             "uuid": uid,
             "rev": rev,
@@ -1445,6 +1464,7 @@ class Python01Explorer(MainView):
 def python_to_describe_result(request, *args, **kwargs):
     import libcst
     from main.parser.python import serialize_dc
+
     code = json.loads(request.body)["code"]
     module = libcst.parse_module(code)
     serialized = serialize_dc(module)
@@ -1457,7 +1477,9 @@ def python_to_describe_result(request, *args, **kwargs):
         return JsonResponse({"error": str(e)}, safe=False, status=400)
     else:
         if resp.status_code != 200:
-            return JsonResponse({"error": f"Status returned {resp.status_code}"}, safe=False, status=400)
+            return JsonResponse(
+                {"error": f"Status returned {resp.status_code}"}, safe=False, status=400
+            )
         else:
             return JsonResponse(resp.json(), safe=False)
 
@@ -1466,6 +1488,7 @@ def python_to_describe_result(request, *args, **kwargs):
 def python_to_match_result(request, *args, **kwargs):
     import libcst
     from main.parser.python import serialize_dc
+
     code = json.loads(request.body)["code"]
     module = libcst.parse_module(code)
     serialized = serialize_dc(module)
@@ -1478,13 +1501,17 @@ def python_to_match_result(request, *args, **kwargs):
         return JsonResponse({"error": str(e)}, safe=False, status=400)
     else:
         if resp.status_code != 200:
-            return JsonResponse({"error": f"Status returned {resp.status_code}"}, safe=False, status=400)
+            return JsonResponse(
+                {"error": f"Status returned {resp.status_code}"}, safe=False, status=400
+            )
         else:
             return JsonResponse({**resp.json(), "value": serialized}, safe=False)
+
 
 @csrf_exempt
 def python_node(request, *args, **kwargs):
     import libcst
     from main.parser.python import serialize_dc
+
     code = json.loads(request.body)["code"]
     module = libcst.parse_module(code)

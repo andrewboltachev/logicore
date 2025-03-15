@@ -103,7 +103,7 @@ def field_from_field(f, field, model):
             "label": f.verbose_name.capitalize(),
             "required": not f.blank,
             "validators": [],
-            "readonly": field.get('readonly'),
+            "readonly": field.get("readonly"),
         }
     if isinstance(f, db_models.ForeignKey):
         label_expr = field.get("label_expr", None) or F("name")
@@ -121,7 +121,9 @@ def field_from_field(f, field, model):
                             **{f"{optgroup}__pk": OuterRef("pk")}
                         )
                         .values(f"{optgroup}__pk")
-                        .values(s=ArrayAgg(JSONObject(value=F("id"), label=label_expr))),
+                        .values(
+                            s=ArrayAgg(JSONObject(value=F("id"), label=label_expr))
+                        ),
                         output_field=ArrayField(JSONField()),
                     )
                 ).values("options", label=F("name"))
@@ -141,7 +143,7 @@ def field_from_field(f, field, model):
             "options": options,
             "placeholder": field.get("placeholder", None),
             "validators": [],
-            "label_expr": field.get('label_expr', None)
+            "label_expr": field.get("label_expr", None),
         }
     if isinstance(f, db_models.ManyToManyField):
         options = None
@@ -294,7 +296,7 @@ def read_field(obj, v, getter=getattr, raw=False):
         label_expr = v.get("label_expr") or F("name")
         if not v.get("is_m2m"):
             if v.get("is_choices"):
-                #print("default is", v["default"], v["options"])
+                # print("default is", v["default"], v["options"])
                 return [
                     *[
                         option
@@ -317,8 +319,10 @@ def read_field(obj, v, getter=getattr, raw=False):
             }
         else:
             return [
-                {"value": subObj['pk'], "label": subObj['label_a23r238r23r8']}
-                for subObj in getter(obj, v["k"]).values('pk', label_a23r238r23r8=label_expr)
+                {"value": subObj["pk"], "label": subObj["label_a23r238r23r8"]}
+                for subObj in getter(obj, v["k"]).values(
+                    "pk", label_a23r238r23r8=label_expr
+                )
             ]
     elif v["type"] == "BooleanField":
         return getter(obj, v["k"]) or False
@@ -346,9 +350,9 @@ def read_field(obj, v, getter=getattr, raw=False):
                 else None
             )
         )
-    elif v["type"] == "DefinedField" and not v.get('simple_defined_field'):
+    elif v["type"] == "DefinedField" and not v.get("simple_defined_field"):
         try:
-            current = v['definitions'][getattr(obj, v['master_field']).pk]
+            current = v["definitions"][getattr(obj, v["master_field"]).pk]
         except:
             pass
         else:
@@ -442,15 +446,18 @@ def read_field_into_qs(obj, v):
     qs_k = v.get("qs_k", v["k"])
     if v["type"] == "SelectField":
         if v.get("is_choices"):
-            if not v.get('is_expressions'):
+            if not v.get("is_expressions"):
                 value = [x for x in (getter(obj, v["k"]) or "").split(",") if x]
                 if value:
                     return {f"{qs_k}__in": value}
-                elif v.get('only_in_default'):
-                    return {f"{qs_k}__in": v.get('only_in_default')}
+                elif v.get("only_in_default"):
+                    return {f"{qs_k}__in": v.get("only_in_default")}
             else:
-                value = [*[x for x in (getter(obj, v["k"]) or "").split(",") if x], None][0]
-                return v['expressions'].get(value, {})
+                value = [
+                    *[x for x in (getter(obj, v["k"]) or "").split(",") if x],
+                    None,
+                ][0]
+                return v["expressions"].get(value, {})
         elif v["multiple"]:
             value = [int(x) for x in (getter(obj, v["k"]) or "").split(",") if x]
             if value:
@@ -516,7 +523,7 @@ def write_fields(fields, obj, data, files=None):
     def assign_field(obj, v, path2=None, setter=setattr):
         if isinstance(v, defaultdict):
             return  # XXX fix
-        if v.get('readonly'):
+        if v.get("readonly"):
             return
         json_collection_k = v.get("json_collection")
         if v.get("json_collection"):
@@ -562,9 +569,9 @@ def write_fields(fields, obj, data, files=None):
             setter(obj, v["k"], Decimal(str(val or 0)))
         elif v["type"] == "DateField":
             setter(obj, v["k"], datetime.strptime(val, "%d.%m.%Y") if val else None)
-        elif v["type"] == "DefinedField" and not v.get('simple_defined_field'):
+        elif v["type"] == "DefinedField" and not v.get("simple_defined_field"):
             try:
-                current = v['definitions'][parent_val[v['master_field']]['value']]
+                current = v["definitions"][parent_val[v["master_field"]]["value"]]
             except:
                 pass
             else:
@@ -614,7 +621,7 @@ def write_fields(fields, obj, data, files=None):
                 manager.add(doc)
             # m2m_field.related_model
         # print(obj, obj.__dict__)
-        print('items', items)
+        print("items", items)
         for k, v in items.items():
             # if not isinstance(v, dict) or not 'type' in v:
             #    continue
@@ -671,10 +678,7 @@ class StatusOptions:
 
     @classmethod
     def get_options(cls, *args, **kwargs):
-        return [
-            {"value": k, "label": v}
-            for (k, v) in cls.get_choices(*args, **kwargs)
-        ]
+        return [{"value": k, "label": v} for (k, v) in cls.get_choices(*args, **kwargs)]
 
     @classmethod
     def get_args(cls):
@@ -687,7 +691,7 @@ class StatusOptions:
                 return c
         else:
             # XXX shouldn't happen
-            return type('StatusOptionPlaceholder', (object,), {"name": "<нет>"})
+            return type("StatusOptionPlaceholder", (object,), {"name": "<нет>"})
 
     @classmethod
     def get_field(cls, verbose_name=None):

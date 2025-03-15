@@ -7,19 +7,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0001_initial'),
+        ("main", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='stratagem',
-            name='created_dt',
-            field=models.DateTimeField(auto_now_add=True, default=datetime.datetime(2022, 5, 30, 19, 44, 30, 784213)),
+            model_name="stratagem",
+            name="created_dt",
+            field=models.DateTimeField(
+                auto_now_add=True,
+                default=datetime.datetime(2022, 5, 30, 19, 44, 30, 784213),
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='stratagem',
-            name='modified_dt',
+            model_name="stratagem",
+            name="modified_dt",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

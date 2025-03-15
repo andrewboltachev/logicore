@@ -13,12 +13,12 @@ register = template.Library()
 @register.simple_tag(takes_context=True)
 def include_react_head(context):
     if not settings.FRONTEND_DEV_MODE:
-        return ''
+        return ""
     return SafeString(" ".join(context["_REACT_SCRIPTS"].scripts[:3]))
 
 
 @register.simple_tag(takes_context=True)
 def include_react_body(context):
     if not settings.FRONTEND_DEV_MODE:
-        return ''
+        return ""
     return SafeString(" ".join(context["_REACT_SCRIPTS"].scripts[3:]))
