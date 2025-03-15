@@ -1492,7 +1492,7 @@ def python_to_match_result(request, *args, **kwargs):
     code = json.loads(request.body)["code"]
     module = libcst.parse_module(code)
     positions = {}
-    serialized = serialize_dc(module, positions)
+    serialized = serialize_dc(module, positions=positions)
     try:
         resp = requests.post(
             "http://localhost:3042/valueToExactGrammar",
