@@ -1481,3 +1481,10 @@ def python_to_match_result(request, *args, **kwargs):
             return JsonResponse({"error": f"Status returned {resp.status_code}"}, safe=False, status=400)
         else:
             return JsonResponse({**resp.json(), "value": serialized}, safe=False)
+
+@csrf_exempt
+def python_node(request, *args, **kwargs):
+    import libcst
+    from main.parser.python import serialize_dc
+    code = json.loads(request.body)["code"]
+    module = libcst.parse_module(code)

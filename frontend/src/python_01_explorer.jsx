@@ -4,7 +4,7 @@ import React, { useContext, useState, useEffect, useRef, useCallback, forwardRef
 import { getByPath, setByPath } from './logicore-forms'
 import { ModalContext } from './runModal'
 import _ from 'lodash'
-import { useLocalStorage } from '@uidotdev/usehooks'
+import { useThrottle, useLocalStorage } from '@uidotdev/usehooks'
 
 import hljs from 'highlight.js/lib/core'
 import python from 'highlight.js/lib/languages/python'
@@ -38,6 +38,19 @@ const CodeDisplay = ({ code }) => {
 
   const codeRef = useRef(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
+  const delayedPosition = useThrottle(position, 500)
+  useEffect(() => {
+    (async () => {
+      const resp = await axios.post(
+        '/python-node/',
+        {
+          code
+        }
+      );
+      console.log(resp.data.value)
+      //setTree(resp.data.value)
+    })()
+  }, [delayedPosition, code])
   const lines = useMemo(() => {
     return code.split('\n').map((s) => s.length + 1)
   }, [code])
@@ -66,10 +79,7 @@ const CodeDisplay = ({ code }) => {
   }, [code])
   if (!highlighted) {
     return (
-      <>
-        <pre>{JSON.stringify([codeRef?.current?.selectionEnd, position])}</pre>
-        <div className='form-control flex-grow-1' style={{ flex: 1, position: 'relative', overflow: 'auto' }} />
-      </>
+      <div className='form-control flex-grow-1' style={{ flex: 1, position: 'relative', overflow: 'auto' }} />
     )
   }
   return (

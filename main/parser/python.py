@@ -2,12 +2,17 @@ import copy
 from dataclasses import _is_dataclass_instance, fields
 
 dict_factory = lambda d: {f"{k}_param" if k == "type" else k: v for k, v in dict(d).items()}
-def serialize_dc(obj, *args):
+
+def serialize_dc(obj, *args, positions=None, path=None, **kwargs):
+    if path is None:
+        path = []
+    if positions is None:
+        positions = {}
     from libcst import MaybeSentinel
     if _is_dataclass_instance(obj):
         result = []
         for f in fields(obj):
-            value = serialize_dc(getattr(obj, f.name), dict_factory)
+            value = serialize_dc(getattr(obj, f.name))
             result.append((f.name, value))
         return {**dict_factory(result), 'type': obj.__class__.__name__}
     elif isinstance(obj, tuple) and hasattr(obj, '_fields'):
@@ -30,16 +35,20 @@ def serialize_dc(obj, *args):
         #   namedtuples, we could no longer call asdict() on a data
         #   structure where a namedtuple was used as a dict key.
 
-        return type(obj)(*[serialize_dc(v, dict_factory) for v in obj])
+        return type(obj)(*[serialize_dc(v) for v in obj])
     elif isinstance(obj, (list, tuple)):
         # Assume we can create an object of this type by passing in a
         # generator (which is not true for namedtuples, handled
         # above).
-        return type(obj)(serialize_dc(v, dict_factory) for v in obj)
+        return type(obj)(serialize_dc(v, path=path + [i], positions=positions, **kwargs) for i, v in enumerate(obj))
     elif isinstance(obj, dict):
-        return type(obj)((serialize_dc(k, dict_factory),
-                        serialize_dc(v, dict_factory))
-                        for k, v in obj.items())
+        return type(obj)(
+            (
+                serialize_dc(k),
+                serialize_dc(v, path=path + [k], positions=positions, **kwargs),
+            )
+            for k, v in obj.items()
+        )
     elif obj == MaybeSentinel.DEFAULT:
         return "MaybeSentinel.DEFAULT"
     else:
