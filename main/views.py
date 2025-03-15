@@ -1491,7 +1491,8 @@ def python_to_match_result(request, *args, **kwargs):
 
     code = json.loads(request.body)["code"]
     module = libcst.parse_module(code)
-    serialized = serialize_dc(module)
+    positions = {}
+    serialized = serialize_dc(module, positions)
     try:
         resp = requests.post(
             "http://localhost:3042/valueToExactGrammar",
@@ -1505,13 +1506,6 @@ def python_to_match_result(request, *args, **kwargs):
                 {"error": f"Status returned {resp.status_code}"}, safe=False, status=400
             )
         else:
-            return JsonResponse({**resp.json(), "value": serialized}, safe=False)
-
-
-@csrf_exempt
-def python_node(request, *args, **kwargs):
-    import libcst
-    from main.parser.python import serialize_dc
-
-    code = json.loads(request.body)["code"]
-    module = libcst.parse_module(code)
+            return JsonResponse(
+                {**resp.json(), "value": serialized, "positions": positions}, safe=False
+            )

@@ -25,7 +25,9 @@ def hello():
         module = libcst.parse_module(code)
         positions = {}
         serialized = serialize_dc(module, positions=positions)
-        #print(serialized)
+        # print(serialized)
         print(positions)
-        import ipdb; ipdb.set_trace() # BREAKPOINT
+        import ipdb
+
+        ipdb.set_trace()  # BREAKPOINT
         self.stdout.write(self.style.SUCCESS("Hello world"))

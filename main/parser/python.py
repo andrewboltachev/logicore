@@ -14,12 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 def serialize_dc(obj, *, positions=None, path=None, position_metadata=None, **kwargs):
-    #print(f"Received {path}")
-    #print(f"Received {position_metadata}")
-    #print(f"Received {positions}")
+    # print(f"Received {path}")
+    # print(f"Received {position_metadata}")
+    # print(f"Received {positions}")
     if positions is not None and position_metadata is None and isinstance(obj, Module):
-        position_metadata = MetadataWrapper(obj, unsafe_skip_copy=True).resolve(PositionProvider)
-        #import ipdb; ipdb.set_trace()
+        position_metadata = MetadataWrapper(obj, unsafe_skip_copy=True).resolve(
+            PositionProvider
+        )
+        # import ipdb; ipdb.set_trace()
     if path is None:
         path = []
     from libcst import MaybeSentinel
@@ -39,14 +41,14 @@ def serialize_dc(obj, *, positions=None, path=None, position_metadata=None, **kw
             "type": obj.__class__.__name__,
         }
         if positions is not None:
-            #print(f"Position for {'.'.join(map(str, path))}: {position_metadata[obj]}")
+            # print(f"Position for {'.'.join(map(str, path))}: {position_metadata[obj]}")
             positions[".".join(map(str, path))] = serialize_dc(position_metadata[obj])
-            #result.update(
+            # result.update(
             #    {
             #        "_path": path,
             #        "_position": position_metadata[obj] if position_metadata else None,
             #    }
-            #)
+            # )
         return result
     elif isinstance(obj, tuple) and hasattr(obj, "_fields"):
         # obj is a namedtuple.  Recurse into it, but the returned
