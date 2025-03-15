@@ -1,3 +1,4 @@
+import logging
 import copy
 from dataclasses import _is_dataclass_instance, fields
 
@@ -9,22 +10,44 @@ dict_factory = lambda d: {
     f"{k}_param" if k == "type" else k: v for k, v in dict(d).items()
 }
 
+logger = logging.getLogger(__name__)
+
 
 def serialize_dc(obj, *, positions=None, path=None, position_metadata=None, **kwargs):
-    if isinstance(obj, Module) and position_metadata is None:
-        position_metadata = MetadataWrapper(obj).resolve(PositionProvider)
+    print(f"Received {path}")
+    print(f"Received {position_metadata}")
+    print(f"Received {positions}")
+    if positions is not None and position_metadata is None and isinstance(obj, Module):
+        position_metadata = MetadataWrapper(obj, unsafe_skip_copy=True).resolve(PositionProvider)
+        #import ipdb; ipdb.set_trace()
     if path is None:
         path = []
-    if positions is None:
-        positions = {}
     from libcst import MaybeSentinel
 
     if _is_dataclass_instance(obj):
         result = []
         for f in fields(obj):
-            value = serialize_dc(getattr(obj, f.name))
+            value = serialize_dc(
+                getattr(obj, f.name),
+                path=path + [f.name],
+                positions=positions,
+                position_metadata=position_metadata,
+            )
             result.append((f.name, value))
-        return {**dict_factory(result), "type": obj.__class__.__name__}
+        result = {
+            **dict_factory(result),
+            "type": obj.__class__.__name__,
+        }
+        if positions is not None:
+            print(f"Position for {'.'.join(map(str, path))}: {position_metadata[obj]}")
+            positions[".".join(map(str, path))] = position_metadata[obj]
+            #result.update(
+            #    {
+            #        "_path": path,
+            #        "_position": position_metadata[obj] if position_metadata else None,
+            #    }
+            #)
+        return result
     elif isinstance(obj, tuple) and hasattr(obj, "_fields"):
         # obj is a namedtuple.  Recurse into it, but the returned
         # object is another namedtuple of the same type.  This is
@@ -44,8 +67,8 @@ def serialize_dc(obj, *, positions=None, path=None, position_metadata=None, **kw
         #   dict.  Note that if we returned dicts here instead of
         #   namedtuples, we could no longer call asdict() on a data
         #   structure where a namedtuple was used as a dict key.
-
-        return type(obj)(*[serialize_dc(v) for v in obj])
+        assert False, "Should not have NamedTuple"
+        # return type(obj)(*[serialize_dc(v) for v in obj])
     elif isinstance(obj, (list, tuple)):
         # Assume we can create an object of this type by passing in a
         # generator (which is not true for namedtuples, handled

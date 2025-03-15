@@ -23,6 +23,8 @@ class Command(BaseCommand):
 def hello():
     print("Hello world")"""
         module = libcst.parse_module(code)
-        serialized = serialize_dc(module)
-        print(serialized)
+        positions = {}
+        serialized = serialize_dc(module, positions=positions)
+        #print(serialized)
+        print(positions)
         self.stdout.write(self.style.SUCCESS("Hello world"))
