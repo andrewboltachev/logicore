@@ -43,7 +43,9 @@ def serialize_dc(obj, *, positions=None, path=None, position_metadata=None, **kw
         if positions is not None:
             # print(f"Position for {'.'.join(map(str, path))}: {position_metadata[obj]}")
             if obj in position_metadata:
-                positions[".".join(map(str, path))] = serialize_dc(position_metadata[obj])
+                positions[".".join(map(str, path))] = serialize_dc(
+                    position_metadata[obj]
+                )
             else:
                 logger.warning(f"obj not found in position_metadata: {obj}")
             # result.update(

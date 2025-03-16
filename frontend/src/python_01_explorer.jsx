@@ -33,24 +33,15 @@ function mouseDownHandler (
 
 }
 
-const CodeDisplay = ({ code }) => {
+const CodeDisplay = ({ code, onPositionChange }) => {
   const [highlighted, setHighlighted] = useState('')
 
   const codeRef = useRef(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const delayedPosition = useThrottle(position, 500)
   useEffect(() => {
-    (async () => {
-      const resp = await axios.post(
-        '/python-node/',
-        {
-          code
-        }
-      );
-      console.log(resp.data.value)
-      //setTree(resp.data.value)
-    })()
-  }, [delayedPosition, code])
+    onPositionChange(delayedPosition)
+  }, [delayedPosition, code, onPositionChange])
   const lines = useMemo(() => {
     return code.split('\n').map((s) => s.length + 1)
   }, [code])
@@ -222,8 +213,16 @@ const Python01Explorer = () => {
   const [code, setCode] = useLocalStorage('PYTHON_01_EXPLORER_CODE', '')
   // Производные
   const [tree, setTree] = useState(null)
+  const [positions, setPositions] = useState(null)
   const [expanded, setExpanded] = useState({})
   const [selected, setSelected] = useState(null)
+
+  const onPositionChange = useCallback((newPosition) => {
+    if (!positions) return
+    Object.entries(positions).forEach(([k, v]) => {
+      // ...
+    })
+  }, [positions]);
 
   useEffect(() => {
     (async () => {
@@ -234,6 +233,7 @@ const Python01Explorer = () => {
         }
       );
       setTree(resp.data.value)
+      setPositions(resp.data.positions)
     })()
   }, [code])
 
@@ -295,7 +295,7 @@ const Python01Explorer = () => {
               </button>
             </h5>
           </div>
-          <CodeDisplay code={code} />
+          <CodeDisplay code={code} onPositionChange={onPositionChange} />
         </div>
       </div>
     </div>

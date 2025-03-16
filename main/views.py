@@ -1,3 +1,4 @@
+import typing as ty
 import mimetypes
 import os
 import glob
@@ -1493,6 +1494,37 @@ def python_to_match_result(request, *args, **kwargs):
     module = libcst.parse_module(code)
     positions = {}
     serialized = serialize_dc(module, positions=positions)
+    positions_reversed = defaultdict(dict)
+    positions_data = sorted(
+        positions.items(),
+        key=lambda x: (
+            x[1]["start"]["line"],
+            x[1]["start"]["column"],
+            x[1]["end"]["line"],
+            x[1]["end"]["column"],
+        ),
+    )
+
+    def coordinate_is_inside_position(
+        position: ty.Dict[str, ty.Dict[str, int]], line: int, column: int
+    ):
+        if line == position["start"]["line"]:
+            return column >= position["start"]["column"]
+        elif line == position["end"]["line"]:
+            return column <= position["end"]["column"]
+        elif position["start"]["line"] < line < position["end"]["line"]:
+            return True
+        else:
+            return False
+
+    for line, chars in enumerate(code.splitlines()):
+        line += 1
+        for column in range(len(chars)):
+            column += 1
+            for path, position in positions_data:
+                if coordinate_is_inside_position(position, line, column):
+                    positions_reversed[line][column] = path
+
     try:
         resp = requests.post(
             "http://localhost:3042/valueToExactGrammar",
@@ -1507,5 +1539,11 @@ def python_to_match_result(request, *args, **kwargs):
             )
         else:
             return JsonResponse(
-                {**resp.json(), "value": serialized, "positions": positions}, safe=False
+                {
+                    **resp.json(),
+                    "value": serialized,
+                    "positions": positions,
+                    "positions_reversed": positions_reversed,
+                },
+                safe=False,
             )
