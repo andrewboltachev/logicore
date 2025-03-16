@@ -225,7 +225,11 @@ const Python01Explorer = () => {
     // console.log('try onPositionChange', {positions, reversedPositions, newPosition})
     if (!positions) return
     if (!reversedPositions) return
-    const newPath = reversedPositions[newPosition.y + 1][newPosition.x + 1]
+    const newPath = (reversedPositions[newPosition.y + 1] || {})[newPosition.x + 1]
+    if (!newPath) {
+      setExpanded(null)
+      setSelected(null)
+    }
     const items = {}
     let current = ""
     const newExpanded = {"": true}
@@ -234,6 +238,7 @@ const Python01Explorer = () => {
       newExpanded[current] = true
     }
     setExpanded(newExpanded)
+    setSelected(newPath)
   }, [positions, reversedPositions]);
 
   useEffect(() => {
