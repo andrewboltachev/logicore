@@ -1491,9 +1491,14 @@ def python_to_match_result(request, *args, **kwargs):
     from main.parser.python import serialize_dc
 
     code = json.loads(request.body)["code"]
+    code = code.replace("\r\n", "\n").replace("\r", "\n")
     module = libcst.parse_module(code)
     positions = {}
     serialized = serialize_dc(module, positions=positions)
+    for path, pos in positions.items():
+        # Make all (line and column) 0-based
+        pos["start"]["line"] -= 1
+        pos["end"]["line"] -= 1
     positions_reversed = defaultdict(dict)
     positions_data = sorted(
         positions.items(),
@@ -1518,9 +1523,7 @@ def python_to_match_result(request, *args, **kwargs):
             return False
 
     for line, chars in enumerate(code.splitlines()):
-        line += 1
-        for column in range(len(chars)):
-            column += 1
+        for column in range(len(chars) + 1):  # вместе с \n
             for path, position in positions_data:
                 if path == "":
                     continue

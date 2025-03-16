@@ -33,7 +33,7 @@ function mouseDownHandler (
 
 }
 
-const CodeDisplay = ({ code, onPositionChange }) => {
+const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => {
   const [highlighted, setHighlighted] = useState('')
 
   const codeRef = useRef(null)
@@ -44,7 +44,7 @@ const CodeDisplay = ({ code, onPositionChange }) => {
     onPositionChange(delayedPosition)
   }, [delayedPosition, code, onPositionChange])
   const lines = useMemo(() => {
-    return code.split('\n').map((s) => s.length + 1)
+    return code.split('\n').map((s) => s.length + 1) // вместе с переносом
   }, [code])
   const handleMovement = useCallback(() => {
     if (!lines) return
@@ -75,6 +75,8 @@ const CodeDisplay = ({ code, onPositionChange }) => {
   }
   return (
     <>
+      <pre>{JSON.stringify(selected)}</pre>
+      <pre>{JSON.stringify(selectedPosition)}</pre>
       <pre>{JSON.stringify([codeRef?.current?.selectionEnd, position])}</pre>
       <div className='form-control flex-grow-1' style={{ flex: 1, position: 'relative', overflow: 'auto' }}>
         <div style={{ position: 'absolute', top: 0, left: 0 }}>
@@ -169,6 +171,30 @@ const CodeDisplay = ({ code, onPositionChange }) => {
               userSelect: 'none'
             }}
           />
+          {!!selectedPosition && _.range(selectedPosition.start.line, selectedPosition.end.line + 1).map((lineIndex) => {
+            // lineIndex -> 0-based
+            let startPos = 0;
+            let endPos = lines[lineIndex]
+            if (lineIndex === selectedPosition.start.line) {
+              startPos = selectedPosition.start.column
+            }
+            if (lineIndex === selectedPosition.end.line) {
+              endPos = selectedPosition.end.column
+            }
+            // console.log(`wow: ${lineIndex} ${startPos} ${endPos}`)
+            return <div key={lineIndex} style={{
+              position: 'absolute',
+              top: 6 + 24 * lineIndex,
+              left: 12 - 1 + 9.602 * startPos,
+              width: 9.602 * (endPos - startPos),
+              height: 24,
+              backgroundColor: 'yellow',
+              opacity: 0.2,
+              zIndex: 9998,
+              pointerEvents: 'none',
+              userSelect: 'none'
+            }}></div>;
+          })}
         </div>
       </div>
     </>
@@ -225,7 +251,7 @@ const Python01Explorer = () => {
     // console.log('try onPositionChange', {positions, reversedPositions, newPosition})
     if (!positions) return
     if (!reversedPositions) return
-    const newPath = (reversedPositions[newPosition.y + 1] || {})[newPosition.x + 1]
+    const newPath = (reversedPositions[newPosition.y] || {})[newPosition.x]
     if (!newPath) {
       setExpanded({})
       setSelected(null)
@@ -311,7 +337,7 @@ const Python01Explorer = () => {
                       }
                     })
                     if (result) {
-                      setCode(result.val)
+                      setCode(result.val.replaceAll('\r\n', '\n'.replaceAll('\r', '\n')))
                     }
                   })()
                 }}
@@ -320,7 +346,7 @@ const Python01Explorer = () => {
               </button>
             </h5>
           </div>
-          <CodeDisplay code={code} onPositionChange={onPositionChange} />
+          <CodeDisplay code={code} onPositionChange={onPositionChange} selectedPosition={positions?.[selected]} selected={selected} />
         </div>
       </div>
     </div>

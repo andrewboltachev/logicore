@@ -21,7 +21,6 @@ def serialize_dc(obj, *, positions=None, path=None, position_metadata=None, **kw
         position_metadata = MetadataWrapper(obj, unsafe_skip_copy=True).resolve(
             PositionProvider
         )
-        # import ipdb; ipdb.set_trace()
     if path is None:
         path = []
     from libcst import MaybeSentinel
