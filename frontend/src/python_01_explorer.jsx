@@ -227,8 +227,9 @@ const Python01Explorer = () => {
     if (!reversedPositions) return
     const newPath = (reversedPositions[newPosition.y + 1] || {})[newPosition.x + 1]
     if (!newPath) {
-      setExpanded(null)
+      setExpanded({})
       setSelected(null)
+      return
     }
     const items = {}
     let current = ""
@@ -242,6 +243,12 @@ const Python01Explorer = () => {
   }, [positions, reversedPositions]);
 
   useEffect(() => {
+    setTree(null)
+    setPositions(null)
+    setReversedPositions(null)
+    setExpanded({})
+    setSelected(null);
+
     (async () => {
       const resp = await axios.post(
         '/python-to-match-result/',
@@ -264,8 +271,8 @@ const Python01Explorer = () => {
           <h5>
             Grammar (Pseudo-Python)!{' '}
           </h5>
-          <code>
-            {tree ? selected : null}
+          <code style={{whiteSpace: 'normal'}}>
+            {selected ? selected.split('.').join(' ') : null}
             {(selected === '') && '(root)'}
             {selected === null && '(not selected)'}
           </code>
