@@ -38,8 +38,9 @@ const CodeDisplay = ({ code, onPositionChange }) => {
 
   const codeRef = useRef(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
-  const delayedPosition = useThrottle(position, 500)
+  const delayedPosition = useThrottle(position, 100)
   useEffect(() => {
+    console.log(`onPositionChange: ${JSON.stringify(delayedPosition)}`)
     onPositionChange(delayedPosition)
   }, [delayedPosition, code, onPositionChange])
   const lines = useMemo(() => {
@@ -61,8 +62,7 @@ const CodeDisplay = ({ code, onPositionChange }) => {
     }
   }, [lines])
   const handleKeydownWithinTextArea = useCallback((e) => {
-    //
-    handleMovement()
+    if (["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"].includes(e.code)) handleMovement()
   }, [handleMovement])
   useEffect(() => {
     const highlighted = hljs.highlight(code, { language: 'python' })
@@ -187,7 +187,10 @@ const Node = ({value, level= 0, path = null, expanded, setExpanded, selected, se
     // array
     if (!value.length) return '[]';
     return <>
-      {value.map((child, index) => <div style={{background: isSelected ? 'lightyellow' : 'transparent'}} onClick={toggleSelected} key={index}>{_.repeat(' ', level)}- <Node value={child} path={`${path}.${index}`} level={level + 1} expanded={expanded} setExpanded={setExpanded} selected={selected} setSelected={setSelected} /></div>)}
+      {value.map((child, index) => <div
+        style={{background: isSelected ? 'lightyellow' : 'transparent'}}
+        onClick={toggleSelected}
+        key={index}>{_.repeat(' ', level)}- <Node value={child} path={`${path}${path.length ? '.' : ''}${index}`} level={level + 1} expanded={expanded} setExpanded={setExpanded} selected={selected} setSelected={setSelected} /></div>)}
     </>;
   } else if (value === null || typeof value === 'boolean' || typeof value === 'string' || typeof value === 'number') {
     //
@@ -203,7 +206,7 @@ const Node = ({value, level= 0, path = null, expanded, setExpanded, selected, se
         e.preventDefault();
         setExpanded(update(expanded, {$toggle: [path]}));
       }}>{isExpanded ? <>&#9660;</> : <>&#9654;</>} {value.type}</a></div>
-      {isExpanded && Object.entries(vvalue).map(([k, v]) => <div style={{background: isSelected ? 'lightyellow' : 'transparent'}} onClick={toggleSelected} key={k}>{_.repeat(' ', level)}<strong>{k}</strong>: <Node value={v} path={`${path}.${k}`} level={level + 1} expanded={expanded} setExpanded={setExpanded} selected={selected} setSelected={setSelected} /></div>)}
+      {isExpanded && Object.entries(vvalue).map(([k, v]) => <div style={{background: isSelected ? 'lightyellow' : 'transparent'}} onClick={toggleSelected} key={k}>{_.repeat(' ', level)}<strong>{k}</strong>: <Node value={v} path={`${path}${path.length ? '.' : ''}${k}`} level={level + 1} expanded={expanded} setExpanded={setExpanded} selected={selected} setSelected={setSelected} /></div>)}
     </>;
   }
 }
@@ -214,15 +217,24 @@ const Python01Explorer = () => {
   // Производные
   const [tree, setTree] = useState(null)
   const [positions, setPositions] = useState(null)
+  const [reversedPositions, setReversedPositions] = useState(null)
   const [expanded, setExpanded] = useState({})
   const [selected, setSelected] = useState(null)
 
   const onPositionChange = useCallback((newPosition) => {
+    // console.log('try onPositionChange', {positions, reversedPositions, newPosition})
     if (!positions) return
-    Object.entries(positions).forEach(([k, v]) => {
-      // ...
-    })
-  }, [positions]);
+    if (!reversedPositions) return
+    const newPath = reversedPositions[newPosition.y + 1][newPosition.x + 1]
+    const items = {}
+    let current = ""
+    const newExpanded = {"": true}
+    for (const chunk of newPath.split('.')) {
+      current += (current.length ? "." : "") + chunk
+      newExpanded[current] = true
+    }
+    setExpanded(newExpanded)
+  }, [positions, reversedPositions]);
 
   useEffect(() => {
     (async () => {
@@ -234,6 +246,7 @@ const Python01Explorer = () => {
       );
       setTree(resp.data.value)
       setPositions(resp.data.positions)
+      setReversedPositions(resp.data.positions_reversed)
     })()
   }, [code])
 

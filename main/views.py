@@ -1522,6 +1522,8 @@ def python_to_match_result(request, *args, **kwargs):
         for column in range(len(chars)):
             column += 1
             for path, position in positions_data:
+                if path == "":
+                    continue
                 if coordinate_is_inside_position(position, line, column):
                     positions_reversed[line][column] = path
 
