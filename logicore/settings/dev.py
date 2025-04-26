@@ -15,3 +15,5 @@ DATABASES = {
         "PORT": "5438",
     }
 }
+
+INSTALLED_APPS += ["django_extensions"]
