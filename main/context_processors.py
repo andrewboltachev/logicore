@@ -27,3 +27,4 @@ def react(request):
             "FRONTEND_DEV_MODE": True,
             "_REACT_SCRIPTS": ReactScripts(),
         }
+    return {}
