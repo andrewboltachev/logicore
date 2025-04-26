@@ -1465,15 +1465,15 @@ class MatchNodeFunctionality extends NodeFunctionality {
         case 'SourceNode': {
           source = node
           break outer
-        };
+        }
         case 'MatchNode': {
           [result, error] = wrapNode({ node, result, edgeLabel: edge.label, nodes, edges })
-          break
-        };
+          break;
+        }
         case 'ContextFreeNode': {
           [result, error] = wrapNode({ node, result, edgeLabel: edge.label, nodes, edges })
           break
-        };
+        }
         default: {
           error = `Unknown node type found: ${node.type}`
           break outer
@@ -1731,7 +1731,7 @@ function Flow ({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       },
       edges
     ))
-  }, [setEdges])
+  }, [setEdges, edges, nodes, t])
 
   const onNodesChange = (changes) => onChange(update(value, { nodes: { $apply: (v) => applyNodeChanges(changes, v) } }))
   const onEdgesChange = (changes) => onChange(update(value, { edges: { $apply: (v) => applyEdgeChanges(changes, v) } }))
@@ -1772,7 +1772,7 @@ function Flow ({ storageKey, prevStorageKey, value, onChange, saveButton }) {
       }
     }
     if (v) initialized.setViewport(v)
-  }, [storageKey, initialized])
+  }, [storageKey, initialized, prevStorageKey])
 
   useOnViewportChange({
     onChange: ({ x, y, zoom }) => window.localStorage.setItem(storageKey, JSON.stringify({ x, y, zoom }))
@@ -1791,19 +1791,22 @@ function Flow ({ storageKey, prevStorageKey, value, onChange, saveButton }) {
         .filter((o) => _.includes(newNodesIds, o.source))
         .filter((o) => _.includes(newNodesIds, o.target))
     )
-  }, [deletePressed, nodes, edges])
+  }, [deletePressed, nodes, edges, selectedEdges, selectedNodes, setEdges, setNodes])
+
+  const onSelectionChange = useCallback(({ nodes, edges }) => {
+    setSelectedNodes(nodes);
+    setSelectedEdges(edges);
+  }, []);
 
   useOnSelectionChange({
-    onChange: ({ nodes, edges }) => {
-      setSelectedNodes(nodes)
-      setSelectedEdges(edges)
-    }
-  })
+    onChange: onSelectionChange,
+  });
+
   const lastSelectedThing = selectedNodes.length
     ? { type: 'Node', value: selectedNodes[selectedNodes.length - 1] }
     : (
         selectedEdges.length ? { type: 'Edge', value: selectedEdges[selectedEdges.length - 1] } : null
-      )
+      );
   const { LastSelectedThingComponent, lastSelectedComponentProps } = useMemo(
     () => {
       if (!lastSelectedThing) return {}
@@ -1832,7 +1835,8 @@ function Flow ({ storageKey, prevStorageKey, value, onChange, saveButton }) {
           }
         }
       }
-    }, [lastSelectedThing?.value.id, value, onChange, edges, nodes, funnel, setFunnel]
+      // lastSelectedThing?.value.id
+    }, [value, onChange, edges, nodes, funnel, setFunnel, setEdges, setNodes, lastSelectedThing]
   )
   useEffect(() => {
     // when changed
@@ -1841,7 +1845,7 @@ function Flow ({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const viewport = useViewport()
   const ref = useRef()
   return (
-    <>
+    <>{JSON.stringify(lastSelectedThing)}
       <div className='row align-items-stretch flex-grow-1'>
         <div className='col-md-7 d-flex flex-column'>
           <div className='btn-group'>
@@ -1930,7 +1934,7 @@ function Flow ({ storageKey, prevStorageKey, value, onChange, saveButton }) {
                 <div>
                   <funnel.funnelMode.FunnelComponent item={item} />
                 </div>
-                                                                                 </React.Fragment>)}
+              </React.Fragment>)}
             </div>
           </div>
         </div>
