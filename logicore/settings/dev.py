@@ -17,3 +17,7 @@ DATABASES = {
 }
 
 INSTALLED_APPS += ["django_extensions"]
+
+MAIL_DEBUG = True
+FRONTEND_DEV_MODE = True
+DEBUG= True
