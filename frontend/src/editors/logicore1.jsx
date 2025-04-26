@@ -1845,7 +1845,7 @@ function Flow ({ storageKey, prevStorageKey, value, onChange, saveButton }) {
   const viewport = useViewport()
   const ref = useRef()
   return (
-    <>{JSON.stringify(lastSelectedThing)}
+    <>
       <div className='row align-items-stretch flex-grow-1'>
         <div className='col-md-7 d-flex flex-column'>
           <div className='btn-group'>
