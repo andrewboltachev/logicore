@@ -9,3 +9,4 @@ main/static/react/**
 /media/**
 .idea
 .venv
+postgers_data
