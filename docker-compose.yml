@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17.4
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data/
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "logicore" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    environment:
+      - POSTGRES_USER=logicore
+      - POSTGRES_PASSWORD=logicore
+      - POSTGRES_DB=logicore
+    expose:
+      - 5438
+    ports:
+      - 5438:5432

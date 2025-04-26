@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-lvmdan_6bv(i*4x#$6vh$o3ink=er6s+pfk-&1!b6z#z1*m@2*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "main.andrewboltachev.site"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "main.andrewboltachev.site"]
 CSRF_TRUSTED_ORIGINS = ["https://main.andrewboltachev.site"]
 
 
@@ -87,7 +87,7 @@ DATABASES = {
         "USER": "logicore",
         "PASSWORD": os.environ["LOGICORE_DJANGO_DATABASE_PASSWORD"],
         "HOST": "127.0.0.1",
-        "PORT": "5432",
+        "PORT": "5438",
     }
 }
 
