@@ -719,8 +719,8 @@ class SimpleValueSourceType extends SourceType {
         ...(params || {})
       })
       if (resp.data.error) {
-        NotificationManager.warning('', resp.data.error)
-        return
+          NotificationManager.warning('', resp.data.error)
+          return
       } else {
         elements = resp.data.funnel
       }

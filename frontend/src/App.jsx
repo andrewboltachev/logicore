@@ -1809,16 +1809,16 @@ Object.assign(interceptors, {
 })
 
 function App () {
-  return (
+  return (<>
+    <NotificationContainer enterTimeout={10} leaveTimeout={10} />
     <ModalProvider>
       <Router>
         <Routes>
           <Route path='*' element={<BaseLayout />} />
         </Routes>
       </Router>
-      <NotificationContainer enterTimeout={10} leaveTimeout={10} />
     </ModalProvider>
-  )
+  </>)
 }
 
 export default App

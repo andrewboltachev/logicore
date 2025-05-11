@@ -1,3 +1,4 @@
+import React from 'react';
 import { ReactNotifications, Store } from 'react-notifications-component'
 import 'react-notifications-component/dist/theme.css'
 
@@ -32,5 +33,3 @@ export const NotificationManager = {
   warning: addNotification('warning'),
   success: addNotification('success')
 }
-
-export default {}
