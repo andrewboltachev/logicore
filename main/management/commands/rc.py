@@ -68,7 +68,9 @@ def get_spellings(term):
         capitalize_rest,  # camelCase ?
     ]:
         for joint in ["", " ", "-", "_"]:
-            options.append(joint.join(cased))
+            opt = joint.join(cased)
+            if opt not in options:
+                options.append(opt)
     print(options)
     return options
 
@@ -89,28 +91,19 @@ class Command(BaseCommand):
         name_from = options['name_from']
         name_to = options['name_to']
 
-        '''
-        try:
-            rooted_copy = RootedCopy.objects.create(
-                fs_path=fs_path,
-                name_from=name_from,
-                name_to=name_to
-            )
-            self.stdout.write(self.style.SUCCESS(
-                f'Successfully created RootedCopy: "{rooted_copy.name_from}" - "{rooted_copy.name_to}" with path "{rooted_copy.fs_path}"'
-            ))
-        except Exception as e:
-            raise CommandError(f'Error creating RootedCopy: {e}')
-        '''
+        spellings = get_spellings(name_from)
+
+        result = []
 
         for python_file in tqdm.tqdm(list(all_python_files(fs_path))):
             code = read_file(python_file)
             m = libcst.parse_module(code)
-            positions = {}
-            parsed = serialize_dc(m, positions=positions)
+            #positions = {}
+            parsed = serialize_dc(m)
             #print(f"Reading {python_file}")
             #print("positions:", positions)
 
+            '''
             for path, pos in positions.items():
                 # Make all (line and column) 0-based
                 pos["start"]["line"] -= 1
@@ -146,11 +139,7 @@ class Command(BaseCommand):
                             continue
                         if coordinate_is_inside_position(position, line, column):
                             positions_reversed[line][column] = path
-
-            #print("positions_reversed")
-            #print(positions_reversed)
-
-            spellings = get_spellings(name_from)
+            '''
 
             paths = {}
 
@@ -169,5 +158,26 @@ class Command(BaseCommand):
                                     break
 
             visit(parsed, visitor)
-            print(paths)
-            break
+            if paths:
+                result.append({
+                    "filename": python_file,
+                    "paths": paths,
+                })
+
+        '''
+        try:
+            rooted_copy = RootedCopy.objects.create(
+                fs_path=fs_path,
+                name_from=name_from,
+                name_to=name_to
+            )
+            self.stdout.write(self.style.SUCCESS(
+                f'Successfully created RootedCopy: "{rooted_copy.name_from}" - "{rooted_copy.name_to}" with path "{rooted_copy.fs_path}"'
+            ))
+        except Exception as e:
+            raise CommandError(f'Error creating RootedCopy: {e}')
+        '''
+
+        num = sum([len(d["paths"]) for d in result])
+
+        print(f"Found {num} occurrences in {len(result)} files.")
