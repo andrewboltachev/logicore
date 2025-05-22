@@ -141,3 +141,19 @@ class Book(models.Model):
 
     def __str__(self):
         return f"{self.author} - {self.name}"
+
+
+class RootedCopy(models.Model):
+    name_from = models.CharField(max_length=1024)
+    name_to = models.CharField(max_length=1024)
+    fs_path = models.CharField(max_length=1024)
+    created_dt = models.DateTimeField(auto_now_add=True)
+    modified_dt = models.DateTimeField(auto_now=True)
+    files = models.TextField(default="", blank=True)
+    items = models.JSONField(default=None, blank=True, null=True)
+
+    def __str__(self):
+        return f"RootedCopy: {self.name_from} - {self.name_to}"
+
+    class Meta:
+        ordering = ["-modified_dt"]
