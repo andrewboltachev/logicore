@@ -24,6 +24,7 @@ import SelectFileField from './selectFileField' // register
 import PickFilePositionsField from './pickFilePositionsField' // register
 
 import Python01Explorer from './python_01_explorer'
+import RootedCopyExplorer from './RootedCopyExplorer'
 
 import { ModalProvider, ModalContext } from './runModal'
 
@@ -1502,7 +1503,8 @@ const mainComponents = {
   FiddleNotFound,
   Fiddle,
   // Fiddle end
-  Python01Explorer
+  Python01Explorer,
+  RootedCopyExplorer,
 }
 
 const MainWrapper = ({ result, onChange }) => {

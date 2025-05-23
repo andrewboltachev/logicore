@@ -4,6 +4,7 @@ import os
 import glob
 import json
 import uuid
+from operator import index
 
 import requests
 import pprint
@@ -1600,16 +1601,18 @@ class RootedCopyExplorer(MainView):
             return {
                 "template": "PageNotFound",
             }
+        index = kwargs["index"]
         filenames = rc.files.split("\n")
         l = len(filenames)
-        if kwargs.get("index") > l:
+        if index > l or index < 1:
             return {
                 "template": "PageNotFound",
             }
-        index = kwargs["index"]
         filename = filenames[index]
         return {
+            "id": rc.id,
             "index": index,
+            "count": l,
             "has_prev": index > 1,
             "has_next": index < l,
             "filename": filename,
