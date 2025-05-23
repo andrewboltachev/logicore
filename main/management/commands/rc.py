@@ -93,7 +93,7 @@ class Command(BaseCommand):
 
         spellings = get_spellings(name_from)
 
-        result = []
+        result = {}
 
         for python_file in tqdm.tqdm(list(all_python_files(fs_path))):
             code = read_file(python_file)
@@ -159,24 +159,20 @@ class Command(BaseCommand):
 
             visit(parsed, visitor)
             if paths:
-                result.append({
-                    "filename": python_file,
-                    "paths": paths,
-                })
+                result[python_file] = paths
 
-        '''
         try:
             rooted_copy = RootedCopy.objects.create(
                 fs_path=fs_path,
                 name_from=name_from,
-                name_to=name_to
+                name_to=name_to,
+                paths=result,
             )
             self.stdout.write(self.style.SUCCESS(
                 f'Successfully created RootedCopy: "{rooted_copy.name_from}" - "{rooted_copy.name_to}" with path "{rooted_copy.fs_path}"'
             ))
         except Exception as e:
             raise CommandError(f'Error creating RootedCopy: {e}')
-        '''
 
         num = sum([len(d["paths"]) for d in result])
 
