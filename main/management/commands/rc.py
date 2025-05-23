@@ -1,7 +1,9 @@
+import sys
 import tqdm
 import typing as ty
 from collections import defaultdict
 
+from networkx.algorithms.operators.product import rooted_product
 from rich import print
 import glob
 import os
@@ -85,6 +87,8 @@ class Command(BaseCommand):
                             help='The "name_from" string for the RootedCopy instance.')
         # parser.add_argument('name_to', type=str,
         #                     help='The "name_to" string for the RootedCopy instance.')
+        parser.add_argument('--id', type=int, nargs='?', default=None,
+                            help='Optional: ID of an existing RootedCopy to update. If not provided, a new instance will be created.')
 
     def handle(self, *args, **options):
         fs_path = options['fs_path']
@@ -162,13 +166,23 @@ class Command(BaseCommand):
                 result[python_file] = paths
 
         try:
-            rooted_copy = RootedCopy.objects.create(
-                fs_path=fs_path,
-                name_from=name_from,
-                name_to="",
-                files=result.keys(),
-                items=result,
-            )
+            if options["id"]:
+                try:
+                    rooted_copy = RootedCopy.objects.get(id=options["id"])
+                except RootedCopy.DoesNotExist:
+                    self.stdout.write(self.style.WARNING(f"RootedCopy with id={options['id']} does not exist."))
+                    sys.exit(1)
+            else:
+                rooted_copy = RootedCopy.objects.create(
+                    fs_path=fs_path,
+                )
+
+            rooted_copy.name_from = name_from
+            rooted_copy.name_to = ""
+            rooted_copy.files = "\n".join(list(result.keys()))
+            rooted_copy.items = result
+            rooted_copy.save()
+
             self.stdout.write(self.style.SUCCESS(
                 f'Successfully created RootedCopy: "{rooted_copy.name_from}" - "{rooted_copy.name_to}" with path "{rooted_copy.fs_path}"'
             ))
