@@ -83,13 +83,13 @@ class Command(BaseCommand):
                             help='The filesystem path for the RootedCopy instance.')
         parser.add_argument('name_from', type=str,
                             help='The "name_from" string for the RootedCopy instance.')
-        parser.add_argument('name_to', type=str,
-                            help='The "name_to" string for the RootedCopy instance.')
+        # parser.add_argument('name_to', type=str,
+        #                     help='The "name_to" string for the RootedCopy instance.')
 
     def handle(self, *args, **options):
         fs_path = options['fs_path']
         name_from = options['name_from']
-        name_to = options['name_to']
+        # name_to = options['name_to']
 
         spellings = get_spellings(name_from)
 
@@ -165,8 +165,9 @@ class Command(BaseCommand):
             rooted_copy = RootedCopy.objects.create(
                 fs_path=fs_path,
                 name_from=name_from,
-                name_to=name_to,
-                paths=result,
+                name_to="",
+                files=result.keys(),
+                items=result,
             )
             self.stdout.write(self.style.SUCCESS(
                 f'Successfully created RootedCopy: "{rooted_copy.name_from}" - "{rooted_copy.name_to}" with path "{rooted_copy.fs_path}"'
@@ -174,6 +175,6 @@ class Command(BaseCommand):
         except Exception as e:
             raise CommandError(f'Error creating RootedCopy: {e}')
 
-        num = sum([len(d["paths"]) for d in result])
+        num = sum([len(d) for d in result.values()])
 
         print(f"Found {num} occurrences in {len(result)} files.")

@@ -74,6 +74,7 @@ from .utils import (
     validation_error_message,
     postwalk,
 )
+from django.urls import reverse
 
 
 def react_static(request, path):
@@ -236,6 +237,7 @@ class MainView(ApiView):
 class LoginApiView(MainView):
     in_menu = False
     url_path = "/login"
+    url_name = "login"
     title = "Вход на сайт"
     TEMPLATE = "LoginScreen"
 
@@ -295,6 +297,7 @@ class LoginApiView(MainView):
 class LogoutApiView(MainView):
     in_menu = False
     url_path = "/logout"
+    url_name = "logout"
     title = ""
     TEMPLATE = None
 
@@ -324,6 +327,7 @@ class LogoutApiView(MainView):
 class Error404ApiView(MainView):
     in_menu = False
     url_path = "/404"
+    url_name = "404"
     title = "Error: Page not found"
     TEMPLATE = "PageNotFound"
 
@@ -334,6 +338,7 @@ class Error404ApiView(MainView):
 class LogicoreFormsDemoApiView(MainView):
     in_menu = False
     url_path = "/logicore-forms-demo"
+    url_name = "logicore-forms-demo"
     title = "andrewboltachev.club"
     TEMPLATE = "LogicoreFormsDemoView"
 
@@ -349,6 +354,7 @@ class LogicoreFormsDemoApiView(MainView):
 class HomeApiView(MainView):
     in_menu = False
     url_path = "/"
+    url_name = "home"
     title = "andrewboltachev.site"
     TEMPLATE = "GenericForm"
 
@@ -366,6 +372,7 @@ class HomeApiView(MainView):
 class StratagemsApiView(MainView):
     in_menu = False
     url_path = "/stratagems/"
+    url_name = "stratagems"
     title = "Stratagems"
     TEMPLATE = "ListView"
 
@@ -429,6 +436,7 @@ class StratagemsApiView(MainView):
 class StratagemApiView(MainView):
     in_menu = False
     url_path = "/<int:id>"
+    url_name = "stratagem-detail"
     title = "Hello world"
     TEMPLATE = "GenericForm"
 
@@ -584,6 +592,7 @@ class GetFileNodesView(View):
 class PythonView(MainView):
     in_menu = False
     url_path = "/python"
+    url_name = "python"
     title = "Hello world"
     TEMPLATE = "LanguageView"
 
@@ -620,6 +629,7 @@ class PythonView(MainView):
 class PythonGrammarView(MainView):
     in_menu = False
     url_path = "/pyg"
+    url_name = "pyg"
     title = "Hello world"
     TEMPLATE = "LanguageView"
 
@@ -672,6 +682,7 @@ class PythonGrammarView(MainView):
 class PythonGrammarView(MainView):
     in_menu = False
     url_path = "/tsview/"
+    url_name = "tsview"
     title = "Hello world"
     TEMPLATE = "TSView"
 
@@ -682,6 +693,7 @@ class PythonGrammarView(MainView):
 class CodeSearchsApiView(MainView):
     in_menu = False
     url_path = "/logicore-code/"
+    url_name = "logicore-code"
     title = "Code search Examples"
     TEMPLATE = "ListView"
 
@@ -720,6 +732,7 @@ class CodeSearchsApiView(MainView):
 class CodeSearchApiView(MainView):
     in_menu = False
     url_path = "/logicore-code/<int:id>"
+    url_name = "logicore-code-detail"
     title = "Hello world"
     TEMPLATE = "GenericForm2"
 
@@ -838,6 +851,7 @@ class CodeSearchApiView(MainView):
 class MatcherFiddlesApiView(MainView):
     in_menu = False
     url_path = "/structure-explorer/"
+    url_name = "structure-explorer"
     title = "Structure Explorer"
     TEMPLATE = "FiddleListView"
 
@@ -875,6 +889,7 @@ class MatcherFiddlesApiView(MainView):
 class MatcherFiddleNewApiView(MainView):
     in_menu = False
     url_path = "/structure-explorer/new"
+    url_name = "structure-explorer-new"
     title = "Hello world"
     TEMPLATE = "GenericForm2"
 
@@ -890,6 +905,7 @@ class MatcherFiddleNewApiView(MainView):
 class MatcherFiddleApiView(MainView):
     in_menu = False
     url_path = "/structure-explorer/<uuid:uuid>"
+    url_name = "structure-explorer-detail"
     title = "Hello world"
     TEMPLATE = "GenericForm2"
 
@@ -1002,6 +1018,7 @@ class MatcherFiddleApiView(MainView):
 class JSONExplorerApiView(MainView):
     in_menu = False
     url_path = "/json-explorer/"
+    url_name = "json-explorer"
     title = "JSON explorer"
     TEMPLATE = "JSONExplorerGadget"
 
@@ -1451,6 +1468,7 @@ def embellishedMatchToFunnel(request):
 class Python01Explorer(MainView):
     in_menu = False
     url_path = "/python01explorer/"
+    url_name = "python01explorer"
     title = "Python 01 — explorer"
     TEMPLATE = "Python01Explorer"
     WRAPPER = "FiddleWrapper"
@@ -1552,3 +1570,30 @@ def python_to_match_result(request, *args, **kwargs):
                 },
                 safe=False,
             )
+
+
+class RootedCopyExplorerBase(MainView):
+    in_menu = False
+    url_path = "/rc/<int:id>/"
+    url_name = "rc-base"
+    title = "Python 01 — explorer"
+    TEMPLATE = "RootedCopyExplorer"
+    WRAPPER = "FiddleWrapper"
+
+    def get_data(self, request, *args, **kwargs):
+        return {
+            "navigate": reverse("rc-item", kwargs={"id": kwargs["id"], "index": 1}),
+        }
+
+class RootedCopyExplorer(MainView):
+    in_menu = False
+    url_path = "/rc/<int:id>/<int:index>/"
+    url_name = "rc-item"
+    title = "Python 01 — explorer"
+    TEMPLATE = "RootedCopyExplorer"
+    WRAPPER = "FiddleWrapper"
+
+    def get_data(self, request, *args, **kwargs):
+        return {
+            "foo": "bar",
+        }

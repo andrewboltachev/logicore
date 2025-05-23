@@ -29,7 +29,7 @@ from rest_framework import routers, serializers, viewsets
 
 
 api_views_patterns = [
-    path(f"api{v.url_path}", v.as_view()) for v in main_views.all_api_views()
+    path(f"api{v.url_path}", v.as_view(), name=f"{v.url_name}") for v in main_views.all_api_views()
 ]
 
 
