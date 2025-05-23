@@ -3,8 +3,8 @@ import mimetypes
 import os
 import glob
 import json
-import locale
 import uuid
+
 import requests
 import pprint
 import timeago
@@ -1594,6 +1594,23 @@ class RootedCopyExplorer(MainView):
     WRAPPER = "FiddleWrapper"
 
     def get_data(self, request, *args, **kwargs):
+        try:
+            rc = models.RootedCopy.objects.get(id=kwargs["id"])
+        except models.RootedCopy.DoesNotExist:
+            return {
+                "template": "PageNotFound",
+            }
+        filenames = rc.files.split("\n")
+        l = len(filenames)
+        if kwargs.get("index") > l:
+            return {
+                "template": "PageNotFound",
+            }
+        index = kwargs["index"]
+        filename = filenames[index]
         return {
-            "foo": "bar",
+            "index": index,
+            "has_prev": index > 1,
+            "has_next": index < l,
+            "filename": filename,
         }
