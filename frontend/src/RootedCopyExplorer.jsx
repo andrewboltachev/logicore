@@ -240,7 +240,7 @@ const Node = ({value, level= 0, path = null, expanded, setExpanded, selected, se
 
 const RootedCopyExplorer = (props) => {
     // Основной
-    const [code, setCode] = useLocalStorage('PYTHON_01_EXPLORER_CODE', '')
+    const { code } = props;
     // Производные
     const [tree, setTree] = useState(null)
     const [positions, setPositions] = useState(null)

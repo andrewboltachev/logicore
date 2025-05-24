@@ -76,6 +76,7 @@ from .utils import (
     postwalk,
 )
 from django.urls import reverse
+from pathlib import Path
 
 
 def react_static(request, path):
@@ -1609,6 +1610,8 @@ class RootedCopyExplorer(MainView):
                 "template": "PageNotFound",
             }
         filename = filenames[index]
+        file_path: Path = Path(rc.fs_path) + Path(filename)
+        file_path.as_posix()
         return {
             "id": rc.id,
             "index": index,
