@@ -6,6 +6,7 @@ import json
 import uuid
 from operator import index
 
+import libcst
 import requests
 import pprint
 import timeago
@@ -1610,8 +1611,14 @@ class RootedCopyExplorer(MainView):
                 "template": "PageNotFound",
             }
         filename = filenames[index]
-        file_path: Path = Path(rc.fs_path) + Path(filename)
-        file_path.as_posix()
+        file_path: Path = Path(rc.fs_path) / Path(filename)
+        path = file_path.as_posix()
+        with open(path, "r", encoding="utf-8") as f:
+            code = f.read()
+        parsed = libcst.parse_module(code)
+        positions = {}
+        from main.parser.python import serialize_dc
+        serialized = serialize_dc(parsed, positions=positions)
         return {
             "id": rc.id,
             "index": index,
@@ -1619,4 +1626,7 @@ class RootedCopyExplorer(MainView):
             "has_prev": index > 1,
             "has_next": index < l,
             "filename": filename,
+            "serialized": serialized,
+            "positions": positions,
+            "code": code,
         }

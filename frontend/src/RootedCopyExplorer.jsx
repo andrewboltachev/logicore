@@ -240,54 +240,7 @@ const Node = ({value, level= 0, path = null, expanded, setExpanded, selected, se
 
 const RootedCopyExplorer = (props) => {
     // Основной
-    const { code } = props;
-    // Производные
-    const [tree, setTree] = useState(null)
-    const [positions, setPositions] = useState(null)
-    const [reversedPositions, setReversedPositions] = useState(null)
-    const [expanded, setExpanded] = useState({})
-    const [selected, setSelected] = useState(null)
-
-    const onPositionChange = useCallback((newPosition) => {
-        // console.log('try onPositionChange', {positions, reversedPositions, newPosition})
-        if (!positions) return
-        if (!reversedPositions) return
-        const newPath = (reversedPositions[newPosition.y] || {})[newPosition.x]
-        if (!newPath) {
-            setExpanded({})
-            setSelected(null)
-            return
-        }
-        const items = {}
-        let current = ""
-        const newExpanded = {"": true}
-        for (const chunk of newPath.split('.')) {
-            current += (current.length ? "." : "") + chunk
-            newExpanded[current] = true
-        }
-        setExpanded(newExpanded)
-        setSelected(newPath)
-    }, [positions, reversedPositions]);
-
-    useEffect(() => {
-        setTree(null)
-        setPositions(null)
-        setReversedPositions(null)
-        setExpanded({})
-        setSelected(null);
-
-        (async () => {
-            const resp = await axios.post(
-                '/python-to-match-result/',
-                {
-                    code
-                }
-            );
-            setTree(resp.data.value)
-            setPositions(resp.data.positions)
-            setReversedPositions(resp.data.positions_reversed)
-        })()
-    }, [code])
+    const { code, tree, positions, reversedPositions } = props;
 
     const { runModal } = useContext(ModalContext)
     const t = _.identity
