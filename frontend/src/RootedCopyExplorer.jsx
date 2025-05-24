@@ -248,12 +248,21 @@ const RootedCopyExplorer = (props) => {
     const t = _.identity
     return (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-            <div className="container-fluid">
+            <div className="container-fluid my-4">
                 <div className="row">
-                    <div className="col-12">
-                        {props.has_prev && <Link to={`/rc/${props.id}/${props.index - 1}/`}>Prev</Link>}
-                        File {props.index} out of {props.count}: {props.filename}
-                        {props.has_next && <Link to={`/rc/${props.id}/${props.index + 1}/`}>Next</Link>}
+                    <div className="col-1 d-flex justify-content-start align-items-center">
+                        {props.has_prev && <Link to={`/rc/${props.id}/${props.index - 1}/`}><button className="btn btn-outline-secondary">
+                            <i className={`fas fa-angle-double-left`} />
+                        </button></Link>}
+                    </div>
+                    <div className="col-10 d-flex justify-content-start align-items-center">
+                        <strong>File</strong><div className="badge text-bg-secondary mx-1">{props.index}</div><strong> out of </strong><div className="badge text-bg-secondary mx-1">{props.count}</div>
+                        <code style={{fontSize: "1.2rem"}}>{props.filename}</code>
+                    </div>
+                    <div className="col-1 d-flex justify-content-end align-items-center">
+                        {props.has_next && <Link to={`/rc/${props.id}/${props.index + 1}/`}><button className="btn btn-outline-secondary">
+                            <i className={`fas fa-angle-double-right`} />
+                        </button></Link>}
                     </div>
                 </div>
             </div>
@@ -269,7 +278,7 @@ const RootedCopyExplorer = (props) => {
                         <CodeDisplay
                             code={code}
                             onPositionChange={() => {}}
-                            selectedPositions={[props.positions["body.7.body.0.names.0.name"]]}
+                            selectedPositions={[Object.values(props.positions)[5]]}
                             selected={null}
                         />
                     </div>
