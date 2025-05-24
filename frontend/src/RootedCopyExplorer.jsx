@@ -31,9 +31,10 @@ function mouseDownHandler (
 
 }
 
-const HighlightedPositions = ({ positions, items, lines, zIndex }) => (
+const HighlightedPositions = ({ positions, items, lines, zIndex, outstandingItem }) => (
     (Object.entries(items || {}).map(([k, selectedPositionData]) => {
         const selectedPosition = positions[k];
+        console.log('compare', outstandingItem, k);
         return _.range(selectedPosition.start.line, selectedPosition.end.line + 1).map((lineIndex) => {
             // lineIndex -> 0-based
             let startPos = 0;
@@ -49,10 +50,10 @@ const HighlightedPositions = ({ positions, items, lines, zIndex }) => (
                 position: 'absolute',
                 top: 6 + 24 * lineIndex,
                 left: 12 - 1 + 9.602 * startPos,
-                width: 9.602 * (endPos - startPos),
+                width: 9.602 * (endPos - startPos) + 3.5,
                 height: 24,
                 backgroundColor: selectedPosition.color || 'yellow',
-                opacity: selectedPosition.opacity || 1,
+                opacity: selectedPosition.opacity || (outstandingItem === k) ? 1 : 0.25,
                 zIndex,
                 pointerEvents: 'none',
                 userSelect: 'none'
@@ -61,8 +62,9 @@ const HighlightedPositions = ({ positions, items, lines, zIndex }) => (
     }))
 );
 
-const CodeDisplay = ({ code, positions, selectedPositions, highlightedPositions }) => {
+const CodeDisplay = ({ code, positions, selectedPositions, highlightedPositions, outstandingItem }) => {
     const [highlighted, setHighlighted] = useState('')
+    console.log({outstandingItem})
 
     const codeRef = useRef(null)
     const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -205,7 +207,7 @@ const CodeDisplay = ({ code, positions, selectedPositions, highlightedPositions 
                     }}
                     />
                     <HighlightedPositions zIndex={1} positions={positions} items={highlightedPositions} lines={lines} />
-                    <HighlightedPositions zIndex={2} positions={positions} items={selectedPositions} lines={lines} />
+                    <HighlightedPositions outstandingItem={outstandingItem} zIndex={2} positions={positions} items={selectedPositions} lines={lines} />
                 </div>
             </div>
         </>
@@ -270,7 +272,7 @@ const RootedCopyExplorer = (props) => {
     }, [foundItem]);
 
     const selectedPositions = foundItems;
-    const highlightedPositions = [];
+    const highlightedPositions = {};
 
     useEffect(() => {
         setFoundItem(null);
@@ -326,6 +328,7 @@ const RootedCopyExplorer = (props) => {
                             code={code}
                             onPositionChange={() => {}}
                             positions={props.positions}
+                            outstandingItem={foundItem}
                             selectedPositions={selectedPositions} // [{start: ...}]
                             highlightedPositions={highlightedPositions} // [{start: ...}]
                         />

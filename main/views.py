@@ -1635,5 +1635,5 @@ class RootedCopyExplorer(MainView):
             "serialized": serialized,
             "positions": positions,
             "code": code,
-            "foundItems": rc.items[filename],
+            "foundItems": dict(sorted(rc.items[filename].items(), key=lambda kv: kv[0].split("."))),
         }
