@@ -31,7 +31,37 @@ function mouseDownHandler (
 
 }
 
-const CodeDisplay = ({ code, onPositionChange, selectedPositions, selected }) => {
+const HighlightedPositions = ({ positions, items, lines, zIndex }) => (
+    (Object.entries(items || {}).map(([k, selectedPositionData]) => {
+        const selectedPosition = positions[k];
+        return _.range(selectedPosition.start.line, selectedPosition.end.line + 1).map((lineIndex) => {
+            // lineIndex -> 0-based
+            let startPos = 0;
+            let endPos = lines[lineIndex]
+            if (lineIndex === selectedPosition.start.line) {
+                startPos = selectedPosition.start.column
+            }
+            if (lineIndex === selectedPosition.end.line) {
+                endPos = selectedPosition.end.column
+            }
+            // console.log(`wow: ${lineIndex} ${startPos} ${endPos}`)
+            return <div key={lineIndex} data-code-path={k.replaceAll('.', '_')} style={{
+                position: 'absolute',
+                top: 6 + 24 * lineIndex,
+                left: 12 - 1 + 9.602 * startPos,
+                width: 9.602 * (endPos - startPos),
+                height: 24,
+                backgroundColor: selectedPosition.color || 'yellow',
+                opacity: selectedPosition.opacity || 1,
+                zIndex,
+                pointerEvents: 'none',
+                userSelect: 'none'
+            }}></div>;
+        });
+    }))
+);
+
+const CodeDisplay = ({ code, positions, selectedPositions, highlightedPositions }) => {
     const [highlighted, setHighlighted] = useState('')
 
     const codeRef = useRef(null)
@@ -133,7 +163,7 @@ const CodeDisplay = ({ code, onPositionChange, selectedPositions, selected }) =>
                   left: 0,
                   textWrap: 'nowrap',
                   overflow: 'hidden',
-                  zIndex: 2,
+                  zIndex: 10,
               }}
               value={code}
               onKeyDown={handleKeydownWithinTextArea}
@@ -158,7 +188,7 @@ const CodeDisplay = ({ code, onPositionChange, selectedPositions, selected }) =>
               }}
           />
                     <div
-                        style={{ pointerEvents: 'none', userSelect: 'none', whiteSpace: 'pre', padding: '6px 12px', position: 'relative', zIndex: 2 }} id='python_01_explorer_code'
+                        style={{ pointerEvents: 'none', userSelect: 'none', whiteSpace: 'pre', padding: '6px 12px', position: 'relative', zIndex: 10 }} id='python_01_explorer_code'
                         dangerouslySetInnerHTML={{ __html: highlighted }}
                     />
                     <div
@@ -174,30 +204,8 @@ const CodeDisplay = ({ code, onPositionChange, selectedPositions, selected }) =>
                         userSelect: 'none',
                     }}
                     />
-                    {(selectedPositions || []).map((selectedPosition) => { return _.range(selectedPosition.start.line, selectedPosition.end.line + 1).map((lineIndex) => {
-                        // lineIndex -> 0-based
-                        let startPos = 0;
-                        let endPos = lines[lineIndex]
-                        if (lineIndex === selectedPosition.start.line) {
-                            startPos = selectedPosition.start.column
-                        }
-                        if (lineIndex === selectedPosition.end.line) {
-                            endPos = selectedPosition.end.column
-                        }
-                        // console.log(`wow: ${lineIndex} ${startPos} ${endPos}`)
-                        return <div key={lineIndex} style={{
-                            position: 'absolute',
-                            top: 6 + 24 * lineIndex,
-                            left: 12 - 1 + 9.602 * startPos,
-                            width: 9.602 * (endPos - startPos),
-                            height: 24,
-                            backgroundColor: 'yellow',
-                            opacity: 1,
-                            zIndex: 1,
-                            pointerEvents: 'none',
-                            userSelect: 'none'
-                        }}></div>;
-                    })})}
+                    <HighlightedPositions zIndex={1} positions={positions} items={highlightedPositions} lines={lines} />
+                    <HighlightedPositions zIndex={2} positions={positions} items={selectedPositions} lines={lines} />
                 </div>
             </div>
         </>
@@ -242,7 +250,32 @@ const Node = ({value, level= 0, path = null, expanded, setExpanded, selected, se
 
 const RootedCopyExplorer = (props) => {
     // Основной
-    const { code, tree, positions, reversedPositions } = props;
+    const { code, foundItems } = props;
+
+    const [foundItem, setFoundItem] = useState(null);
+    const [parentPath, setParentPath] = useState(null);
+
+    const foundItemTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        if (foundItem) {
+            foundItemTimeoutRef.current = setTimeout(() => {
+                document.querySelector(`[data-code-path=${foundItem.replaceAll('.', '_')}]`).scrollIntoView({behavior: 'smooth'});
+            }, 100);
+        }
+        setParentPath(null);
+        return () => {
+            if (foundItemTimeoutRef.current !== null) clearTimeout(foundItemTimeoutRef.current);
+        }
+    }, [foundItem]);
+
+    const selectedPositions = foundItems;
+    const highlightedPositions = [];
+
+    useEffect(() => {
+        setFoundItem(null);
+        setParentPath(null);
+    }, [code]);
 
     const { runModal } = useContext(ModalContext)
     const t = _.identity
@@ -268,18 +301,33 @@ const RootedCopyExplorer = (props) => {
             </div>
             <div className='container-fluid flex-grow-1 d-flex py-3' style={{ overflow: 'hidden' }}>
                 <div className='row align-items-stretch flex-grow-1' style={{ overflow: 'hidden' }}>
-                    <div className='col d-flex flex-column'>
+                    <div className='col-3 d-flex flex-column'>
+                        <h5>Select</h5>
+                        <ul className="list-group">
+                            {Object.entries(foundItems).map(([k, v], i) => {
+                                return (
+                                    <li
+                                        key={k}
+                                        style={{overflowWrap: 'anywhere', cursor: 'pointer'}}
+                                        className={`list-group-item ${(k === foundItem) ? "active" : ''}`}
+                                        onClick={() => setFoundItem(k)}>{k}</li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                    <div className='col-3 d-flex flex-column'>
                         <h5>Select</h5>
                     </div>
-                    <div className='col d-flex flex-column' style={{ overflow: 'hidden' }}>
-                        <div style={{ overflow: 'hidden' }}>
-                            <h5>Python code</h5>
+                    <div className='col-6 d-flex flex-column' style={{overflow: 'hidden'}}>
+                        <div style={{overflow: 'hidden'}}>
+                        <h5>Python code</h5>
                         </div>
                         <CodeDisplay
                             code={code}
                             onPositionChange={() => {}}
-                            selectedPositions={[Object.values(props.positions)[5]]}
-                            selected={null}
+                            positions={props.positions}
+                            selectedPositions={selectedPositions} // [{start: ...}]
+                            highlightedPositions={highlightedPositions} // [{start: ...}]
                         />
                     </div>
                 </div>

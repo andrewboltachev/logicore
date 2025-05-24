@@ -1635,4 +1635,5 @@ class RootedCopyExplorer(MainView):
             "serialized": serialized,
             "positions": positions,
             "code": code,
+            "foundItems": rc.items[filename],
         }
