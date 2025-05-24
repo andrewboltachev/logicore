@@ -31,7 +31,7 @@ function mouseDownHandler (
 
 }
 
-const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => {
+const CodeDisplay = ({ code, onPositionChange, selectedPositions, selected }) => {
     const [highlighted, setHighlighted] = useState('')
 
     const codeRef = useRef(null)
@@ -133,6 +133,7 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
                   left: 0,
                   textWrap: 'nowrap',
                   overflow: 'hidden',
+                  zIndex: 2,
               }}
               value={code}
               onKeyDown={handleKeydownWithinTextArea}
@@ -157,7 +158,7 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
               }}
           />
                     <div
-                        style={{ pointerEvents: 'none', userSelect: 'none', whiteSpace: 'pre', padding: '6px 12px' }} id='python_01_explorer_code'
+                        style={{ pointerEvents: 'none', userSelect: 'none', whiteSpace: 'pre', padding: '6px 12px', position: 'relative', zIndex: 2 }} id='python_01_explorer_code'
                         dangerouslySetInnerHTML={{ __html: highlighted }}
                     />
                     <div
@@ -170,10 +171,10 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
                         backgroundColor: 'black',
                         zIndex: 9999,
                         pointerEvents: 'none',
-                        userSelect: 'none'
+                        userSelect: 'none',
                     }}
                     />
-                    {!!selectedPosition && _.range(selectedPosition.start.line, selectedPosition.end.line + 1).map((lineIndex) => {
+                    {(selectedPositions || []).map((selectedPosition) => { return _.range(selectedPosition.start.line, selectedPosition.end.line + 1).map((lineIndex) => {
                         // lineIndex -> 0-based
                         let startPos = 0;
                         let endPos = lines[lineIndex]
@@ -191,12 +192,12 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
                             width: 9.602 * (endPos - startPos),
                             height: 24,
                             backgroundColor: 'yellow',
-                            opacity: 0.2,
-                            zIndex: 9998,
+                            opacity: 1,
+                            zIndex: 1,
                             pointerEvents: 'none',
                             userSelect: 'none'
                         }}></div>;
-                    })}
+                    })})}
                 </div>
             </div>
         </>
@@ -268,7 +269,7 @@ const RootedCopyExplorer = (props) => {
                         <CodeDisplay
                             code={code}
                             onPositionChange={() => {}}
-                            selectedPosition={null}
+                            selectedPositions={[props.positions["body.7.body.0.names.0.name"]]}
                             selected={null}
                         />
                     </div>

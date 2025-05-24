@@ -1619,6 +1619,12 @@ class RootedCopyExplorer(MainView):
         positions = {}
         from main.parser.python import serialize_dc
         serialized = serialize_dc(parsed, positions=positions)
+
+        for path, pos in positions.items():
+            # Make all (line and column) 0-based
+            pos["start"]["line"] -= 1
+            pos["end"]["line"] -= 1
+
         return {
             "id": rc.id,
             "index": index,
