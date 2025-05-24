@@ -1,14 +1,11 @@
-import { onPath } from './editors/commons'
 import { update } from './imports.jsx'
 import React, { useContext, useState, useEffect, useRef, useCallback, forwardRef, useMemo } from 'react'
-import { getByPath, setByPath } from './logicore-forms'
 import { ModalContext } from './runModal'
 import _ from 'lodash'
 import { useThrottle, useLocalStorage } from '@uidotdev/usehooks'
 
 import hljs from 'highlight.js/lib/core'
 import python from 'highlight.js/lib/languages/python'
-import { axios } from './imports.jsx'
 import {Link} from "react-router-dom";
 hljs.registerLanguage('python', python)
 
@@ -39,13 +36,12 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
 
     const codeRef = useRef(null)
     const [position, setPosition] = useState({ x: 0, y: 0 })
-    const delayedPosition = useThrottle(position, 100)
-    useEffect(() => {
-        console.log(`onPositionChange: ${JSON.stringify(delayedPosition)}`)
-        onPositionChange(delayedPosition)
-    }, [delayedPosition, code, onPositionChange])
     const lines = useMemo(() => {
         return code.split('\n').map((s) => s.length + 1) // вместе с переносом
+    }, [code])
+    useEffect(() => {
+        const highlighted = hljs.highlight(code, { language: 'python' })
+        setHighlighted(highlighted.value);
     }, [code])
     const handleMovement = useCallback(() => {
         if (!lines) return
@@ -65,10 +61,6 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
     const handleKeydownWithinTextArea = useCallback((e) => {
         if (["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"].includes(e.code)) handleMovement()
     }, [handleMovement])
-    useEffect(() => {
-        const highlighted = hljs.highlight(code, { language: 'python' })
-        setHighlighted(highlighted.value);
-    }, [code])
     if (!highlighted) {
         return (
             <div className='form-control flex-grow-1' style={{ flex: 1, position: 'relative', overflow: 'auto' }} />
@@ -76,9 +68,6 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
     }
     return (
         <>
-            <pre>{JSON.stringify(selected)}</pre>
-            <pre>{JSON.stringify(selectedPosition)}</pre>
-            <pre>{JSON.stringify([codeRef?.current?.selectionEnd, position])}</pre>
             <div className='form-control flex-grow-1' style={{ flex: 1, position: 'relative', overflow: 'auto' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0 }}>
           <textarea
@@ -93,6 +82,25 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
                       event
                   )}
               onMouseDown={event => mouseDownHandler(event)}
+              // onWheel={(event) => {
+              //     function dispatchToScrollableParent(element, event) {
+              //         let parent = element.parentNode;
+              //         while (parent) {
+              //             console.log(parent);
+              //             if (parent.scrollHeight > parent.clientHeight) {
+              //                 parent.dispatchEvent(new WheelEvent('wheel', {
+              //                     deltaX: event.deltaX,
+              //                     deltaY: event.deltaY,
+              //                     deltaZ: event.deltaZ,
+              //                 }));
+              //                 return;
+              //             }
+              //             parent = parent.parentNode;
+              //         }
+              //     }
+              //
+              //     dispatchToScrollableParent(event.target, event);
+              // }}
               aria-label='file content'
               aria-readonly
               // this prevents the virtual keyboard from being popped up when a user is on mobile
@@ -123,7 +131,8 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
                   right: 0,
                   bottom: 0,
                   left: 0,
-                  textWrap: 'nowrap'
+                  textWrap: 'nowrap',
+                  overflow: 'hidden',
               }}
               value={code}
               onKeyDown={handleKeydownWithinTextArea}
@@ -132,17 +141,9 @@ const CodeDisplay = ({ code, onPositionChange, selectedPosition, selected }) => 
               autoCapitalize='off'
               autoComplete='off'
               data-ms-editor='false'
-              onDrop={e => {
-                  /*
-                                const text = e.dataTransfer.getData('Text')
-                                try {
-                                    // eslint-disable-next-line no-restricted-syntax
-                                    const url = new URL(text)
-                                    window.open(url, '_blank')?.focus()
-                                } catch {
-                                    //the thing dropped was not a URL, catch but don't do anything
-                                } */
-                  return false
+              onDrop={(e) => {
+                  e.preventDefault();
+                  return false;
               }}
               onPaste={e => {
                   e.preventDefault()
@@ -245,70 +246,31 @@ const RootedCopyExplorer = (props) => {
     const { runModal } = useContext(ModalContext)
     const t = _.identity
     return (
-        <div className="container-fluid">
-            <div className="row">
-                <div className="col-12">
-                    {props.has_prev && <Link to={`/rc/${props.id}/${props.index - 1}/`}>Prev</Link>}
-                    File {props.index} out of {props.count}: {props.filename}
-                    {props.has_next && <Link to={`/rc/${props.id}/${props.index + 1}/`}>Next</Link>}
+        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="container-fluid">
+                <div className="row">
+                    <div className="col-12">
+                        {props.has_prev && <Link to={`/rc/${props.id}/${props.index - 1}/`}>Prev</Link>}
+                        File {props.index} out of {props.count}: {props.filename}
+                        {props.has_next && <Link to={`/rc/${props.id}/${props.index + 1}/`}>Next</Link>}
+                    </div>
                 </div>
             </div>
             <div className='container-fluid flex-grow-1 d-flex py-3' style={{ overflow: 'hidden' }}>
                 <div className='row align-items-stretch flex-grow-1' style={{ overflow: 'hidden' }}>
                     <div className='col d-flex flex-column'>
-                        <h5>
-                            Grammar (Pseudo-Python)!{' '}
-                        </h5>
-                        <code style={{whiteSpace: 'normal'}}>
-                            {selected ? selected.split('.').join(' ') : null}
-                            {(selected === '') && '(root)'}
-                            {selected === null && '(not selected)'}
-                        </code>
-                        <div
-                            style={{whiteSpace: 'pre', overflow: "hidden"}}
-                            className='form-control flex-grow-1 position-relative'>
-                            <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto'}}>
-                                {/*JSON.stringify(tree, null, 2)*/}
-                                {tree ? <Node value={tree} expanded={expanded} setExpanded={setExpanded} selected={selected} setSelected={setSelected} /> : 'Loading...'}
-                            </div>
-                        </div>
+                        <h5>Select</h5>
                     </div>
                     <div className='col d-flex flex-column' style={{ overflow: 'hidden' }}>
                         <div style={{ overflow: 'hidden' }}>
-                            <h5>
-                                Python code
-                                <button
-                                    className='btn btn-sm btn-primary mx-2' onClick={(e) => {
-                                    (async () => {
-                                        const result = await runModal({
-                                            title: t('Insert Python code'),
-                                            fields: {
-                                                type: 'Fields',
-                                                fields: [
-                                                    {
-                                                        type: 'TextareaField',
-                                                        k: 'val',
-                                                        label: t('Code'),
-                                                        required: false
-                                                    }
-                                                ]
-                                            },
-                                            modalSize: 'md',
-                                            value: {
-                                                val: ''
-                                            }
-                                        })
-                                        if (result) {
-                                            setCode(result.val.replaceAll('\r\n', '\n'.replaceAll('\r', '\n')))
-                                        }
-                                    })()
-                                }}
-                                >
-                                    Insert Python Code
-                                </button>
-                            </h5>
+                            <h5>Python code</h5>
                         </div>
-                        <CodeDisplay code={code} onPositionChange={onPositionChange} selectedPosition={positions?.[selected]} selected={selected} />
+                        <CodeDisplay
+                            code={code}
+                            onPositionChange={() => {}}
+                            selectedPosition={null}
+                            selected={null}
+                        />
                     </div>
                 </div>
             </div>

@@ -60,7 +60,7 @@ def serialize_dc(obj, *, positions=None, path=None, position_metadata=None, **kw
         # similar to how other list- or tuple-derived classes are
         # treated (see below), but we just need to create them
         # differently because a namedtuple's __init__ needs to be
-        # called differently (see bpo-34363).
+        # called differently (see bpo-34363).   
 
         # I'm not using namedtuple's _asdict()
         # method, because:
