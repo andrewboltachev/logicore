@@ -327,6 +327,8 @@ const RootedCopyExplorer = (props) => {
         });
     }
 
+    const isCancelled = (k) => props.cancelledItems.includes(k);
+
     return (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <div className="container-fluid my-4">
@@ -360,14 +362,47 @@ const RootedCopyExplorer = (props) => {
                                         style={{overflow: 'hidden', cursor: 'pointer', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
                                         className={`list-group-item ${(k === foundItem) ? "active" : ''}`}
                                         onClick={() => setFoundItem(k)}>
-                                        <i className={`fas ${props.cancelledItems.includes(k) ? 'fa-times text-danger' : (!!isCovered(k) ? 'fa-check text-success' : 'fa-dot-circle text-warning')}`} />{"\u00a0"}{k}
+                                        <i className={`fas ${isCancelled(k) ? 'fa-times text-danger' : (!!isCovered(k) ? 'fa-check text-success' : 'fa-dot-circle text-warning')}`} />{"\u00a0"}{k}
                                     </li>
                                 );
                             })}
                         </ul>
                     </div>
                     <div className='col-3 d-flex flex-column'>
-                        <h5>Select Parent</h5>
+                        <h5 className="d-flex justify-content-between align-items-center">
+                            Select Parent
+                            {!foundItem ? <div/> : <div className="btn-group btn-group-sm">
+                                <button type="button"
+                                        className={`btn btn-sm ${isCancelled(foundItem) ? 'btn-success' : 'btn-light'}`}
+                                        style={{width:'3rem'}}
+                                        onClick={() => {
+                                            if (isCancelled(foundItem)) {
+                                                props.onChange && props.onChange({
+                                                    filename: props.filename,
+                                                    cancel: foundItem,
+                                                })
+                                            }
+                                        }}
+                                >
+                                    <i className={`fas fa-check ${isCancelled(foundItem) && 'text-success'}`} />
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`btn btn-sm  ${isCancelled(foundItem) ? 'btn-danger' : 'btn-light'}`}
+                                    style={{width:'3rem'}}
+                                    onClick={() => {
+                                        if (!isCancelled(foundItem)) {
+                                            props.onChange && props.onChange({
+                                                filename: props.filename,
+                                                cancel: foundItem,
+                                            })
+                                        }
+                                    }}
+                                >
+                                    <i className={`fas fa-times ${!isCancelled(foundItem) && 'text-danger'}`} />
+                                </button>
+                            </div>}
+                        </h5>
                         {!!foundItem && <>
                             <ul className="list-group">
                                 {parentPaths.map((k, i) => {
@@ -381,8 +416,8 @@ const RootedCopyExplorer = (props) => {
                                                 setHoveredParentPath(null);
                                             }}
                                             style={{overflowWrap: 'anywhere', cursor: 'pointer'}}
-                                            className={`list-group-item ${(k === parentPath) ? "active" : ''} ${(k === hoveredParentPath) ? "active" : ''}`}
-                                            onClick={() => setParentPath(k)}>{k}</li>
+                                            className={`list-group-item ${(k === parentPath) ? "active" : (k.startsWith(parentPath) ? 'text-decoration-line-through' : '')} ${(k === hoveredParentPath) ? "active" : ''}`}
+                                            onClick={() => !(k.startsWith(parentPath) && k !== parentPath) && setParentPath(k)}>{k}</li>
                                     );
                                 })}
                             </ul>

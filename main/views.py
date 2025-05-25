@@ -1637,7 +1637,7 @@ class RootedCopyExplorer(MainView):
             "code": code,
             "foundItems": dict(sorted(rc.items[filename].items(), key=lambda kv: kv[0].split("."))),
             "parentPaths": (rc.parent_paths or {}).get(filename, []),
-            "cancelledItems": rc.cancelled_items.split("\n"),
+            "cancelledItems": (rc.cancelled_items or {}).get(filename, []),
         }
 
     def post(self, request, *args, **kwargs):
@@ -1659,5 +1659,13 @@ class RootedCopyExplorer(MainView):
                     paths = [p for p in paths if not ((p != path) and p.startswith(path))]
                 rc.parent_paths[filename] = paths
                 rc.save()
+            if cancel := data.get("cancel"):
+                paths = rc.cancelled_items.get(filename, [])
+                if path in paths:
+                    paths = [p for p in paths if p != path]
+                else:
+                    paths = [*paths, path]
+                    paths = [p for p in paths if not ((p != path) and p.startswith(path))]
+
 
         return JsonResponse({"navigate": reverse("rc-item", kwargs=self.kwargs).replace("/api", "")})
