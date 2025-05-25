@@ -1604,9 +1604,10 @@ class RootedCopyExplorer(MainView):
                 "template": "PageNotFound",
             }
         index = kwargs["index"]
+        index = index - 1
         filenames = rc.files.split("\n")
         l = len(filenames)
-        if index > l or index < 1:
+        if index >= l or index < 0:
             return {
                 "template": "PageNotFound",
             }
@@ -1627,10 +1628,10 @@ class RootedCopyExplorer(MainView):
 
         return {
             "id": rc.id,
-            "index": index,
+            "index": index + 1,
             "count": l,
-            "has_prev": index > 1,
-            "has_next": index < l,
+            "has_prev": (index + 1) > 0,
+            "has_next": (index + 1) < l,
             "filename": filename,
             "serialized": serialized,
             "positions": positions,
@@ -1659,13 +1660,15 @@ class RootedCopyExplorer(MainView):
                     paths = [p for p in paths if not ((p != path) and p.startswith(path))]
                 rc.parent_paths[filename] = paths
                 rc.save()
-            if cancel := data.get("cancel"):
+            if path := data.get("cancel"):
+                rc.cancelled_items = rc.cancelled_items or {}
                 paths = rc.cancelled_items.get(filename, [])
                 if path in paths:
                     paths = [p for p in paths if p != path]
                 else:
                     paths = [*paths, path]
-                    paths = [p for p in paths if not ((p != path) and p.startswith(path))]
+                rc.cancelled_items[filename] = paths
+                rc.save()
 
 
         return JsonResponse({"navigate": reverse("rc-item", kwargs=self.kwargs).replace("/api", "")})

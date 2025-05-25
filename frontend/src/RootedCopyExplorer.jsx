@@ -373,7 +373,7 @@ const RootedCopyExplorer = (props) => {
                             Select Parent
                             {!foundItem ? <div/> : <div className="btn-group btn-group-sm">
                                 <button type="button"
-                                        className={`btn btn-sm ${isCancelled(foundItem) ? 'btn-success' : 'btn-light'}`}
+                                        className={`btn btn-sm ${!isCancelled(foundItem) ? 'btn-success' : 'btn-light'}`}
                                         style={{width:'3rem'}}
                                         onClick={() => {
                                             if (isCancelled(foundItem)) {
