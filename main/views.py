@@ -1636,9 +1636,28 @@ class RootedCopyExplorer(MainView):
             "positions": positions,
             "code": code,
             "foundItems": dict(sorted(rc.items[filename].items(), key=lambda kv: kv[0].split("."))),
-            "parentPaths": rc.parent_paths.get(filename, []),
-            "parentPaths": rc.parentPaths.get(filename, []),
+            "parentPaths": (rc.parent_paths or {}).get(filename, []),
+            "cancelledItems": rc.cancelled_items.split("\n"),
         }
 
     def post(self, request, *args, **kwargs):
-        return JsonResponse({"navigate": reverse("rc-item", kwargs=self.kwargs)})
+        data = json.loads(request.body)["data"]
+        filename = data["filename"]
+
+        try:
+            rc = models.RootedCopy.objects.get(id=kwargs["id"])
+        except models.RootedCopy.DoesNotExist:
+            pass
+        else:
+            if path := data.get("path"):
+                rc.parent_paths = rc.parent_paths or {}
+                paths = rc.parent_paths.get(filename, [])
+                if path in paths:
+                    paths = [p for p in paths if p != path]
+                else:
+                    paths = [*paths, path]
+                    paths = [p for p in paths if not ((p != path) and p.startswith(path))]
+                rc.parent_paths[filename] = paths
+                rc.save()
+
+        return JsonResponse({"navigate": reverse("rc-item", kwargs=self.kwargs).replace("/api", "")})

@@ -35,6 +35,10 @@ function mouseDownHandler (
 const HighlightedPositions = ({ positions, items, lines, zIndex, outstandingItem }) => (
     (Object.entries(items || {}).map(([k, selectedPositionData]) => {
         const selectedPosition = positions[k];
+        if (!selectedPosition) {
+            console.error('cannot get selected position', k, positions);
+            return null;
+        }
         return _.range(selectedPosition.start.line, selectedPosition.end.line + 1).map((lineIndex) => {
             // lineIndex -> 0-based
             let startPos = 0;
@@ -282,9 +286,17 @@ const RootedCopyExplorer = (props) => {
     const { runModal } = useContext(ModalContext)
     const t = _.identity
 
+    const isCovered = (k) => {
+        for (const child of props.parentPaths) {
+            if (k.startsWith(child)) return child;
+        }
+        return null;
+    }
+
     let parentPath = null;
+
     if (foundItem) {
-        parentPath = props.parentPaths[foundItem] || null;
+        parentPath = isCovered(foundItem);
     }
 
     const highlightedParentPath = hoveredParentPath || parentPath;
@@ -301,12 +313,19 @@ const RootedCopyExplorer = (props) => {
     let parentPaths = [];
     if (foundItem) {
         const l = foundItem.split('.');
-        for (let i = 0; i < l.length; i++) if (/^[0-9]+$/.exec(l[i + 2])) {
+        for (let i = 0; i < l.length; i++) if (/^[0-9]+$/.exec(l[i])) {
             parentPaths.push(l.slice(0, i + 1).join('.'));
         }
     }
 
     const displayedParentPath = highlightedParentPath || parentPath;
+
+    const setParentPath = (path) => {
+        props.onChange && props.onChange({
+            filename: props.filename,
+            path,
+        });
+    }
 
     return (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -338,9 +357,11 @@ const RootedCopyExplorer = (props) => {
                                 return (
                                     <li
                                         key={k}
-                                        style={{overflowWrap: 'anywhere', cursor: 'pointer'}}
+                                        style={{overflow: 'hidden', cursor: 'pointer', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
                                         className={`list-group-item ${(k === foundItem) ? "active" : ''}`}
-                                        onClick={() => setFoundItem(k)}>{k}</li>
+                                        onClick={() => setFoundItem(k)}>
+                                        <i className={`fas ${props.cancelledItems.includes(k) ? 'fa-times text-danger' : (!!isCovered(k) ? 'fa-check text-success' : 'fa-dot-circle text-warning')}`} />{"\u00a0"}{k}
+                                    </li>
                                 );
                             })}
                         </ul>
