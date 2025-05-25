@@ -289,7 +289,7 @@ const RootedCopyExplorer = (props) => {
     }
 
     if (parentPath) {
-        highlightedPositions[parentPath] = { color: 'green', opacity: 1 };
+        highlightedPositions[parentPath] = { color: 'green', opacity: 0.5 };
     }
 
     let parentPaths = [];
