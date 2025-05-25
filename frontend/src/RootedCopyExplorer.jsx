@@ -34,7 +34,6 @@ function mouseDownHandler (
 const HighlightedPositions = ({ positions, items, lines, zIndex, outstandingItem }) => (
     (Object.entries(items || {}).map(([k, selectedPositionData]) => {
         const selectedPosition = positions[k];
-        console.log('compare', outstandingItem, k);
         return _.range(selectedPosition.start.line, selectedPosition.end.line + 1).map((lineIndex) => {
             // lineIndex -> 0-based
             let startPos = 0;
@@ -52,8 +51,8 @@ const HighlightedPositions = ({ positions, items, lines, zIndex, outstandingItem
                 left: 12 - 1 + 9.602 * startPos,
                 width: 9.602 * (endPos - startPos) + 3.5,
                 height: 24,
-                backgroundColor: selectedPosition.color || 'yellow',
-                opacity: selectedPosition.opacity || (outstandingItem === k) ? 1 : 0.25,
+                backgroundColor: selectedPositionData.color || 'yellow',
+                opacity: !!selectedPositionData.opacity ? selectedPositionData.opacity : ((outstandingItem === k) ? 1 : 0.25),
                 zIndex,
                 pointerEvents: 'none',
                 userSelect: 'none'
@@ -256,6 +255,7 @@ const RootedCopyExplorer = (props) => {
 
     const [foundItem, setFoundItem] = useState(null);
     const [parentPath, setParentPath] = useState(null);
+    const [hoveredParentPath, setHoveredParentPath] = useState(null);
 
     const foundItemTimeoutRef = useRef(null);
 
@@ -272,7 +272,6 @@ const RootedCopyExplorer = (props) => {
     }, [foundItem]);
 
     const selectedPositions = foundItems;
-    const highlightedPositions = {};
 
     useEffect(() => {
         setFoundItem(null);
@@ -281,6 +280,25 @@ const RootedCopyExplorer = (props) => {
 
     const { runModal } = useContext(ModalContext)
     const t = _.identity
+
+    const highlightedParentPath = hoveredParentPath || parentPath;
+
+    const highlightedPositions = {};
+    if (hoveredParentPath && hoveredParentPath !== parentPath) {
+        highlightedPositions[hoveredParentPath] = { color: 'purple', opacity: 0.1 };
+    }
+
+    if (parentPath) {
+        highlightedPositions[parentPath] = { color: 'green', opacity: 1 };
+    }
+
+    let parentPaths = [];
+    if (foundItem) {
+        const l = foundItem.split('.');
+        for (let i = 0; i < l.length; i++) if (/^[0-9]+$/.exec(l[i + 2])) {
+            parentPaths.push(l.slice(0, i + 1).join('.'));
+        }
+    }
     return (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <div className="container-fluid my-4">
@@ -304,8 +322,9 @@ const RootedCopyExplorer = (props) => {
             <div className='container-fluid flex-grow-1 d-flex py-3' style={{ overflow: 'hidden' }}>
                 <div className='row align-items-stretch flex-grow-1' style={{ overflow: 'hidden' }}>
                     <div className='col-3 d-flex flex-column'>
-                        <h5>Select</h5>
+                        <h5>Select Node</h5>
                         <ul className="list-group">
+                            {parentPath}
                             {Object.entries(foundItems).map(([k, v], i) => {
                                 return (
                                     <li
@@ -318,7 +337,26 @@ const RootedCopyExplorer = (props) => {
                         </ul>
                     </div>
                     <div className='col-3 d-flex flex-column'>
-                        <h5>Select</h5>
+                        <h5>Select Parent</h5>
+                        {!!foundItem &&
+                            <ul className="list-group">
+                                {parentPaths.map((k, i) => {
+                                    return (
+                                        <li
+                                            key={k}
+                                            onMouseOver={(e) => {
+                                                setHoveredParentPath(k);
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                setHoveredParentPath(null);
+                                            }}
+                                            style={{overflowWrap: 'anywhere', cursor: 'pointer'}}
+                                            className={`list-group-item ${(k === parentPath) ? "active" : ''} ${(k === hoveredParentPath) ? "active" : ''}`}
+                                            onClick={() => setParentPath(k)}>{k}</li>
+                                    );
+                                })}
+                            </ul>
+                        }
                     </div>
                     <div className='col-6 d-flex flex-column' style={{overflow: 'hidden'}}>
                         <div style={{overflow: 'hidden'}}>
