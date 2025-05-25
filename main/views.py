@@ -1636,4 +1636,9 @@ class RootedCopyExplorer(MainView):
             "positions": positions,
             "code": code,
             "foundItems": dict(sorted(rc.items[filename].items(), key=lambda kv: kv[0].split("."))),
+            "parentPaths": rc.parent_paths.get(filename, []),
+            "parentPaths": rc.parentPaths.get(filename, []),
         }
+
+    def post(self, request, *args, **kwargs):
+        return JsonResponse({"navigate": reverse("rc-item", kwargs=self.kwargs)})

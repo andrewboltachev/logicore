@@ -7,6 +7,7 @@ import { useThrottle, useLocalStorage } from '@uidotdev/usehooks'
 import hljs from 'highlight.js/lib/core'
 import python from 'highlight.js/lib/languages/python'
 import {Link} from "react-router-dom";
+import {getByPath} from "./logicore-forms/index.jsx";
 hljs.registerLanguage('python', python)
 
 function getRectParams (r) {
@@ -254,7 +255,7 @@ const RootedCopyExplorer = (props) => {
     const { code, foundItems } = props;
 
     const [foundItem, setFoundItem] = useState(null);
-    const [parentPath, setParentPath] = useState(null);
+    // const [parentPath, setParentPath] = useState(null);
     const [hoveredParentPath, setHoveredParentPath] = useState(null);
 
     const foundItemTimeoutRef = useRef(null);
@@ -265,7 +266,7 @@ const RootedCopyExplorer = (props) => {
                 document.querySelector(`[data-code-path=${foundItem.replaceAll('.', '_')}]`).scrollIntoView({behavior: 'smooth'});
             }, 100);
         }
-        setParentPath(null);
+        //setParentPath(null);
         return () => {
             if (foundItemTimeoutRef.current !== null) clearTimeout(foundItemTimeoutRef.current);
         }
@@ -275,11 +276,16 @@ const RootedCopyExplorer = (props) => {
 
     useEffect(() => {
         setFoundItem(null);
-        setParentPath(null);
+        //setParentPath(null);
     }, [code]);
 
     const { runModal } = useContext(ModalContext)
     const t = _.identity
+
+    let parentPath = null;
+    if (foundItem) {
+        parentPath = props.parentPaths[foundItem] || null;
+    }
 
     const highlightedParentPath = hoveredParentPath || parentPath;
 
@@ -299,6 +305,9 @@ const RootedCopyExplorer = (props) => {
             parentPaths.push(l.slice(0, i + 1).join('.'));
         }
     }
+
+    const displayedParentPath = highlightedParentPath || parentPath;
+
     return (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <div className="container-fluid my-4">
@@ -338,7 +347,7 @@ const RootedCopyExplorer = (props) => {
                     </div>
                     <div className='col-3 d-flex flex-column'>
                         <h5>Select Parent</h5>
-                        {!!foundItem &&
+                        {!!foundItem && <>
                             <ul className="list-group">
                                 {parentPaths.map((k, i) => {
                                     return (
@@ -356,7 +365,10 @@ const RootedCopyExplorer = (props) => {
                                     );
                                 })}
                             </ul>
-                        }
+                            {(!!displayedParentPath && displayedParentPath !== '-') && <pre style={{fontSize: "1.2rem"}}>
+                                {JSON.stringify((getByPath(props.serialized, displayedParentPath.split('.')) || {type: 'Undefined'}).type, null, 2)}
+                            </pre>}
+                        </>}
                     </div>
                     <div className='col-6 d-flex flex-column' style={{overflow: 'hidden'}}>
                         <div style={{overflow: 'hidden'}}>
