@@ -89,6 +89,8 @@ class Command(BaseCommand):
         #                     help='The "name_to" string for the RootedCopy instance.')
         parser.add_argument('--id', type=int, nargs='?', default=None,
                             help='Optional: ID of an existing RootedCopy to update. If not provided, a new instance will be created.')
+        parser.add_argument('--has', type=str, nargs='?', default=None,
+                            help='Optional: pattern')
 
     def handle(self, *args, **options):
         fs_path = options['fs_path']
@@ -101,10 +103,12 @@ class Command(BaseCommand):
 
         for python_file in tqdm.tqdm(list(all_python_files(fs_path))):
             code = read_file(python_file)
+            if options["has"] and options["has"] not in code:
+                continue
             m = libcst.parse_module(code)
             #positions = {}
             parsed = serialize_dc(m)
-            #print(f"Reading {python_file}")
+            print(f"Reading {python_file}")
             #print("positions:", positions)
 
             '''
