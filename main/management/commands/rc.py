@@ -184,7 +184,8 @@ class Command(BaseCommand):
             rooted_copy.save()
 
             self.stdout.write(self.style.SUCCESS(
-                f'Successfully created RootedCopy: "{rooted_copy.name_from}" - "{rooted_copy.name_to}" with path "{rooted_copy.fs_path}"'
+                f'Successfully created RootedCopy #{rooted_copy.id}: "{rooted_copy.name_from}" "'
+                f'"- "{rooted_copy.name_to}" with path "{rooted_copy.fs_path}"'
             ))
         except Exception as e:
             raise CommandError(f'Error creating RootedCopy: {e}')
