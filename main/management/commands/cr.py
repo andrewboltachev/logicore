@@ -7,6 +7,7 @@ from rich import print
 
 import libcst
 from django.core.management.base import BaseCommand, CommandError
+from django.template import Variable
 
 from libcst_to_react.get_me_nodes import read_file
 from main.models import RootedCopy
@@ -130,7 +131,7 @@ def make_replace_fn(regexp, terms, replace):
     return replace_fn
 
 
-def f1(term, replacement):
+def f1(term, replacement, **kwargs):
     variants = []
     terms = [term]
     for v in terms:
@@ -148,8 +149,8 @@ def f1(term, replacement):
     return make_replace_fn(regexp, terms, replacement)
 
 
-def byone_replacer(name_from, name_to):
-    def f(term):
+def byone_replacer(name_from, name_to, **kwargs):
+    def f(term, **context):
         nonlocal name_from, name_to
         # "lower"
         variant_from = name_from.lower()
@@ -161,8 +162,12 @@ def byone_replacer(name_from, name_to):
             elif "_" in term:
                 variant_to = "_".join(chunks)
             else:
-                print(f"WARNING: falling back to underscore-joined for {term}")
-                variant_to = "_".join(chunks)
+                if context['outer_node']['type'] == 'SimpleString':
+                    print(f"WARNING: falling back to hyphen-joined for {term}")
+                    variant_to = "-".join(chunks)
+                else:
+                    print(f"WARNING: falling back to underscore-joined for {term}")
+                    variant_to = "_".join(chunks)
             return term.replace(variant_from, variant_to)
 
         # "upper"
@@ -189,6 +194,10 @@ def byone_replacer(name_from, name_to):
         return term
 
     return f
+
+
+def rreplace(s, old, new, count):
+    return (s[::-1].replace(old[::-1], new[::-1], count))[::-1]
 
 
 class Command(BaseCommand):
@@ -231,10 +240,11 @@ class Command(BaseCommand):
                             and current_child_path not in current_cancelled_child_paths
                         )
                     }
+                    original = node
                     def handler2(node, child_path):
-                        # print(child_path, the_map.keys())
                         if v := the_map.get(child_path):
-                            return replacer(node)
+                            outer_node = Variable(".".join(child_path.split(".")[:-1])).resolve(original)
+                            return replacer(node, outer_node=outer_node, **v)
                         return node
                     return walk2(node, handler2)
                 return None
