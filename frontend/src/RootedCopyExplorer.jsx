@@ -346,6 +346,11 @@ const RootedCopyExplorer = (props) => {
         }
     }
 
+    const isFullCovered = (k) => {
+        if (currentFullPath) return true;
+        return isCovered(k);
+    }
+
     return (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <div className="container-fluid my-4">
@@ -379,7 +384,7 @@ const RootedCopyExplorer = (props) => {
                                         style={{overflow: 'hidden', cursor: 'pointer', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
                                         className={`list-group-item ${(k === foundItem) ? "active" : ''}`}
                                         onClick={() => setFoundItem(k)}>
-                                        <i className={`fas ${isCancelled(k) ? 'fa-times text-danger' : (!!isCovered(k) ? 'fa-check text-success' : 'fa-dot-circle text-warning')}`} />{"\u00a0"}{k}
+                                        <i className={`fas ${isCancelled(k) ? 'fa-times text-danger' : (!!isFullCovered(k) ? 'fa-check text-success' : 'fa-dot-circle text-warning')}`} />{"\u00a0"}{k}
                                     </li>
                                 );
                             })}
