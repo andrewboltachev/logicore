@@ -1689,6 +1689,8 @@ class RootedCopyExplorer(MainView):
                     paths = [p for p in paths if p != path]
                 else:
                     paths = [*paths, path]
+                    if filename in rc.parent_paths:
+                        del rc.parent_paths[filename]
                 rc.full_paths = "\n".join(paths)
                 rc.save()
 
