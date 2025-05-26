@@ -1,5 +1,6 @@
 import re
 import sys
+from pathlib import Path
 
 import tqdm
 
@@ -217,17 +218,35 @@ class Command(BaseCommand):
         else:
             replacer = f1(rc.name_from, options['name_to'])
 
+        full_paths = rc.full_paths.split("\n")
+
+        def included_fully(filename):
+            for full_path in full_paths:
+                if not full_path.endswith(".py"):
+                    full_path = full_path + "/"
+                if filename.startswith(full_path):
+                    return True
+            return False
+
         for python_file in tqdm.tqdm(rc.files.split("\n")):
             filename = python_file
             code = read_file(filename)
             m = libcst.parse_module(code)
             parsed = serialize_dc(m)
-            current_parent_paths = rc.parent_paths.get(python_file, [])
-            current_child_paths = rc.items.get(python_file, {})
-            current_cancelled_child_paths = rc.cancelled_items.get(python_file, [])
 
-            def handler(parent_path, node):
-                if parent_path in current_parent_paths:
+            if included_fully(filename.replace(rc.fs_path, "")):
+                # TODO... you know it
+                short_filename = filename.replace(rc.fs_path, "")
+                new_filename_short = replacer(short_filename)
+                new_filename = (Path(rc.fs_path) / Path(new_filename_short)).name
+                print(f"Will copy {short_filename} to {new_filename_short}")
+
+                # begin
+                # current_parent_paths = rc.parent_paths.get(python_file, [])
+                current_child_paths = rc.items.get(python_file, {})
+                current_cancelled_child_paths = rc.cancelled_items.get(python_file, [])
+
+                def handler(parent_path, node):
                     the_map = {
                         current_child_path.replace(f"{parent_path}.", "") + ".value": item  # TODO
                         for current_child_path, item in current_child_paths.items()
@@ -243,12 +262,43 @@ class Command(BaseCommand):
                             return replacer(node, outer_node=outer_node, **v)
                         return node
                     return walk2(node, handler2)
-                return None
+                processed = walk(parsed, handler)
+                # end
 
-            processed = walk(parsed, handler)
-            result = unserialize_dc(processed).code
-            if result != code:
-                with open(filename, "w") as f:
+                result = unserialize_dc(processed).code
+                import ipdb; ipdb.set_trace()
+                with open(new_filename, "w") as f:
                     f.write(result)
+
+
+            else:
+                current_parent_paths = rc.parent_paths.get(python_file, [])
+                current_child_paths = rc.items.get(python_file, {})
+                current_cancelled_child_paths = rc.cancelled_items.get(python_file, [])
+
+                def handler(parent_path, node):
+                    if parent_path in current_parent_paths:
+                        the_map = {
+                            current_child_path.replace(f"{parent_path}.", "") + ".value": item  # TODO
+                            for current_child_path, item in current_child_paths.items()
+                            if (
+                                current_child_path.startswith(f"{parent_path}.")
+                                and current_child_path not in current_cancelled_child_paths
+                            )
+                        }
+                        original = node
+                        def handler2(node, child_path):
+                            if v := the_map.get(child_path):
+                                outer_node = Variable(".".join(child_path.split(".")[:-1])).resolve(original)
+                                return replacer(node, outer_node=outer_node, **v)
+                            return node
+                        return walk2(node, handler2)
+                    return None
+                processed = walk(parsed, handler)
+
+                result = unserialize_dc(processed).code
+                if result != code:
+                    with open(filename, "w") as f:
+                        f.write(result)
 
         print(f"Done.")
