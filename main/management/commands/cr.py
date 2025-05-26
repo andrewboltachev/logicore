@@ -141,10 +141,6 @@ def f1(term, replacement, **kwargs):
     result_parts = [re.escape(p) for p in replacement.split("-")]
     result_regexp = r"[ \-\_]?".join(result_parts)
     regexp = re.compile(regexp, flags=re.I)
-    # fns
-    # {'avito': 'telegram_personal', 'Avito': 'TelegramPersonal', 'AVITO': 'TELEGRAM_PERSONAL'}
-    # Out[3]: <function main.management.commands.cr.make_replace_fn.<locals>.replace_fn(value, *args, **kwargs)>
-
     print("The regexp", regexp)
     return make_replace_fn(regexp, terms, replacement)
 
