@@ -150,6 +150,7 @@ class RootedCopy(models.Model):
     created_dt = models.DateTimeField(auto_now_add=True)
     modified_dt = models.DateTimeField(auto_now=True)
     files = models.TextField(default="", blank=True)
+    full_paths = models.TextField(default="", blank=True)
     items = models.JSONField(default=None, blank=True, null=True)
     parent_paths = models.JSONField(default=None, blank=True, null=True)
     cancelled_items = models.JSONField(default=None, blank=True, null=True)

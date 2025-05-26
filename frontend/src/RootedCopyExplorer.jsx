@@ -327,7 +327,24 @@ const RootedCopyExplorer = (props) => {
         });
     }
 
+    const includeFullPath = (full_path) => {
+        props.onChange && props.onChange({
+            filename: props.filename,
+            full_path,
+        });
+    }
+
     const isCancelled = (k) => props.cancelledItems.includes(k);
+
+    let currentFullPath = null;
+
+    // the shortest
+    outer: for (const p of _.sortBy(props.fullPaths, (p) => p.length)) {
+        if (props.shortFilename.startsWith(p)) {
+            currentFullPath = p;
+            break outer;
+        }
+    }
 
     return (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -369,6 +386,23 @@ const RootedCopyExplorer = (props) => {
                         </ul>
                     </div>
                     <div className='col-3 d-flex flex-column'>
+                        {!!props.availableFullPaths?.length && <div className="mb-4">
+                            <h5 className="d-flex justify-content-between align-items-center">
+                                Full Inclusion
+                            </h5>
+                            <ul className="list-group">
+                                {props.availableFullPaths.map((k, i) => {
+                                    return (
+                                        <li
+                                            key={k}
+                                            style={{overflowWrap: 'anywhere', cursor: 'pointer'}}
+                                            className={`list-group-item ${(k === currentFullPath) ? "active" : (currentFullPath && k.startsWith(currentFullPath) ? 'text-decoration-line-through' : '')}`}
+                                            onClick={() => !(k.startsWith(currentFullPath) && k !== currentFullPath && currentFullPath) && includeFullPath(k)}>{k}</li>
+                                    );
+                                })}
+                            </ul>
+                        </div>}
+
                         <h5 className="d-flex justify-content-between align-items-center">
                             Select Parent
                             {!foundItem ? <div/> : <div className="btn-group btn-group-sm">

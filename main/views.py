@@ -69,6 +69,7 @@ from .framework import (
     apply_model_to_fields,
     read_k_fields,
 )
+from .management.commands.rc import get_spellings
 from .utils import (
     unique,
     dissoc,
@@ -1626,6 +1627,16 @@ class RootedCopyExplorer(MainView):
             pos["start"]["line"] -= 1
             pos["end"]["line"] -= 1
 
+        spellings = get_spellings(rc.name_from)
+        current = []
+        availableFullPaths = []
+        for chunk in filename.replace(rc.fs_path, "").split("/"):
+            current.append(chunk)
+            curr = "/".join(current)
+            for spelling in spellings:
+                if spelling in chunk:
+                    availableFullPaths.insert(0, curr)
+                    break
         return {
             "id": rc.id,
             "index": index + 1,
@@ -1633,12 +1644,15 @@ class RootedCopyExplorer(MainView):
             "has_prev": (index + 1) > 0,
             "has_next": (index + 1) < l,
             "filename": filename,
+            "shortFilename": filename.replace(rc.fs_path, ""),
             "serialized": serialized,
             "positions": positions,
             "code": code,
             "foundItems": dict(sorted(rc.items[filename].items(), key=lambda kv: kv[0].split("."))),
             "parentPaths": (rc.parent_paths or {}).get(filename, []),
             "cancelledItems": (rc.cancelled_items or {}).get(filename, []),
+            "availableFullPaths": availableFullPaths,
+            "fullPaths": [x for x in (rc.full_paths or "").split("\n") if x],
         }
 
     def post(self, request, *args, **kwargs):
@@ -1669,6 +1683,13 @@ class RootedCopyExplorer(MainView):
                     paths = [*paths, path]
                 rc.cancelled_items[filename] = paths
                 rc.save()
-
+            if path := data.get("full_path"):
+                paths = [x for x in (rc.full_paths or "").split("\n") if x]
+                if path in paths:
+                    paths = [p for p in paths if p != path]
+                else:
+                    paths = [*paths, path]
+                rc.full_paths = "\n".join(paths)
+                rc.save()
 
         return JsonResponse({"navigate": reverse("rc-item", kwargs=self.kwargs).replace("/api", "")})
