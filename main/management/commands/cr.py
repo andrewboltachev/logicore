@@ -238,7 +238,7 @@ class Command(BaseCommand):
                 # TODO... you know it
                 short_filename = filename.replace(rc.fs_path, "")
                 new_filename_short = replacer(short_filename)
-                new_filename = (Path(rc.fs_path) / Path(new_filename_short)).name
+                new_filename = (Path(rc.fs_path) / Path(new_filename_short)).as_posix()
                 print(f"Will copy {short_filename} to {new_filename_short}")
 
                 # begin
@@ -266,7 +266,6 @@ class Command(BaseCommand):
                 # end
 
                 result = unserialize_dc(processed).code
-                import ipdb; ipdb.set_trace()
                 with open(new_filename, "w") as f:
                     f.write(result)
 
