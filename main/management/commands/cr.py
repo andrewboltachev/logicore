@@ -63,6 +63,35 @@ def walk2(node, handler):
     return f(node)
 
 
+def walk3(node, handler):
+    def f(node, path=""):
+        if isinstance(node, dict):
+            result = {}
+            for k, v in node.items():
+                result[k] = f(v, path=f"{path}.{k}".lstrip("."))
+            return result
+        elif isinstance(node, list):
+            result = []
+            for i, v in enumerate(node):
+                newPath = f"{path}.{i}".lstrip(".")
+                if added := handler(newPath, v):
+                    result.append(added)
+                else:
+                    result.append(f(v, path=newPath))
+            return result
+        elif isinstance(node, tuple):
+            result = []
+            for i, v in enumerate(node):
+                newPath = f"{path}.{i}".lstrip(".")
+                if added := handler(newPath, v):
+                    result.append(added)
+                else:
+                    result.append(f(v, path=newPath))
+            return tuple(result)
+        return node
+    return f(node)
+
+
 def get_spellings(term):
     """
     Convert term into all spellings
@@ -262,7 +291,7 @@ class Command(BaseCommand):
                             return replacer(node, outer_node=outer_node, **v)
                         return node
                     return walk2(node, handler2)
-                processed = walk(parsed, handler)
+                processed = walk3(parsed, handler)
                 # end
 
                 result = unserialize_dc(processed).code
