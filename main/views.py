@@ -1586,7 +1586,7 @@ class RootedCopyExplorerBase(MainView):
 
     def get_data(self, request, *args, **kwargs):
         return {
-            "navigate": reverse("rc-item", kwargs={"id": kwargs["id"], "index": 1}),
+            "navigate": reverse("rc-item", kwargs={"id": kwargs["id"], "index": 1}).replace("/api", ""),
         }
 
 class RootedCopyExplorer(MainView):
@@ -1692,6 +1692,13 @@ class RootedCopyExplorer(MainView):
                     if filename in rc.parent_paths:
                         del rc.parent_paths[filename]
                 rc.full_paths = "\n".join(paths)
+                rc.save()
+            if data.get("remove_all"):
+                rc.cancelled_items = rc.cancelled_items or {}
+                paths = rc.cancelled_items.get(filename, [])
+                rc.cancelled_items[filename] = list(
+                    rc.items.get(filename, {}).keys()
+                )
                 rc.save()
 
         return JsonResponse({"navigate": reverse("rc-item", kwargs=self.kwargs).replace("/api", "")})

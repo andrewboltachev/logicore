@@ -176,6 +176,7 @@ def f1(term, replacement, **kwargs):
 
 
 def byone_replacer(name_from, name_to, **kwargs):
+    context = kwargs
     def f(term, **context):
         nonlocal name_from, name_to
         # "lower"
@@ -188,7 +189,8 @@ def byone_replacer(name_from, name_to, **kwargs):
             elif "_" in term:
                 variant_to = "_".join(chunks)
             else:
-                if context['outer_node']['type'] == 'SimpleString':
+                # FIXME why check this?
+                if 'outer_node' in context and context['outer_node']['type'] == 'SimpleString':
                     print(f"WARNING: falling back to hyphen-joined for {term}")
                     variant_to = "-".join(chunks)
                 else:

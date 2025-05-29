@@ -363,6 +363,22 @@ const RootedCopyExplorer = (props) => {
                     <div className="col-10 d-flex justify-content-start align-items-center">
                         <strong>File</strong><div className="badge text-bg-secondary mx-1">{props.index}</div><strong> out of </strong><div className="badge text-bg-secondary mx-1">{props.count}</div>
                         <code style={{fontSize: "1.2rem"}}>{props.filename}</code>
+                        <div className="mx-5">
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary"
+                                onClick={() => {
+                                    if (confirm()) {
+                                        props.onChange && props.onChange({
+                                            'filename': props.filename,
+                                            'remove_all': true,
+                                        })
+                                    }
+                                }}
+                            >
+                                <i className={`fas fa-times`} />
+                            </button>
+                        </div>
                     </div>
                     <div className="col-1 d-flex justify-content-end align-items-center">
                         {props.has_next && <Link to={`/rc/${props.id}/${props.index + 1}/`}><button className="btn btn-outline-secondary">
