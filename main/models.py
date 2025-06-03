@@ -160,3 +160,14 @@ class RootedCopy(models.Model):
 
     class Meta:
         ordering = ["-modified_dt"]
+
+
+class CoolTraceProject(models.Model):
+    name = models.CharField(max_length=256)
+    fs_path = models.CharField(max_length=2048)
+    created_dt = models.DateTimeField(auto_now_add=True)
+    modified_dt = models.DateTimeField(auto_now=True)
+
+
+class CoolTraceEntry(models.Model):
+    project = models.ForeignKey("CoolTraceProject", blank=False, null=False, on_delete=models.PROTECT)
