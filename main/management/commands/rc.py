@@ -2,6 +2,7 @@ import sys
 import tqdm
 import typing as ty
 from collections import defaultdict
+import subprocess
 
 from networkx.algorithms.operators.product import rooted_product
 from rich import print
@@ -28,6 +29,28 @@ def visit(node, f, path=""):
 
 def all_python_files(fs_path):
     for filename in glob.glob(os.path.join(fs_path, '**', '*.py'), recursive=True):
+        if "node_modules/" in filename:
+            continue
+        if "/migrations/" in filename:
+            continue
+        if "/venv/" in filename:
+            continue
+        if ".venv/" in filename:
+            continue
+        if filename.startswith("venv/"):
+            continue
+        yield filename
+
+
+def matching_python_files(fs_path, name_from):
+    exp = r".*".join(name_from.replace("_", "-").split("-"))
+    filenames = subprocess.Popen(
+        f'''grep -riIlP --include='*.py' "{exp}" {fs_path}''',
+        shell=True, stdout=subprocess.PIPE
+    ).stdout.read().decode('utf-8').rstrip('\n').split("\n")
+    for filename in filenames:
+        if not filename:
+            continue
         if "node_modules/" in filename:
             continue
         if "/migrations/" in filename:
@@ -101,7 +124,7 @@ class Command(BaseCommand):
 
         result = {}
 
-        for python_file in tqdm.tqdm(list(all_python_files(fs_path))):
+        for python_file in tqdm.tqdm(list(matching_python_files(fs_path, name_from))):
             code = read_file(python_file)
             if options["has"] and options["has"] not in code:
                 continue
