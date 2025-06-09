@@ -1,4 +1,6 @@
-@import "bootstrap";
+//@import "bootstrap";
+@import "bootstrap/scss/bootstrap.scss";
+
 
 .react-flow__node-ColorSelectorNode {
   font-size: 12px;
@@ -163,4 +165,13 @@
 
 .caret {
   animation: blink 0.75s step-start 0s infinite;
+}
+
+.btn-no-hover:hover, .btn-no-hover:focus, .btn-no-hover:active {
+  background-color: white;
+  color: $primary;
+  &.btn-primary {
+    color: white;
+    background-color: $primary;
+  }
 }

@@ -351,6 +351,9 @@ const RootedCopyExplorer = (props) => {
         return isCovered(k);
     }
 
+    const [autoPlay, setAutoPlay] = useLocalStorage('LOGICORE_ROOTED_COPY_AUTO_PLAY', false);
+    console.log("autoPlay", autoPlay);
+
     return (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <div className="container-fluid my-4">
@@ -363,10 +366,11 @@ const RootedCopyExplorer = (props) => {
                     <div className="col-10 d-flex justify-content-start align-items-center">
                         <strong>File</strong><div className="badge text-bg-secondary mx-1">{props.index}</div><strong> out of </strong><div className="badge text-bg-secondary mx-1">{props.count}</div>
                         <code style={{fontSize: "1.2rem"}}>{props.filename}</code>
-                        <div className="mx-5">
+                        <div className="mx-5 btn-group">
                             <button
                                 type="button"
                                 className="btn btn-sm btn-outline-secondary"
+                                style={{minWidth: "3rem"}}
                                 onClick={() => {
                                     if (confirm()) {
                                         props.onChange && props.onChange({
@@ -377,6 +381,14 @@ const RootedCopyExplorer = (props) => {
                                 }}
                             >
                                 <i className={`fas fa-times`} />
+                            </button>
+                            <button
+                                type="button"
+                                className={`btn btn-sm btn-no-hover btn-${autoPlay ? '' : 'outline-'}primary`}
+                                style={{minWidth: "3rem"}}
+                                onClick={() => setAutoPlay(!autoPlay)}
+                            >
+                                <i className={`fas fa-play`} />
                             </button>
                         </div>
                     </div>
