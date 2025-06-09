@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+from itertools import islice, chain
 import typing as ty
 import mimetypes
 import os
@@ -70,6 +72,7 @@ from .framework import (
     read_k_fields,
 )
 from .management.commands.rc import get_spellings
+from .parser.python import serialize_dc
 from .utils import (
     unique,
     dissoc,
@@ -1589,6 +1592,39 @@ class RootedCopyExplorerBase(MainView):
             "navigate": reverse("rc-item", kwargs={"id": kwargs["id"], "index": 1}).replace("/api", ""),
         }
 
+
+def rotated(lst, start):
+    it = iter(lst)
+    next(islice(it, start, start), None)
+    return chain(it, islice(lst, start))
+
+
+def walk_and_search_non_covered_paths(node, items, parent_paths, cancelled_paths):
+    def f(node, path=""):
+        if path in items:  # if we consider
+            if path in parent_paths:
+                return None  # covered
+            elif path in cancelled_paths:
+                return None  # covered
+            else:
+                return path
+        if isinstance(node, dict):
+            for k, v in node.items():
+                if found := f(v, path=f"{path}.{k}".lstrip(".")):
+                    return found
+            else:
+                return None
+        elif isinstance(node, (list, tuple)):
+            for i, v in enumerate(node):
+                newPath = f"{path}.{i}".lstrip(".")
+                if found := f(v, path=newPath):
+                    return found
+            else:
+                return None
+        return None
+    return f(node)
+
+
 class RootedCopyExplorer(MainView):
     in_menu = False
     url_path = "/rc/<int:id>/<int:index>/"
@@ -1695,10 +1731,38 @@ class RootedCopyExplorer(MainView):
                 rc.save()
             if data.get("remove_all"):
                 rc.cancelled_items = rc.cancelled_items or {}
-                paths = rc.cancelled_items.get(filename, [])
                 rc.cancelled_items[filename] = list(
                     rc.items.get(filename, {}).keys()
                 )
                 rc.save()
 
-        return JsonResponse({"navigate": reverse("rc-item", kwargs=self.kwargs).replace("/api", "")})
+        success_url = reverse("rc-item", kwargs=self.kwargs).replace("/api", "")
+
+        if data["autoPlay"]:
+            rc.refresh_from_db()
+            # files — read-only — str — filenames list
+            # items — read-only — dict (keys) — filename -> existing item
+
+            # full_paths — filename -> \n-str — fully included files
+            # parent_paths — filename -> [path]
+            # cancelled_items — filename -> [item]
+            full_paths = rc.full_paths.split("\n")
+            files_split = rc.files.split("\n")
+            files_split_indexed = list(enumerate(files_split, 1))
+            for i, f in rotated(files_split_indexed, files_split.index(filename)):
+                if f in full_paths:
+                    continue  # whole file included
+
+                # rc.fs_path.rstrip("/") + "/" +
+                m = libcst.parse_module(open(f).read())
+                parsed = serialize_dc(m)
+
+                if found := walk_and_search_non_covered_paths(
+                    parsed, rc.items.get(f), (rc.parent_paths.get(f) or []), (rc.cancelled_items.get(f) or [])
+                ):
+                    success_url = reverse("rc-item", kwargs=self.kwargs | {"index": i}).replace("/api", "")
+                    current_items = list(rc.items.get(f).keys())
+                    print("f", f)
+                    success_url += "?" + urlencode({"item": current_items.index(found) + 1})
+
+        return JsonResponse({"navigate": success_url})

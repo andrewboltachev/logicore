@@ -324,6 +324,7 @@ const RootedCopyExplorer = (props) => {
         props.onChange && props.onChange({
             filename: props.filename,
             path,
+            autoPlay,
         });
     }
 
@@ -331,6 +332,7 @@ const RootedCopyExplorer = (props) => {
         props.onChange && props.onChange({
             filename: props.filename,
             full_path,
+            autoPlay,
         });
     }
 
@@ -376,6 +378,7 @@ const RootedCopyExplorer = (props) => {
                                         props.onChange && props.onChange({
                                             'filename': props.filename,
                                             'remove_all': true,
+                                            autoPlay,
                                         })
                                     }
                                 }}
@@ -387,6 +390,14 @@ const RootedCopyExplorer = (props) => {
                                 className={`btn btn-sm btn-no-hover btn-${autoPlay ? '' : 'outline-'}primary`}
                                 style={{minWidth: "3rem"}}
                                 onClick={() => setAutoPlay(!autoPlay)}
+                            >
+                                <i className={`fas fa-play`} />
+                            </button>
+                            <button
+                                type="button"
+                                className={`btn btn-sm btn-light`}
+                                style={{minWidth: "3rem"}}
+                                onClick={() => props.onChange && props.onChange({filename: props.filename, autoPlay})}
                             >
                                 <i className={`fas fa-play`} />
                             </button>
@@ -447,6 +458,7 @@ const RootedCopyExplorer = (props) => {
                                                 props.onChange && props.onChange({
                                                     filename: props.filename,
                                                     cancel: foundItem,
+                                                    autoPlay,
                                                 })
                                             }
                                         }}
@@ -462,6 +474,7 @@ const RootedCopyExplorer = (props) => {
                                             props.onChange && props.onChange({
                                                 filename: props.filename,
                                                 cancel: foundItem,
+                                                autoPlay,
                                             })
                                         }
                                     }}
