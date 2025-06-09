@@ -1765,8 +1765,8 @@ class RootedCopyExplorer(MainView):
                     continue  # whole file included
 
                 items = sort_rooted_copy_items(rc.items.get(f))
-                parent_paths = (rc.parent_paths.get(f) or [])
-                cancelled_items = (rc.cancelled_items.get(f) or [])
+                parent_paths = ((rc.parent_paths or {}).get(f) or [])
+                cancelled_items = ((rc.cancelled_items or {}).get(f) or [])
 
                 for item_index, item in enumerate(items.keys(), 1):
                     if item in cancelled_items:
