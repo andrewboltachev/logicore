@@ -1749,20 +1749,23 @@ class RootedCopyExplorer(MainView):
             full_paths = rc.full_paths.split("\n")
             files_split = rc.files.split("\n")
             files_split_indexed = list(enumerate(files_split, 1))
-            for i, f in rotated(files_split_indexed, files_split.index(filename)):
-                if f in full_paths:
+            for file_index, f in rotated(files_split_indexed, files_split.index(filename)):
+                if f.replace(rc.fs_path.rstrip("/") + "/", "") in full_paths:
                     continue  # whole file included
 
-                # rc.fs_path.rstrip("/") + "/" +
-                m = libcst.parse_module(open(f).read())
-                parsed = serialize_dc(m)
+                items = rc.items.get(f)
+                parent_paths = (rc.parent_paths.get(f) or [])
+                cancelled_items = (rc.cancelled_items.get(f) or [])
 
-                if found := walk_and_search_non_covered_paths(
-                    parsed, rc.items.get(f), (rc.parent_paths.get(f) or []), (rc.cancelled_items.get(f) or [])
-                ):
-                    success_url = reverse("rc-item", kwargs=self.kwargs | {"index": i}).replace("/api", "")
-                    current_items = list(rc.items.get(f).keys())
-                    print("f", f)
-                    success_url += "?" + urlencode({"item": current_items.index(found) + 1})
+                for item_index, item in enumerate(items.keys(), 1):
+                    if item in cancelled_items:
+                        continue
+                    for parent_path in parent_paths:
+                        if item.startswith(parent_path + "."):
+                            break
+                    else:
+                        success_url = reverse("rc-item", kwargs=self.kwargs | {"index": file_index}).replace("/api", "")
+                        success_url += "?" + urlencode({"item": item})
+                        return JsonResponse({"navigate": success_url})
 
         return JsonResponse({"navigate": success_url})

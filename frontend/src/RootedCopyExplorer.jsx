@@ -262,6 +262,18 @@ const RootedCopyExplorer = (props) => {
     // const [parentPath, setParentPath] = useState(null);
     const [hoveredParentPath, setHoveredParentPath] = useState(null);
 
+    const itemFromQSTimeoutRef = useRef(null);
+    useEffect(() => {
+        const itemFromQS = new URLSearchParams(window.location.search).get('item') || null;
+        itemFromQSTimeoutRef.current = setTimeout(() => {
+            setFoundItem(itemFromQS);
+        }, 50);
+
+        return () => {
+            if (itemFromQSTimeoutRef.current !== null) clearTimeout(itemFromQSTimeoutRef.current);
+        }
+    }, []);
+
     const foundItemTimeoutRef = useRef(null);
 
     useEffect(() => {
