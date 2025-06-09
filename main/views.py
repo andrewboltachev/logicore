@@ -1,3 +1,4 @@
+import re
 from urllib.parse import urlencode
 from itertools import islice, chain
 import typing as ty
@@ -1625,6 +1626,16 @@ def walk_and_search_non_covered_paths(node, items, parent_paths, cancelled_paths
     return f(node)
 
 
+def str_or_num(x):
+    if re.match(r"^\d+$", x):
+        return int(x)
+    return x
+
+
+def sort_rooted_copy_items(items):
+    return dict(sorted(items.items(), key=lambda kv: [str_or_num(c) for c in kv[0].split(".")]))
+
+
 class RootedCopyExplorer(MainView):
     in_menu = False
     url_path = "/rc/<int:id>/<int:index>/"
@@ -1684,7 +1695,7 @@ class RootedCopyExplorer(MainView):
             "serialized": serialized,
             "positions": positions,
             "code": code,
-            "foundItems": dict(sorted(rc.items[filename].items(), key=lambda kv: kv[0].split("."))),
+            "foundItems": sort_rooted_copy_items(rc.items[filename]),
             "parentPaths": (rc.parent_paths or {}).get(filename, []),
             "cancelledItems": (rc.cancelled_items or {}).get(filename, []),
             "availableFullPaths": availableFullPaths,
@@ -1753,7 +1764,7 @@ class RootedCopyExplorer(MainView):
                 if f.replace(rc.fs_path.rstrip("/") + "/", "") in full_paths:
                     continue  # whole file included
 
-                items = rc.items.get(f)
+                items = sort_rooted_copy_items(rc.items.get(f))
                 parent_paths = (rc.parent_paths.get(f) or [])
                 cancelled_items = (rc.cancelled_items.get(f) or [])
 
