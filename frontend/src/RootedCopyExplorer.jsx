@@ -296,11 +296,25 @@ const RootedCopyExplorer = (props) => {
     }, [code]);
 
     const { runModal } = useContext(ModalContext)
-    const t = _.identity
+    const t = _.identity;
+
+    const startsWithParentPath = (k, pPath) => {
+        if (!pPath) return false;
+        // let chunk = "";
+        // for (const p of pPath.split(".")) {
+        //     chunk += ("." + p);
+        //     console.log('cmp', chunk, "." + k);
+        //     if (chunk === "." + k) return true;
+        // }
+        // return false;
+        if (pPath === k) return true;
+        if (k.startsWith(pPath + ".")) return true;
+        return false;
+    }
 
     const isCovered = (k) => {
         for (const child of props.parentPaths) {
-            if (k.startsWith(child)) return child;
+            if (startsWithParentPath(k, child)) return child;
         }
         return null;
     }
@@ -366,7 +380,6 @@ const RootedCopyExplorer = (props) => {
     }
 
     const [autoPlay, setAutoPlay] = useLocalStorage('LOGICORE_ROOTED_COPY_AUTO_PLAY', false);
-    console.log("autoPlay", autoPlay);
 
     return (
         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -508,8 +521,8 @@ const RootedCopyExplorer = (props) => {
                                                 setHoveredParentPath(null);
                                             }}
                                             style={{overflowWrap: 'anywhere', cursor: 'pointer'}}
-                                            className={`list-group-item ${(k === parentPath) ? "active" : (k.startsWith(parentPath) ? 'text-decoration-line-through' : '')} ${(k === hoveredParentPath) ? "active" : ''}`}
-                                            onClick={() => !(k.startsWith(parentPath) && k !== parentPath) && setParentPath(k)}>{k}</li>
+                                            className={`list-group-item ${(k === parentPath) ? "active" : (startsWithParentPath(k, parentPath) ? 'text-decoration-line-through' : '')} ${(k === hoveredParentPath) ? "active" : ''}`}
+                                            onClick={() => !(startsWithParentPath(k, parentPath) && k !== parentPath) && setParentPath(k)}>{k}</li>
                                     );
                                 })}
                             </ul>
