@@ -277,23 +277,21 @@ class Command(BaseCommand):
                 current_child_paths = rc.items.get(python_file, {})
                 current_cancelled_child_paths = rc.cancelled_items.get(python_file, [])
 
-                def handler(parent_path, node):
-                    the_map = {
-                        current_child_path.replace(f"{parent_path}.", "") + ".value": item  # TODO
-                        for current_child_path, item in current_child_paths.items()
-                        if (
-                            current_child_path.startswith(f"{parent_path}.")
-                            and current_child_path not in current_cancelled_child_paths
-                        )
-                    }
-                    original = node
-                    def handler2(node, child_path):
-                        if v := the_map.get(child_path):
-                            outer_node = Variable(".".join(child_path.split(".")[:-1])).resolve(original)
-                            return replacer(node, outer_node=outer_node, **v)
-                        return node
-                    return walk2(node, handler2)
-                processed = walk3(parsed, handler)
+                the_map = {
+                    current_child_path: item
+                    for current_child_path, item in current_child_paths.items()
+                    if (
+                        current_child_path not in current_cancelled_child_paths
+                    )
+                }
+                original = parsed
+                def handler2(node, child_path):  # с value
+                    child_path_minus_value = ".".join(child_path.split(".")[:-1])  # без value
+                    if v := the_map.get(child_path_minus_value):  # без value
+                        outer_node = Variable(child_path_minus_value).resolve(original)
+                        node = replacer(node, outer_node=outer_node, **v)
+                    return node
+                processed = walk2(parsed, handler2)
                 # end
 
                 result = unserialize_dc(processed).code
