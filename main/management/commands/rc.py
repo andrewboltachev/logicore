@@ -13,8 +13,14 @@ import libcst
 from django.core.management.base import BaseCommand, CommandError
 
 from libcst_to_react.get_me_nodes import read_file
+from main.git_utils import get_git_info_subprocess
 from main.models import RootedCopy
 from main.parser.python import serialize_dc
+
+
+import subprocess
+import os
+
 
 
 def visit(node, f, path=""):
@@ -124,6 +130,11 @@ class Command(BaseCommand):
 
         result = {}
 
+        git_params = get_git_info_subprocess(fs_path)
+        if git_params['is_dirty']:
+            print("Git is dirty, cannot perform work")
+            sys.exit(1)
+
         for python_file in tqdm.tqdm(list(matching_python_files(fs_path, name_from))):
             code = read_file(python_file)
             if options["has"] and options["has"] not in code:
@@ -208,6 +219,7 @@ class Command(BaseCommand):
             rooted_copy.name_to = ""
             rooted_copy.files = "\n".join(list(result.keys()))
             rooted_copy.items = result
+            rooted_copy.git_params = git_params
             rooted_copy.save()
 
             self.stdout.write(self.style.SUCCESS(

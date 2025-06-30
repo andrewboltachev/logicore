@@ -154,6 +154,7 @@ class RootedCopy(models.Model):
     items = models.JSONField(default=None, blank=True, null=True)
     parent_paths = models.JSONField(default=None, blank=True, null=True)
     cancelled_items = models.JSONField(default=None, blank=True, null=True)
+    git_params = models.JSONField(default=None, blank=True, null=True)
 
     def __str__(self):
         return f"RootedCopy: {self.name_from} - {self.name_to}"

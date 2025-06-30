@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.template import Variable
 
 from libcst_to_react.get_me_nodes import read_file
+from main.git_utils import get_git_info_subprocess
 from main.models import RootedCopy
 from main.parser.python import serialize_dc, unserialize_dc
 
@@ -256,6 +257,20 @@ class Command(BaseCommand):
         except RootedCopy.DoesNotExist:
             sys.stderr.write(f'RootedCopy {options["id"]} does not exist.\n')
             sys.exit(1)
+
+        git_params = get_git_info_subprocess(rc.fs_path)
+        if git_params['is_dirty']:
+            sys.stderr.write(f"Git is dirty, cannot perform work")
+            sys.exit(1)
+
+        if saved_git_params := rc.git_params:
+            if saved_git_params["commit_hash"] != git_params["commit_hash"]:
+                sys.stderr.write(
+                    f"Commit hash mismatch: Saved: {saved_git_params['commit_hash']} != Git: {git_params['commit_hash']}.\n"
+                )
+                sys.stderr.write(f"Saved: {git_params}")
+        else:
+            sys.stderr.write(f"Warning: no git params, proceeding without check\n")
 
         if "-" not in rc.name_from and "-" in options["name_to"]:
             replacer = byone_replacer(rc.name_from, options['name_to'])
