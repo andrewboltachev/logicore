@@ -259,6 +259,7 @@ class Command(BaseCommand):
             sys.exit(1)
 
         rc.cancelled_items = rc.cancelled_items or {}
+        rc.parent_paths = rc.parent_paths or {}
 
         git_params = get_git_info_subprocess(rc.fs_path)
         if git_params['is_dirty']:
