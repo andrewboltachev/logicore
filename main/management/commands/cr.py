@@ -268,7 +268,7 @@ class Command(BaseCommand):
                 sys.stderr.write(
                     f"Commit hash mismatch: Saved: {saved_git_params['commit_hash']} != Git: {git_params['commit_hash']}.\n"
                 )
-                sys.stderr.write(f"Saved: {git_params}")
+                sys.stderr.write(f"Saved: {rc.git_params}")
                 sys.exit(1)
         else:
             sys.stderr.write(f"Warning: no git params, proceeding without check\n")
