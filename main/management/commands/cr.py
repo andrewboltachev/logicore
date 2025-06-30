@@ -258,6 +258,8 @@ class Command(BaseCommand):
             sys.stderr.write(f'RootedCopy {options["id"]} does not exist.\n')
             sys.exit(1)
 
+        rc.cancelled_items = rc.cancelled_items or {}
+
         git_params = get_git_info_subprocess(rc.fs_path)
         if git_params['is_dirty']:
             sys.stderr.write(f"Git is dirty, cannot perform work")
@@ -294,9 +296,8 @@ class Command(BaseCommand):
             m = libcst.parse_module(code)
             parsed = serialize_dc(m)
 
-            if included_fully(filename.replace(rc.fs_path, "")):
-                # TODO... you know it
-                short_filename = filename.replace(rc.fs_path, "")
+            short_filename = filename[len(rc.fs_path):]
+            if included_fully(short_filename):
                 new_filename_short = replacer(short_filename)
                 new_filename = (Path(rc.fs_path) / Path(new_filename_short)).as_posix()
                 print(f"Will copy {short_filename} to {new_filename_short}")
@@ -337,13 +338,14 @@ class Command(BaseCommand):
                 def handler(parent_path, node):
                     if parent_path in current_parent_paths:
                         the_map = {
-                            current_child_path.replace(f"{parent_path}.", "") + ".value": item  # TODO
+                            current_child_path[len(parent_path) + 1:] + ".value": item  # TODO
                             for current_child_path, item in current_child_paths.items()
                             if (
                                 current_child_path.startswith(f"{parent_path}.")
                                 and current_child_path not in current_cancelled_child_paths
                             )
                         }
+                        print('the_map', the_map)
                         original = node
                         def handler2(node, child_path):
                             if v := the_map.get(child_path):
