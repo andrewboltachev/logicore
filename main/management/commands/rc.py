@@ -131,7 +131,7 @@ class Command(BaseCommand):
         result = {}
 
         git_params = get_git_info_subprocess(fs_path)
-        if git_params['is_dirty']:
+        if git_params and git_params['is_dirty']:  # FIXME why "git_params and"?
             print("Git is dirty, cannot perform work")
             sys.exit(1)
 

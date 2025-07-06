@@ -439,20 +439,22 @@ const RootedCopyExplorer = (props) => {
                 <div className='row align-items-stretch flex-grow-1' style={{ overflow: 'hidden' }}>
                     <div className='col-3 d-flex flex-column'>
                         <h5>Select Node</h5>
-                        <ul className="list-group">
-                            {parentPath}
-                            {Object.entries(foundItems).map(([k, v], i) => {
-                                return (
-                                    <li
-                                        key={k}
-                                        style={{overflow: 'hidden', cursor: 'pointer', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
-                                        className={`list-group-item ${(k === foundItem) ? "active" : ''}`}
-                                        onClick={() => setFoundItem(k)}>
-                                        <i className={`fas ${isCancelled(k) ? 'fa-times text-danger' : (!!isFullCovered(k) ? 'fa-check text-success' : 'fa-dot-circle text-warning')}`} />{"\u00a0"}{k}
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                        <div style={{overflow: 'auto', maxHeight: "80vh"}}>
+                            <ul className="list-group">
+                                {parentPath}
+                                {Object.entries(foundItems).map(([k, v], i) => {
+                                    return (
+                                        <li
+                                            key={k}
+                                            style={{overflow: 'hidden', cursor: 'pointer', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
+                                            className={`list-group-item ${(k === foundItem) ? "active" : ''}`}
+                                            onClick={() => setFoundItem(k)}>
+                                            <i className={`fas ${isCancelled(k) ? 'fa-times text-danger' : (!!isFullCovered(k) ? 'fa-check text-success' : 'fa-dot-circle text-warning')}`} />{"\u00a0"}{k}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
                     </div>
                     <div className='col-3 d-flex flex-column'>
                         {!!props.availableFullPaths?.length && <div className="mb-4">
