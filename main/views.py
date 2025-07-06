@@ -1740,6 +1740,14 @@ class RootedCopyExplorer(MainView):
                         del rc.parent_paths[filename]
                 rc.full_paths = "\n".join(paths)
                 rc.save()
+            if path := data.get("exclude_parent_path"):
+                rc.cancelled_items = rc.cancelled_items or {}
+                if not filename in rc.cancelled_items:
+                    rc.cancelled_items[filename] = []
+                for k in rc.items.get(filename, {}).keys():
+                    if (k + ".").startswith(path):
+                        rc.cancelled_items[filename].append(k)
+                rc.save()
             if data.get("remove_all"):
                 rc.cancelled_items = rc.cancelled_items or {}
                 rc.cancelled_items[filename] = list(

@@ -362,6 +362,14 @@ const RootedCopyExplorer = (props) => {
         });
     }
 
+    const excludeParentPath = (full_path) => {
+        props.onChange && props.onChange({
+            filename: props.filename,
+            exclude_parent_path: full_path,
+            autoPlay,
+        });
+    }
+
     const isCancelled = (k) => props.cancelledItems.includes(k);
 
     let currentFullPath = null;
@@ -522,9 +530,23 @@ const RootedCopyExplorer = (props) => {
                                             onMouseLeave={(e) => {
                                                 setHoveredParentPath(null);
                                             }}
-                                            style={{overflowWrap: 'anywhere', cursor: 'pointer'}}
+                                            style={{overflowWrap: 'anywhere', cursor: 'pointer', position: "relative"}}
                                             className={`list-group-item ${(k === parentPath) ? "active" : (startsWithParentPath(k, parentPath) ? 'text-decoration-line-through' : '')} ${(k === hoveredParentPath) ? "active" : ''}`}
-                                            onClick={() => !(startsWithParentPath(k, parentPath) && k !== parentPath) && setParentPath(k)}>{k}</li>
+                                            onClick={() => !(startsWithParentPath(k, parentPath) && k !== parentPath) && setParentPath(k)}
+                                        >
+                                            {k}
+                                            <button
+                                                type={'button'}
+                                                style={{position: "absolute", top: 0, right: -20, left: "100%", bottom: 0}}
+                                                onClick={(e) => {
+                                                    // TODO
+                                                    excludeParentPath(k);
+                                                }}
+                                                className={`btn btn-sm ${!isCancelled(k) ? 'btn-outline-danger' : 'btn-outline-light'}`}
+                                            >
+                                                &times;
+                                            </button>
+                                        </li>
                                     );
                                 })}
                             </ul>
