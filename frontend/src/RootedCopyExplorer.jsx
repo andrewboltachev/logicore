@@ -539,8 +539,10 @@ const RootedCopyExplorer = (props) => {
                                                 type={'button'}
                                                 style={{position: "absolute", top: 0, right: -20, left: "100%", bottom: 0}}
                                                 onClick={(e) => {
+                                                    e.stopPropagation();
                                                     // TODO
                                                     excludeParentPath(k);
+                                                    return false;
                                                 }}
                                                 className={`btn btn-sm ${!isCancelled(k) ? 'btn-outline-danger' : 'btn-outline-light'}`}
                                             >

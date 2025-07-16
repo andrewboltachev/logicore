@@ -297,11 +297,11 @@ class Command(BaseCommand):
             m = libcst.parse_module(code)
             parsed = serialize_dc(m)
 
-            short_filename = filename[len(rc.fs_path):]
+            short_filename = filename[len(rc.fs_path):].lstrip("/")
             if included_fully(short_filename):
                 new_filename_short = replacer(short_filename)
                 new_filename = (Path(rc.fs_path) / Path(new_filename_short)).as_posix()
-                print(f"Will copy {short_filename} to {new_filename_short}")
+                print(f"Will copy {filename} to {new_filename}")
 
                 # begin
                 # current_parent_paths = rc.parent_paths.get(python_file, [])
