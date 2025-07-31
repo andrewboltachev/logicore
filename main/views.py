@@ -1731,6 +1731,7 @@ class RootedCopyExplorer(MainView):
                 rc.cancelled_items[filename] = paths
                 rc.save()
             if path := data.get("full_path"):
+                path = path.lstrip("/")  # TODO why needed?
                 paths = [x for x in (rc.full_paths or "").split("\n") if x]
                 if path in paths:
                     paths = [p for p in paths if p != path]
