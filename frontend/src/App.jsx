@@ -1564,7 +1564,7 @@ const FiddleWrapper = ({ result, onChange }) => {
             </Nav>
             <Nav className='me-5' style={{display: 'inline-block  '}}>
               <span>Logged in as </span>
-              {result?.user?.username || <span className='text-danger'>Anonymous</span>}
+              {result?.user?.username || <a href={`/admin/login/?next=${window.location.pathname}`} className='text-danger'>Anonymous</a>}
             </Nav>
             <Nav>
               <NavDropdown
