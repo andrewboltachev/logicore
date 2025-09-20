@@ -1562,8 +1562,8 @@ const FiddleWrapper = ({ result, onChange }) => {
               {result?.owner && <>Owner:<br /></>}
               {result?.owner}
             </Nav>
-            <Nav className='me-5'>
-              Logged in as<br />
+            <Nav className='me-5' style={{display: 'inline-block  '}}>
+              <span>Logged in as </span>
               {result?.user?.username || <span className='text-danger'>Anonymous</span>}
             </Nav>
             <Nav>

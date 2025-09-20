@@ -26,7 +26,7 @@ from django.utils import timezone
 
 
 from django.conf import settings
-from django.db import models as db_models
+from django.db import models as db_models, transaction
 from django.contrib.postgres.aggregates import ArrayAgg, StringAgg
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate, login, logout
@@ -148,7 +148,7 @@ def get_home_redirect(request):
     suffix = ""
     if request.LANGUAGE_CODE != "en":
         suffix = f"{request.LANGUAGE_CODE}/"
-    return "https://andrewboltachev.site/" + suffix
+    return "/" + suffix + "toolbox/"
 
 
 class HomeRedirectView(View):
@@ -1702,6 +1702,7 @@ class RootedCopyExplorer(MainView):
             "fullPaths": [x for x in (rc.full_paths or "").split("\n") if x],
         }
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body)["data"]
         filename = data["filename"]
