@@ -30,7 +30,8 @@ export default [
       ...pluginReactHooks.configs.recommended.rules,
       ...{
         "react/prop-types": "off",
-        "no-unused-vars": "off",
+        "no-unused-vars": "warn",
+        "no-undef": "error",
       },
     },
   },

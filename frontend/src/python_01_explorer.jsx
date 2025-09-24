@@ -6,10 +6,21 @@ import { ModalContext } from './runModal'
 import _ from 'lodash'
 import { useThrottle, useLocalStorage } from '@uidotdev/usehooks'
 
+import { ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+
 import hljs from 'highlight.js/lib/core'
 import python from 'highlight.js/lib/languages/python'
 import { axios } from './imports.jsx'
 hljs.registerLanguage('python', python)
+
+
+const initialNodes = [
+  { id: 'n1', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },
+  { id: 'n2', position: { x: 0, y: 100 }, data: { label: 'Node 2' } },
+];
+const initialEdges = [{ id: 'n1-n2', source: 'n1', target: 'n2' }];
+
 
 function getRectParams (r) {
   const { top, left, width, height } = { ...r.toJSON() }
@@ -237,20 +248,46 @@ const Node = ({value, level= 0, path = null, expanded, setExpanded, selected, se
   }
 }
 
-const Python01Explorer = () => {
-  // Основной
-  const [code, setCode] = useLocalStorage('PYTHON_01_EXPLORER_CODE', '')
-  // Производные
-  const [tree, setTree] = useState(null)
+const FlowSelector = () => {
+  const [nodes, setNodes] = useState(initialNodes);
+  const [edges, setEdges] = useState(initialEdges);
+
+  const onNodesChange = useCallback(
+      (changes) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
+      [],
+  );
+  const onEdgesChange = useCallback(
+      (changes) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
+      [],
+  );
+  const onConnect = useCallback(
+      (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
+      [],
+  );
+
+  return (
+      <div style={{ width: '100%', height: '700px',
+        border: 'var(--bs-border-width) solid var(--bs-border-color)',
+        borderRadius: 'var(--bs-border-radius)' }}>
+        <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            fitView
+        />
+      </div>
+  );
+}
+
+const Code01Wrapper = ({ code, setExpanded }) => {
   const [positions, setPositions] = useState(null)
   const [reversedPositions, setReversedPositions] = useState(null)
-  const [expanded, setExpanded] = useState({})
-  const [selected, setSelected] = useState(null)
 
   const onPositionChange = useCallback((newPosition) => {
     // console.log('try onPositionChange', {positions, reversedPositions, newPosition})
-    if (!positions) return
-    if (!reversedPositions) return
+    if (!reversedPositions) return;
     const newPath = (reversedPositions[newPosition.y] || {})[newPosition.x]
     if (!newPath) {
       setExpanded({})
@@ -268,6 +305,9 @@ const Python01Explorer = () => {
     setSelected(newPath)
   }, [positions, reversedPositions]);
 
+  const [selected, setSelected] = useState(null)
+  const [tree, setTree] = useState(null)
+
   useEffect(() => {
     setTree(null)
     setPositions(null)
@@ -277,16 +317,32 @@ const Python01Explorer = () => {
 
     (async () => {
       const resp = await axios.post(
-        '/python-to-match-result/',
-        {
-          code
-        }
+          '/python-to-match-result/',
+          {
+            code
+          }
       );
       setTree(resp.data.value)
       setPositions(resp.data.positions)
       setReversedPositions(resp.data.positions_reversed)
     })()
-  }, [code])
+  }, [code, setExpanded])
+
+  return (<>
+    <code style={{whiteSpace: 'normal'}}>
+      {selected ? selected.split('.').join(' ') : null}
+      {(selected === '') && '(root)'}
+      {selected === null && '(not selected)'}
+    </code>
+    <CodeDisplay code={code} onPositionChange={onPositionChange} selectedPosition={positions?.[selected]} selected={selected} />
+  </>)
+}
+
+const Python01Explorer = () => {
+  // Основной
+  const [code, setCode] = useLocalStorage('PYTHON_01_EXPLORER_CODE', '')
+  // Производные
+  const [expanded, setExpanded] = useState({})
 
   const { runModal } = useContext(ModalContext)
   const t = _.identity
@@ -295,21 +351,9 @@ const Python01Explorer = () => {
       <div className='row align-items-stretch flex-grow-1' style={{ overflow: 'hidden' }}>
         <div className='col d-flex flex-column'>
           <h5>
-            Grammar (Pseudo-Python)!{' '}
+            Structure
           </h5>
-          <code style={{whiteSpace: 'normal'}}>
-            {selected ? selected.split('.').join(' ') : null}
-            {(selected === '') && '(root)'}
-            {selected === null && '(not selected)'}
-          </code>
-          <div
-            style={{whiteSpace: 'pre', overflow: "hidden"}}
-            className='form-control flex-grow-1 position-relative'>
-            <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto'}}>
-              {/*JSON.stringify(tree, null, 2)*/}
-              {tree ? <Node value={tree} expanded={expanded} setExpanded={setExpanded} selected={selected} setSelected={setSelected} /> : 'Loading...'}
-            </div>
-          </div>
+          <FlowSelector />
         </div>
         <div className='col d-flex flex-column' style={{ overflow: 'hidden' }}>
           <div style={{ overflow: 'hidden' }}>
@@ -346,7 +390,7 @@ const Python01Explorer = () => {
               </button>
             </h5>
           </div>
-          <CodeDisplay code={code} onPositionChange={onPositionChange} selectedPosition={positions?.[selected]} selected={selected} />
+          <Code01Wrapper code={code} setExpanded={setExpanded} />
         </div>
       </div>
     </div>

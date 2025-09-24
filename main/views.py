@@ -1702,7 +1702,6 @@ class RootedCopyExplorer(MainView):
             "fullPaths": [x for x in (rc.full_paths or "").split("\n") if x],
         }
 
-    @transaction.atomic
     def post(self, request, *args, **kwargs):
         data = json.loads(request.body)["data"]
         filename = data["filename"]
