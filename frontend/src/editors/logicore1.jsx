@@ -88,6 +88,17 @@ const isStrictNumberStr = (s) => {
 }
 
 const refactorAppT = (node) => {
+  /*
+  refactorAppT({type: 'AppT', param: 'a', target: {type: 'AppT', target: 'foo', param: 'b'}})
+  {
+    "type": "AppT1",
+    "target": "foo",
+    "params": [
+        "b",
+        "a"
+    ]
+  }
+   */
   if (!!node && !Array.isArray(node) && typeof node === 'object') {
     if (node.type === 'AppT') {
       const params = []
