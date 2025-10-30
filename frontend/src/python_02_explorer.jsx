@@ -12,6 +12,9 @@ import '@xyflow/react/dist/style.css';
 import hljs from 'highlight.js/lib/core'
 import python from 'highlight.js/lib/languages/python'
 import { axios } from './imports.jsx'
+import {SortableItem} from "./components/SortableItem.jsx";
+import Sortable from "./components/Sortable.jsx";
+import {DragNDrop} from "./components/DragNDrop.jsx";
 hljs.registerLanguage('python', python)
 
 
@@ -321,13 +324,17 @@ const Python02Explorer = () => {
             <h5>
               Structure
             </h5>
-            <div className="form-control flex-grow-1">wow2</div>
+            <div className="form-control flex-grow-1">
+              <Sortable />
+            </div>
           </div>
           <div className='col d-flex flex-column flex-grow-1'>
             <h5>
               Structure
             </h5>
-            <div className="form-control flex-grow-1">wow2 </div>
+            <div className="form-control flex-grow-1">
+              <DragNDrop />
+            </div>
           </div>
         </div>
         <div className='col d-flex flex-column flex-grow-1 gap-4'>
