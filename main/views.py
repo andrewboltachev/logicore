@@ -1487,6 +1487,20 @@ class Python01Explorer(MainView):
         }
 
 
+class Python02Explorer(MainView):
+    in_menu = False
+    url_path = "/python02explorer/"
+    url_name = "python02explorer"
+    title = "Python 02 — explorer"
+    TEMPLATE = "Python02Explorer"
+    WRAPPER = "FiddleWrapper"
+
+    def get_data(self, request, *args, **kwargs):
+        return {
+            "foo": "bar",
+        }
+
+
 @csrf_exempt
 def python_to_describe_result(request, *args, **kwargs):
     import libcst

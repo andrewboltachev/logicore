@@ -96,6 +96,7 @@ import UI1 from './editors/ui1'
 import hljs from 'highlight.js/lib/core'
 import typescript from 'highlight.js/lib/languages/typescript'
 import 'highlight.js/styles/github.css'
+import Python02Explorer from "./python_02_explorer.jsx";
 hljs.registerLanguage('typescript', typescript)
 
 const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url)
@@ -1504,6 +1505,7 @@ const mainComponents = {
   Fiddle,
   // Fiddle end
   Python01Explorer,
+  Python02Explorer,
   RootedCopyExplorer,
 }
 
@@ -1547,6 +1549,7 @@ const FiddleWrapper = ({ result, onChange }) => {
                 <Trans>Mine</Trans>
               </Link>
               <NavDropdown title='Python series' id='basic-nav-dropdown'>
+                <NavDropdown.Item href='/python02explorer/'>02 Explorer</NavDropdown.Item>
                 <NavDropdown.Item href='/python01explorer/'>01 Explorer</NavDropdown.Item>
                 {/* <NavDropdown.Item href="#action/3.2">
                   Another action
