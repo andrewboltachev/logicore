@@ -18,7 +18,7 @@ export function SortableItem(props) {
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <button type="button" className="btn btn-outline-primary">{JSON.stringify(style)}</button>
+            <button type="button" className="btn btn-outline-primary">{props?.id}</button>
         </div>
     );
 }

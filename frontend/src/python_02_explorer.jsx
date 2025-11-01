@@ -320,7 +320,7 @@ const Python02Explorer = () => {
     <div className='container-fluid flex-grow-1 d-flex py-3' style={{ overflow: 'hidden' }}>
       <div className='row align-items-stretch flex-grow-1' style={{ overflow: 'hidden' }}>
         <div className='col d-flex flex-column flex-grow-1 gap-4'>
-          <div className='col d-flex flex-column flex-grow-1'>
+          <div className='col d-flex flex-column flex-grow-1 flex-shrink-0'>
             <h5>
               Structure
             </h5>
@@ -328,11 +328,11 @@ const Python02Explorer = () => {
               <Sortable />
             </div>
           </div>
-          <div className='col d-flex flex-column flex-grow-1'>
+          <div className='col d-flex flex-column flex-grow-1 flex-shrink-0'>
             <h5>
               Structure
             </h5>
-            <div className="form-control flex-grow-1">
+            <div className="form-control flex-grow-1 overflow-auto">
               <DragNDrop />
             </div>
           </div>

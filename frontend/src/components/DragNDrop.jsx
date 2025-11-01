@@ -11,12 +11,17 @@ export function DragNDrop(props) {
     );
 
     return (
-        <DndContext onDragEnd={handleDragEnd}>
-            {!isDropped ? draggableMarkup : null}
-            <Droppable>
-                {isDropped ? draggableMarkup : 'Drop here'}
-            </Droppable>
-        </DndContext>
+        <div>
+            <button type="button" className="btn btn-outline-danger" onClick={() => setIsDropped(false)}>Reset</button>
+            <DndContext onDragEnd={handleDragEnd}>
+                {!isDropped ? draggableMarkup : null}
+                <button type="button" className="btn btn-outline-dark" onClick={() => {setIsDropped(true)}}>After</button>
+                <div style={{height: '700px', backgroundColor: 'var(--bs-light)'}}  />
+                <Droppable>
+                    {isDropped ? draggableMarkup : 'Drop here'}
+                </Droppable>
+            </DndContext>
+        </div>
     );
 
     function handleDragEnd(event) {

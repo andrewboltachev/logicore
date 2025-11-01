@@ -16,6 +16,81 @@ import {
 
 import {SortableItem} from './SortableItem';
 
+const grammar1 = {
+    "tag": "MatchObjectOnly",
+    "contents": {
+        "cases": {
+            "tag": "MatchArray",
+            "contents": {
+                "tag": "MatchObjectOnly",
+                "contents": {
+                    "body": {
+                        "tag": "MatchObjectOnly",
+                        "contents": {
+                            "type": {
+                                "tag": "MatchStringExact",
+                                "contents": "IndentedBlock"
+                            },
+                            "body": {
+                                "tag": "MatchAny"
+                            }
+                        }
+                    },
+                    "guard": {
+                        "tag": "MatchNull"
+                    },
+                    "pattern": {
+                        "tag": "MatchObjectOnly",
+                        "contents": {
+                            "type": {
+                                "tag": "MatchStringExact",
+                                "contents": "MatchValue"
+                            },
+                            "value": {
+                                "tag": "MatchObjectOnly",
+                                "contents": {
+                                    "type": {
+                                        "tag": "MatchStringExact",
+                                        "contents": "SimpleString"
+                                    },
+                                    "value": {
+                                        "tag": "MatchStringAny"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "type": {
+                        "tag": "MatchStringExact",
+                        "contents": "MatchCase"
+                    }
+                }
+            }
+        },
+        "subject": {
+            "tag": "MatchObjectOnly",
+            "contents": {
+                "type": {
+                    "tag": "MatchStringExact",
+                    "contents": "Name"
+                },
+                "value": {
+                    "tag": "MatchStringExact",
+                    "contents": "__o"
+                }
+            }
+        },
+        "type": {
+            "tag": "MatchStringExact",
+            "contents": "Match"
+        }
+    }
+};
+
+const contentsKinds = {
+
+}
+
 function Sortable() {
     const [items, setItems] = useState([1, 2, 3]);
     const sensors = useSensors(
