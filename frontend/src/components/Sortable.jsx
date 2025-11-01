@@ -1,4 +1,6 @@
 import React, {useState} from 'react';
+import './Sortable.scss';
+
 import {
     DndContext,
     closestCenter,
@@ -100,7 +102,7 @@ function Sortable() {
         })
     );
 
-    return (
+    return (<div className="grammar-tree">
         <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -110,10 +112,10 @@ function Sortable() {
                 items={items}
                 strategy={verticalListSortingStrategy}
             >
-                {items.map(id => <SortableItem key={id} id={id} />)}
+                {items.map((id, i) => <SortableItem odd={i % 2 === 0} key={id} id={id} />)}
             </SortableContext>
         </DndContext>
-    );
+    </div>);
 
     function handleDragEnd(event) {
         const {active, over} = event;

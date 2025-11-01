@@ -1,0 +1,11 @@
+$scale: 1.5;
+
+.grammar-tree {
+  font-family: "Noto Sans Mono", "DejaVu Sans Mono", monospace;
+  font-size: 11px * $scale;
+  code {
+    color: rgb(142 0 75 / 100%);
+    line-height: 1.36;
+    padding: 1px * $scale 14px * $scale;
+  }
+}

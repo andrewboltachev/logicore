@@ -16,9 +16,13 @@ export function SortableItem(props) {
         transition,
     };
 
+    delete attributes.tabIndex;
+
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <button type="button" className="btn btn-outline-primary">{props?.id}</button>
+            <code style={{
+                display: "block"
+            }} className={props.odd ? 'bg-secondary-subtle' : ''}>{props?.id}</code>
         </div>
     );
 }
