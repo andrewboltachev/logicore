@@ -12,9 +12,12 @@ import '@xyflow/react/dist/style.css';
 import hljs from 'highlight.js/lib/core'
 import python from 'highlight.js/lib/languages/python'
 import { axios } from './imports.jsx'
-import {SortableItem} from "./components/SortableItem.jsx";
-import Sortable from "./components/Sortable.jsx";
-import {DragNDrop} from "./components/DragNDrop.jsx";
+import Sortable from "./components/sortable/Sortable.jsx";
+import {DragNDrop} from "./components/draggable/DragNDrop.jsx";
+// import {tree} from "d3-hierarchy";
+import matcher_grammar from "./examples/matcher_grammar.json";
+import {GrammarTrie} from "./components/grammar-trie/GrammarTrie";
+
 hljs.registerLanguage('python', python)
 
 
@@ -325,7 +328,7 @@ const Python02Explorer = () => {
               Structure
             </h5>
             <div className="form-control flex-grow-1">
-              <Sortable />
+              <GrammarTrie data={matcher_grammar} />
             </div>
           </div>
           <div className='col d-flex flex-column flex-grow-1 flex-shrink-0'>
@@ -333,6 +336,7 @@ const Python02Explorer = () => {
               Structure
             </h5>
             <div className="form-control flex-grow-1 overflow-auto">
+              <Sortable />
               <DragNDrop />
             </div>
           </div>
