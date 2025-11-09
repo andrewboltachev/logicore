@@ -56,6 +56,12 @@ class MatchAny(Node):
         return value, None
 
     def backwards(self, *, result, payload, path=None):
+        if payload is not None:
+            raise self._error(
+                f"Payload must be null",
+                path=path,
+                payload=payload
+            )
         return result
 
     def to_funnel(self, *, value, path=None):
@@ -191,6 +197,148 @@ class MatchObjectFull(Node):
                 path,
                 extra_keys=keys
             ) from None
+
+
+@dataclass
+class MatchArrayFull(Node):
+    item: Node
+
+    def is_final(self):
+        return False
+
+    def forwards(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_type(path, value)
+        result = []
+        payload = []
+        for i, v in enumerate(value):
+            try:
+                result_item, payload_item = self.item.forwards(
+                    value=v,
+                    path=path + [i]
+                )
+                result.append(result_item)
+                payload.append(payload_item)
+            except MatchError as e:
+                raise self._error(
+                    f"Element at index didn't match: {i}",
+                    path,
+                    index=i
+                ) from e
+        if self.item.is_final():
+            result = len(result)  # Optimization
+        return result, payload
+
+    def backwards(self, *, result, payload, path=None):
+        if not path:
+            path = []
+        if not payload:
+            payload = []
+        if self.item.is_final():
+            if not isinstance(result, int):
+                raise self._error(
+                    f"Result must be integer",
+                    path,
+                )
+            result = [None] * result
+        value = []
+        for i, result_item in enumerate(result):
+            try:
+                payload_item = payload[i]
+            except IndexError:
+                payload_item = None
+            value.append(self.item.backwards(
+                result=result_item, payload=payload_item, path=path + [i]
+            ))
+        return value
+
+    def _check_type(self, path, value):
+        if type(value) != list:
+            raise self._error(f"Not a list", path, value=value) from None
+
+    def to_funnel(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_type(path, value)
+        for i, v in enumerate(value):
+            try:
+                yield from self.item.to_funnel(
+                    value=v,
+                    path=path + [i]
+                )
+            except MatchError as e:
+                raise self._error(
+                    f"Element at index didn't match: {i}",
+                    path,
+                    index=i
+                ) from e
+
+
+@dataclass
+class MatchNil(Node):
+    def is_final(self):
+        return True
+
+    def forwards(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_value(path, value)
+        return None, None
+
+    def backwards(self, *, result, payload, path=None):
+        if not path:
+            path = []
+        return []
+
+    def _check_value(self, path, value):
+        if value != []:
+            raise self._error(f"Not an empty list", path, value=value) from None
+
+    def to_funnel(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_value(path, value)
+        yield from []
+
+
+@dataclass
+class MatchCons(Node):
+    head: Node
+    tail: Node
+
+    def is_final(self):
+        return self.head.is_final() and self.tail.is_final()
+
+    def forwards(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_value(path, value)
+        head_result, head_payload = self.head.forwards(value=value[0], path=path)
+        tail_result, tail_payload = self.tail.forwards(value=value[1:], path=path)
+        return [head_result, tail_result], [head_payload, tail_payload]
+
+    def backwards(self, *, result, payload, path=None):
+        if not path:
+            path = []
+        if not isinstance(result, list):
+            raise self._error(f"Not a list", path, value=value) from None
+        if len(result) != 2:
+            raise self._error(f"List is not of length 2", path, value=value) from None
+        return []
+
+    def _check_value(self, path, value):
+        if not isinstance(value, list):
+            raise self._error(f"Not a list", path, value=value) from None
+        if not len(value):
+            raise self._error(f"List is empty", path, value=value) from None
+
+    def to_funnel(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_value(path, value)
+        yield from self.head.to_funnel(path=path, value=value[0])
+        yield from self.tail.to_funnel(path=path, value=value[1:])
 
 
 def to_dict(dcls: Any) -> Any:
