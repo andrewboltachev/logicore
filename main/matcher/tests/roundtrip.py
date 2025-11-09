@@ -112,3 +112,34 @@ class TestMatchArrayFull:
             [{"w": " "}, {"w": "  "}],
             [{"w": None}, {"w": None}]
         )
+
+
+class TestMatchNil:
+    def test_empty(self):
+        t(
+            MatchNil(),
+            [],
+            None,
+            None,
+            []
+        )
+
+
+class TestMatchCons:
+    def test_single_regular_item(self):
+        t(
+            MatchCons(MatchAny(), MatchNil()),
+            ["foo"],
+            "foo",
+            [None, None],
+            ["foo"]
+        )
+
+    def test_array_full_tail(self):
+        t(
+            MatchCons(MatchAny(), MatchArrayFull(MatchNone())),
+            ["foo", 1, 2, 3],
+            ["foo", 3],
+            [None, [1, 2, 3]],
+            ["foo", None, None, None]
+        )

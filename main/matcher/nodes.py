@@ -289,6 +289,12 @@ class MatchNil(Node):
     def backwards(self, *, result, payload, path=None):
         if not path:
             path = []
+        if payload is not None:
+            self._error(
+                f"Payload must be empty",
+                path=path,
+                payload=payload
+            )
         return []
 
     def _check_value(self, path, value):
@@ -316,16 +322,41 @@ class MatchCons(Node):
         self._check_value(path, value)
         head_result, head_payload = self.head.forwards(value=value[0], path=path)
         tail_result, tail_payload = self.tail.forwards(value=value[1:], path=path)
-        return [head_result, tail_result], [head_payload, tail_payload]
+
+        if self.is_final():
+            result_pair = None
+        elif self.head.is_final():
+            result_pair = tail_result
+        elif self.tail.is_final():
+            result_pair = head_result
+        else:
+            result_pair = [head_result, tail_result]
+
+        return result_pair, [head_payload, tail_payload]
 
     def backwards(self, *, result, payload, path=None):
         if not path:
             path = []
+
+        if self.is_final():
+            result = [None, None]
+        elif self.head.is_final():
+            result = [None, result]
+        elif self.tail.is_final():
+            result = [result, None]
+
         if not isinstance(result, list):
-            raise self._error(f"Not a list", path, value=value) from None
+            raise self._error(f"Not a list", path, result=result) from None
         if len(result) != 2:
-            raise self._error(f"List is not of length 2", path, value=value) from None
-        return []
+            raise self._error(f"List is not of length 2", path, result=result) from None
+
+        if not payload:
+            payload = [None, None]
+
+        return [
+            self.head.backwards(result=result[0], payload=payload[0]),
+            *self.tail.backwards(result=result[1], payload=payload[1]),
+        ]
 
     def _check_value(self, path, value):
         if not isinstance(value, list):
