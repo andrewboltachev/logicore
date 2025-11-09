@@ -76,6 +76,44 @@ class TestMatchObjectFull:
         )
 
 
+class TestMatchRecord:
+    def test_empty(self):
+        t(
+            MatchRecord(MatchAny()),
+            {},
+            {},
+            {},
+            {}
+        )
+
+    def test_single_regular_item(self):
+        t(
+            MatchRecord(MatchAny()),
+            {"a": "foo"},
+            {"a": "foo"},
+            {"a": None},
+            {"a": "foo"}
+        )
+
+    def test_single_final_item(self):
+        t(
+            MatchRecord(MatchNone()),
+            {"a": "foo"},
+            {"a": None},
+            {"a": "foo"},
+            {"a": None}
+        )
+
+    def test_mixed_with_object(self):
+        t(
+            MatchRecord(MatchObjectFull({"w": MatchNone()})),
+            {"a": {"w": " "}, "b": {"w": "  "}},
+            {"a": None, "b": None},
+            {"a": {"w": " "}, "b": {"w": "  "}},
+            {"a": {"w": None}, "b": {"w": None}}
+        )
+
+
 class TestMatchArrayFull:
     def test_empty(self):
         t(

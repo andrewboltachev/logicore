@@ -200,6 +200,73 @@ class MatchObjectFull(Node):
 
 
 @dataclass
+class MatchRecord(Node):
+    item: Node
+
+    def is_final(self):
+        return False
+
+    def forwards(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_type(path, value)
+        result = {}
+        payload = {}
+        for k, v in value.items():
+            try:
+                result_item, payload_item = self.item.forwards(
+                    value=v,
+                    path=path + [k]
+                )
+                result[k] = result_item
+                payload[k] = payload_item
+            except MatchError as e:
+                raise self._error(
+                    f"Element at key didn't match: {k}",
+                    path,
+                    key=k
+                ) from e
+        return result, payload
+
+    def backwards(self, *, result, payload, path=None):
+        if not path:
+            path = []
+        if not payload:
+            payload = {}
+        value = {}
+        for k, result_item in result.items():
+            try:
+                payload_item = payload[k]
+            except KeyError:
+                payload_item = None
+            value[k] = self.item.backwards(
+                result=result_item, payload=payload_item, path=path + [k]
+            )
+        return value
+
+    def _check_type(self, path, value):
+        if type(value) != dict:
+            raise self._error(f"Not a dict", path, value=value) from None
+
+    def to_funnel(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_type(path, value)
+        for k, v in value.items():
+            try:
+                yield from self.item.to_funnel(
+                    value=v,
+                    path=path + [k]
+                )
+            except MatchError as e:
+                raise self._error(
+                    f"Element at key didn't match: {k}",
+                    path,
+                    key=k
+                ) from e
+
+
+@dataclass
 class MatchArrayFull(Node):
     item: Node
 
