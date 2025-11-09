@@ -69,6 +69,27 @@ class MatchAny(Node):
 
 
 @dataclass
+class MatchFunnel(Node):
+    def is_final(self):
+        return False
+
+    def forwards(self, *, value, path=None):
+        return value, None
+
+    def backwards(self, *, result, payload, path=None):
+        if payload is not None:
+            raise self._error(
+                f"Payload must be null",
+                path=path,
+                payload=payload
+            )
+        return result
+
+    def to_funnel(self, *, value, path=None):
+        yield value
+
+
+@dataclass
 class MatchNone(Node):
     def is_final(self):
         return True
@@ -185,6 +206,7 @@ class MatchObjectFull(Node):
                     value=self._get_key(path, value, k),
                     path=path + [k]
                 )
+                keys.remove(k)
             except MatchError as e:
                 raise self._error(
                     f"Key didn't match: {k}",
@@ -437,6 +459,73 @@ class MatchCons(Node):
         self._check_value(path, value)
         yield from self.head.to_funnel(path=path, value=value[0])
         yield from self.tail.to_funnel(path=path, value=value[1:])
+
+
+@dataclass
+class MatchOr(Node):
+    branches: dict[str, Node]
+
+    def is_final(self):
+        return False
+
+    def forwards(self, *, value, path=None):
+        if not path:
+            path = []
+        last_error = None
+
+        for k, b in self.branches.items():
+            try:
+                result, payload = b.forwards(
+                    value=value,
+                    path=path
+                )
+            except MatchError as e:
+                last_error = e
+            else:
+                return {k: result}, {k: payload}
+
+        raise self._error(
+            "Or fail",
+            path=path,
+        ) from last_error
+
+    def backwards(self, *, result, payload, path=None):
+        if not path:
+            path = []
+
+        k = list(result.keys())[0]
+
+        if not payload:
+            payload = {k: None}
+        try:
+            branch = self.branches[k]
+        except KeyError:
+            raise self._error(
+                "Branch not found",
+                path=path,
+                key=k
+            )
+        else:
+            return branch.backwards(result=result[k], payload=payload[k])
+
+    def to_funnel(self, *, value, path=None):
+        if not path:
+            path = []
+        last_error = None
+
+        for k, b in self.branches.items():
+            try:
+                yield from b.to_funnel(
+                    value=value,
+                    path=path
+                )
+            except MatchError as e:
+                last_error = e
+
+        raise self._error(
+            "Or fail",
+            path=path,
+        ) from last_error
 
 
 def to_dict(dcls: Any) -> Any:
