@@ -1287,6 +1287,96 @@ const fiddleTypes = {
   UI1
 }
 
+
+const SortableItemsList = ({ user, items, title, onChange, what, detail_base, breadcrumbs }) => {
+  const { runModal } = useContext(ModalContext);
+  return (
+      <div className='container'>
+        <div className='row align-items-stretch'>
+          <div className='col-md-12 flex-grow-1 d-flex align-items-center py-3 gap-2'>
+            {/*<h3 className='my-3'>*/}
+            {/*  <Trans>{title}</Trans>*/}
+            {/*</h3>*/}
+
+            {!!breadcrumbs?.length && (
+                <nav aria-label="breadcrumb" className="flex-grow-1">
+                  <ol className="breadcrumb" style={{background: '#e9ecef', padding: 10, borderRadius: 8, marginBottom: 0}}>
+                    {breadcrumbs.map((item, i) => (
+                        <li key={i} className={`breadcrumb-item ${ !item.url ? 'active' : '' }`}>
+                          {item?.url ? (
+                              <Link to={item.url}>{item.title}</Link>
+                          ) : (
+                              <>{item.title}</>
+                          )}
+                        </li>
+                    ))}
+                  </ol>
+                </nav>
+            )}
+            <button type="button" className="btn btn-primary" onClick={async () => {
+              const result = await runModal({
+                title: `Add ${what}`,
+                fields: {
+                  type: 'Fields',
+                  fields: [
+                    {
+                      type: 'TextField',
+                      k: 'name',
+                      label: 'Name',
+                      required: true,
+                    }
+                  ]
+                },
+                modalSize: 'md',
+                value: { name: '' }
+              });
+              if (result) {
+                onChange({...result, action: 'add'});
+              }
+            }}>
+              <Trans>
+                <i className="fa fa-plus-circle" />{" "}
+                New {what}
+              </Trans>
+            </button>
+          </div>
+        </div>
+        {/* <ul>
+        {items?.map((item) => {
+          return (
+            <li>
+              <Link to={addLang(item.url)}>{item.title}</Link>
+            </li>
+          );
+        })}
+      </ul> */}
+        {/* className="d-grid" style={{gridAutoFlow: 'column', gap: '15px', gridTemplateColumns: "repeat(auto-fit, 18rem)"}} */}
+        <div
+            style={{ display: 'flex', flexWrap: 'wrap', margin: -10 }}
+        >
+          {items?.map((item) => {
+            return (
+                <div key={item.id} className='card' style={{ width: '18rem', margin: 10 }}>
+                  <div className='card-body'>
+                    <h5 className='card-title'>{item.name}</h5>
+                    <p className='card-text text-secondary fw-bold'>
+                      {/*{item.name}*/}
+                    </p>
+                  </div>
+                  <a className="btn btn-primary" href={`${detail_base}${item.id}/`}>Go</a>
+                </div>
+            )
+          })}
+          {!items.length && (
+              <div style={{margin: "10px"}}>
+                <Trans>No {what}s yet.</Trans>
+              </div>
+          )}
+        </div>
+      </div>
+  )
+}
+
 const Fiddle = (props) => {
   const [val, setVal] = useState(props.val)
   const [localChecked, setLocalChecked] = useState(false)
@@ -1507,6 +1597,8 @@ const mainComponents = {
   Python01Explorer,
   Python02Explorer,
   RootedCopyExplorer,
+  // Matcher
+  SortableItemsList,
 }
 
 const MainWrapper = ({ result, onChange }) => {
