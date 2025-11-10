@@ -542,6 +542,100 @@ class MatchArrayFull(Node):
 
 
 @dataclass
+class MatchArrayNamed(Node):
+    item: Node
+    name: Node
+
+    def is_final(self):
+        return False
+
+    def forwards(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_type(path, value)
+        pre_result = {}
+        for i, v in enumerate(value):
+            try:
+                name_result, _ = self.name.forwards(
+                    value=v,
+                    path=[],
+                )
+            except MatchError:
+                pass  # do nothing
+            else:
+                if name_result in pre_result:
+                    raise self._error(
+                        f"Duplicate name: {name_result}",
+                        path=path,
+                    )
+                pre_result[name_result] = v
+        try:
+            post_result, post_payload = self.item.forwards(
+                value=pre_result,
+                path=path
+            )
+        except MatchError as e:
+            raise self._error(
+                f"Inner didn't match",
+                path,
+            ) from e
+        return post_result, {"pre": value, "post": post_payload}
+
+    def backwards(self, *, result, payload, path=None):
+        if not path:
+            path = []
+        if not payload:
+            payload = {}
+        if "pre" not in payload:
+            payload["pre"] = []
+        if "post" not in payload:
+            payload["post"] = None
+        value = payload["pre"][:]
+        back_value = self.item.backwards(result=result, payload=payload["post"])
+        result_value = []
+        for i, v in enumerate(value):
+            try:
+                name_result, _ = self.name.forwards(
+                    value=v,
+                    path=[],
+                )
+            except MatchError:
+                result_value.append(v)
+            else:
+                try:
+                    current = back_value[name_result]
+                except KeyError:
+                    pass
+                else:
+                    result_value.append(current)
+                    del back_value[name_result]
+        for v in back_value.values():
+            result_value.append(v)  # new
+        return result_value
+
+    def _check_type(self, path, value):
+        if type(value) != list:
+            raise self._error(f"Not a list", path, value=value) from None
+
+    def to_funnel(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_type(path, value)
+        for i, v in enumerate(value):
+            try:
+                yield from self.item.to_funnel(
+                    value=v,
+                    path=path + [i]
+                )
+            except MatchError as e:
+                raise self._error(
+                    f"Element at index didn't match: {i}",
+                    path,
+                    index=i
+                ) from e
+
+
+@dataclass
 class MatchNil(Node):
     def is_final(self):
         return True
