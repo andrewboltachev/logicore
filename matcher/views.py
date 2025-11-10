@@ -53,6 +53,15 @@ class MatcherProjectsPage(MainView):
             resp = {
                 "navigate": f"{self.get_detail_base()}{added.id}/",
             }
+        if data["action"] == "rename":
+            del data["action"]
+            item = self.model.objects.filter(
+                **self.get_add_extra(),
+            ).get(pk=data["id"])
+            del data["id"]
+            for k, v in data.items():
+                setattr(item, k, v)
+            item.save(update_fields=list(data.keys()))
         return JsonResponse(resp)
 
 
@@ -66,7 +75,7 @@ class MatcherProjectPage(MatcherProjectsPage):
         return f"Project: {self.get_parent.name}"
 
     def get_detail_base(self):
-        return self.request.get_full_path()[len("/api"):] + "/stratagem/"
+        return self.request.get_full_path()[len("/api"):] + "stratagem/"
 
     @cached_property
     def get_parent(self):
@@ -82,9 +91,52 @@ class MatcherProjectPage(MatcherProjectsPage):
         return {"project_id": self.get_parent.id}
 
 
-class MatcherStratagemsPage(MainView):
-    pass
-
-
 class MatcherStratagemPage(MainView):
-    pass
+    in_menu = False
+    url_path = "/matcher-projects/<int:project_id>/stratagem/<int:id>/"
+    url_name = "matcher-stratagem"
+    title = "Matcher Projects"
+    TEMPLATE = "MatcherStratagem"
+    WRAPPER = "FiddleWrapper"
+    model = MatcherProject
+    what = "project"
+
+    def get_title(self):
+        return self.title
+
+    def get_project(self):
+        return MatcherProject.objects.get(id=self.kwargs["project_id"])
+
+    def get_stratagem(self):
+        return MatcherStratagem.objects.filter(project=self.get_project()).get(
+            id=self.kwargs["id"]
+        )
+
+    def get_data(self, request, *args, **kwargs):
+        return {
+            "title": self.get_title(),
+            "what": self.what,
+            "breadcrumbs": self.get_breadcrumbs(),
+        }
+
+    def get_breadcrumbs(self):
+        project = self.get_project()
+        stratagem = self.get_stratagem()
+        return [
+            {"title": "Matcher", "url": "/matcher/"},
+            {"title": project.name, "url": f"/matcher-projects/{project.id}/"},
+            {"title": stratagem.name},
+        ]
+
+    # def post(self, request, *args, **kwargs):
+    #     resp = {
+    #         "navigate": self.request.get_full_path()[len("/api"):],
+    #     }
+    #     data = json.loads(request.body)["data"]
+    #     if data["action"] == "add":
+    #         del data["action"]
+    #         added = self.model.objects.create(**data, **self.get_add_extra())
+    #         resp = {
+    #             "navigate": f"{self.get_detail_base()}{added.id}/",
+    #         }
+    #     return JsonResponse(resp)

@@ -1291,13 +1291,9 @@ const fiddleTypes = {
 const SortableItemsList = ({ user, items, title, onChange, what, detail_base, breadcrumbs }) => {
   const { runModal } = useContext(ModalContext);
   return (
-      <div className='container'>
+      <div className='container-fluid'>
         <div className='row align-items-stretch'>
           <div className='col-md-12 flex-grow-1 d-flex align-items-center py-3 gap-2'>
-            {/*<h3 className='my-3'>*/}
-            {/*  <Trans>{title}</Trans>*/}
-            {/*</h3>*/}
-
             {!!breadcrumbs?.length && (
                 <nav aria-label="breadcrumb" className="flex-grow-1">
                   <ol className="breadcrumb" style={{background: '#e9ecef', padding: 10, borderRadius: 8, marginBottom: 0}}>
@@ -1341,16 +1337,6 @@ const SortableItemsList = ({ user, items, title, onChange, what, detail_base, br
             </button>
           </div>
         </div>
-        {/* <ul>
-        {items?.map((item) => {
-          return (
-            <li>
-              <Link to={addLang(item.url)}>{item.title}</Link>
-            </li>
-          );
-        })}
-      </ul> */}
-        {/* className="d-grid" style={{gridAutoFlow: 'column', gap: '15px', gridTemplateColumns: "repeat(auto-fit, 18rem)"}} */}
         <div
             style={{ display: 'flex', flexWrap: 'wrap', margin: -10 }}
         >
@@ -1358,7 +1344,34 @@ const SortableItemsList = ({ user, items, title, onChange, what, detail_base, br
             return (
                 <div key={item.id} className='card' style={{ width: '18rem', margin: 10 }}>
                   <div className='card-body'>
-                    <h5 className='card-title'>{item.name}</h5>
+                    <h5 className='card-title'>
+                      {item.name}
+                      {" "}
+                      <a className="btn btn-sm btn-light" onClick={async (e) => {
+                        const result = await runModal({
+                          title: `Rename ${what} "${item.name}"`,
+                          fields: {
+                            type: 'Fields',
+                            fields: [
+                              {
+                                type: 'TextField',
+                                k: 'name',
+                                label: 'New name',
+                                required: true,
+                              }
+                            ]
+                          },
+                          modalSize: 'md',
+                          value: { name: item.name },
+                        });
+                        if (result) {
+                          if (result.name === item.name) return;
+                          onChange({...result, action: 'rename', id: item.id});
+                        }
+                      }}>
+                        <i className="fa fa-edit" />
+                      </a>
+                    </h5>
                     <p className='card-text text-secondary fw-bold'>
                       {/*{item.name}*/}
                     </p>
@@ -1376,6 +1389,39 @@ const SortableItemsList = ({ user, items, title, onChange, what, detail_base, br
       </div>
   )
 }
+
+const MatcherStratagem = ({ user, items, title, onChange, what, detail_base, breadcrumbs }) => {
+  const { runModal } = useContext(ModalContext);
+  return (
+      <div className='container-fluid'>
+        <div className='row align-items-stretch'>
+          <div className='col-md-12 flex-grow-1 d-flex align-items-center py-3 gap-2'>
+            {!!breadcrumbs?.length && (
+                <nav aria-label="breadcrumb" className="flex-grow-1">
+                  <ol className="breadcrumb" style={{background: '#e9ecef', padding: 10, borderRadius: 8, marginBottom: 0}}>
+                    {breadcrumbs.map((item, i) => (
+                        <li key={i} className={`breadcrumb-item ${ !item.url ? 'active' : '' }`}>
+                          {item?.url ? (
+                              <Link to={item.url}>{item.title}</Link>
+                          ) : (
+                              <>{item.title}</>
+                          )}
+                        </li>
+                    ))}
+                  </ol>
+                </nav>
+            )}
+          </div>
+        </div>
+        <div
+            style={{ display: 'flex', flexWrap: 'wrap' }}
+        >
+          hello
+        </div>
+      </div>
+  )
+}
+
 
 const Fiddle = (props) => {
   const [val, setVal] = useState(props.val)
@@ -1599,6 +1645,7 @@ const mainComponents = {
   RootedCopyExplorer,
   // Matcher
   SortableItemsList,
+  MatcherStratagem,
 }
 
 const MainWrapper = ({ result, onChange }) => {
