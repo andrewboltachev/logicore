@@ -1385,6 +1385,32 @@ const SortableItemsListItem = ({ item, what, onChange, detail_base }) => {
             }} className={item.is_favourite ? 'btn btn-sm btn-outline-light text-warning' : 'btn btn-sm btn-outline-light text-light'}>
               <i className="fa fa-heart" style={{ fontSize: '1.25rem' }} />
             </a>
+            {" "}
+
+            <a className="btn btn-sm btn-light" onClick={async (e) => {
+              const result = await runModal({
+                title: `Delete ${what} "${item.name}"`,
+                fields: {
+                  type: 'Fields',
+                  fields: [
+                    {
+                      type: 'TextField',
+                      k: 'confirmation',
+                      label: 'Write "DELETE" to confirm',
+                      required: true,
+                    }
+                  ]
+                },
+                modalSize: 'md',
+                value: { confirmation: '' },
+              });
+              if (result) {
+                if (result.confirmation !== 'DELETE') return;
+                onChange({...result, action: 'delete', id: item.id});
+              }
+            }}>
+              <i className="fa fa-times" />
+            </a>
           </h5>
           <p className='card-text text-secondary fw-bold'>
             {/*{item.name}*/}

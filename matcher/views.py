@@ -103,6 +103,12 @@ class MatcherProjectsPage(MainView):
                     ).update(order=F("order") - Value(1))
                     old_place_item.order = new_place_item.order
                     old_place_item.save(update_fields=["order"])
+            case "delete":
+                del data["action"]
+                if data.get("confirmation") == "DELETE":
+                    self.model.objects.filter(
+                        **self.get_add_extra(),
+                    ).filter(pk=data["id"]).delete()
         return JsonResponse(resp)
 
 
