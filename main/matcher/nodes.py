@@ -1,5 +1,6 @@
 # Python Matcher Nodes
 import dataclasses
+import json
 import numbers
 from dataclasses import dataclass
 from typing import Any
@@ -142,6 +143,26 @@ class MatchNone(Node):
 
 
 @dataclass
+class MatchIfThen(MatchAny):
+    cond: Node
+    item: Node
+
+    def is_final(self):
+        return self.item.is_final()
+
+    def forwards(self, *, value, path=None):
+        self.cond.forwards(value=value, path=path)
+        return self.item.forwards(value=value, path=path)
+
+    def backwards(self, *, result, payload, path=None):
+        return self.item.backwards(result=result, payload=payload, path=path)
+
+    def to_funnel(self, *, value, path=None):
+        yield from self.cond.to_funnel(value=value, path=path)
+        yield from self.item.to_funnel(value=value, path=path)
+
+
+@dataclass
 class MatchExact(Node):
     exact_value: Any
 
@@ -161,6 +182,12 @@ class MatchExact(Node):
         return self.exact_value
 
     def to_funnel(self, *, value, path=None):
+        if value != self.exact_value:
+            raise self._error(
+                f"Exact value doesn't match: {value}",
+                path=path,
+                value=value
+            )
         yield from []
 
 
@@ -520,7 +547,7 @@ class MatchArrayFull(Node):
         return value
 
     def _check_type(self, path, value):
-        if type(value) != list:
+        if type(value) not in [list, tuple]:
             raise self._error(f"Not a list", path, value=value) from None
 
     def to_funnel(self, *, value, path=None):
@@ -563,9 +590,11 @@ class MatchArrayNamed(Node):
             except MatchError:
                 pass  # do nothing
             else:
-                if name_result in pre_result:
+                if name_result is None:
+                    continue
+                if not isinstance(name_result, str) and not isinstance(name_result, numbers.Number):
                     raise self._error(
-                        f"Duplicate name: {name_result}",
+                        f"Name not a string or number: {name_result}",
                         path=path,
                     )
                 pre_result[name_result] = v
@@ -614,25 +643,46 @@ class MatchArrayNamed(Node):
         return result_value
 
     def _check_type(self, path, value):
-        if type(value) != list:
+        if type(value) not in [list, tuple]:
             raise self._error(f"Not a list", path, value=value) from None
 
     def to_funnel(self, *, value, path=None):
         if not path:
             path = []
         self._check_type(path, value)
+        pre_result = {}
         for i, v in enumerate(value):
             try:
-                yield from self.item.to_funnel(
+                name_result, _ = self.name.forwards(
                     value=v,
-                    path=path + [i]
+                    path=[],
                 )
-            except MatchError as e:
-                raise self._error(
-                    f"Element at index didn't match: {i}",
-                    path,
-                    index=i
-                ) from e
+            except MatchError:
+                pass  # do nothing
+            else:
+                if name_result is None:
+                    continue
+                if not isinstance(name_result, str) and not isinstance(name_result, numbers.Number):
+                    raise self._error(
+                        f"Name not a string or number: {name_result}",
+                        path=path,
+                    )
+                if name_result in pre_result:
+                    raise self._error(
+                        f"Duplicate name: {name_result}",
+                        path=path,
+                    )
+                pre_result[name_result] = v
+        try:
+            yield from self.item.to_funnel(
+                value=pre_result,
+                path=path
+            )
+        except MatchError as e:
+            raise self._error(
+                f"Inner didn't match",
+                path,
+            ) from e
 
 
 @dataclass
@@ -658,7 +708,7 @@ class MatchNil(Node):
         return []
 
     def _check_value(self, path, value):
-        if value != []:
+        if value not in [[], ()]:
             raise self._error(f"Not an empty list", path, value=value) from None
 
     def to_funnel(self, *, value, path=None):
@@ -719,7 +769,7 @@ class MatchCons(Node):
         ]
 
     def _check_value(self, path, value):
-        if not isinstance(value, list):
+        if type(value) not in [list, tuple]:
             raise self._error(f"Not a list", path, value=value) from None
         if not len(value):
             raise self._error(f"List is empty", path, value=value) from None
@@ -753,7 +803,8 @@ class MatchOr(Node):
             except MatchError as e:
                 last_error = e
             else:
-                return {k: result}, {k: payload}
+                # return {k: result}, {k: payload}
+                return result, payload
 
         raise self._error(
             "Or fail",
@@ -767,7 +818,8 @@ class MatchOr(Node):
         k = list(result.keys())[0]
 
         if not payload:
-            payload = {k: None}
+            #payload = {k: None}
+            payload = None
         try:
             branch = self.branches[k]
         except KeyError:
@@ -777,7 +829,8 @@ class MatchOr(Node):
                 key=k
             )
         else:
-            return branch.backwards(result=result[k], payload=payload[k])
+            #return branch.backwards(result=result[k], payload=payload[k])
+            return branch.backwards(result=result, payload=payload)
 
     def to_funnel(self, *, value, path=None):
         if not path:
@@ -786,17 +839,19 @@ class MatchOr(Node):
 
         for k, b in self.branches.items():
             try:
-                yield from b.to_funnel(
+                yield from list(b.to_funnel(
                     value=value,
                     path=path
-                )
+                ))
             except MatchError as e:
                 last_error = e
-
-        raise self._error(
-            "Or fail",
-            path=path,
-        ) from last_error
+            else:
+                break
+        else:
+            raise self._error(
+                "Or fail",
+                path=path,
+            ) from last_error
 
 
 @dataclass
