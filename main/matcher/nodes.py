@@ -468,7 +468,6 @@ class MatchRecord(Node):
 @dataclass
 class MatchArrayFull(Node):
     item: Node
-    key: Node | None = None
 
     def is_final(self):
         return False
@@ -477,35 +476,22 @@ class MatchArrayFull(Node):
         if not path:
             path = []
         self._check_type(path, value)
-        value = list(value)
         result = []
-        payload = {}
+        payload = []
         for i, v in enumerate(value):
             try:
-                key_result, _ = self.key.forwards(
-                    value={"index": i, "value": v},
-                    path=[]
+                result_item, payload_item = self.item.forwards(
+                    value=v,
+                    path=path + [i]
                 )
+                result.append(result_item)
+                payload.append(payload_item)
             except MatchError as e:
                 raise self._error(
-                    f"Error defining key for element at index: {i}",
+                    f"Element at index didn't match: {i}",
                     path,
                     index=i
                 ) from e
-            else:
-                try:
-                    result_item, payload_item = self.item.forwards(
-                        value=v,
-                        path=path + [i]
-                    )
-                    result.append(result_item)
-                    payload[key_result] = payload_item
-                except MatchError as e:
-                    raise self._error(
-                        f"Element at index didn't match: {i}",
-                        path,
-                        index=i
-                    ) from e
         if self.item.is_final():
             result = len(result)  # Optimization
         return result, payload
@@ -534,7 +520,7 @@ class MatchArrayFull(Node):
         return value
 
     def _check_type(self, path, value):
-        if type(value) not in [list, tuple]:  # XXX: had to do
+        if type(value) != list:
             raise self._error(f"Not a list", path, value=value) from None
 
     def to_funnel(self, *, value, path=None):
