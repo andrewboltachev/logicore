@@ -1,6 +1,8 @@
 import json
 from functools import cached_property
 
+from django.db.models import Max
+
 from main.views import MainView, JsonResponse
 from matcher.models import MatcherProject, MatcherStratagem
 
@@ -47,21 +49,32 @@ class MatcherProjectsPage(MainView):
             "navigate": self.request.get_full_path()[len("/api"):],
         }
         data = json.loads(request.body)["data"]
-        if data["action"] == "add":
-            del data["action"]
-            added = self.model.objects.create(**data, **self.get_add_extra())
-            resp = {
-                "navigate": f"{self.get_detail_base()}{added.id}/",
-            }
-        if data["action"] == "rename":
-            del data["action"]
-            item = self.model.objects.filter(
-                **self.get_add_extra(),
-            ).get(pk=data["id"])
-            del data["id"]
-            for k, v in data.items():
-                setattr(item, k, v)
-            item.save(update_fields=list(data.keys()))
+        match data["action"]:
+            case "add":
+                del data["action"]
+                max_order = (
+                    self.model.objects.filter(
+                        **self.get_add_extra()
+                    ).aggregate(Max("order"))["order__max"]
+                    or 0
+                )
+                added = self.model.objects.create(
+                    **data,
+                    **self.get_add_extra(),
+                    order=max_order + 1
+                )
+                resp = {
+                    "navigate": f"{self.get_detail_base()}{added.id}/",
+                }
+            case "rename":
+                del data["action"]
+                item = self.model.objects.filter(
+                    **self.get_add_extra(),
+                ).get(pk=data["id"])
+                del data["id"]
+                for k, v in data.items():
+                    setattr(item, k, v)
+                item.save(update_fields=list(data.keys()))
         return JsonResponse(resp)
 
 

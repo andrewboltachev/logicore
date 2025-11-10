@@ -3,20 +3,26 @@ from django.db import models
 
 class MatcherProject(models.Model):
     name = models.CharField(max_length=300)
-    order = models.IntegerField(default=0)
+    order = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ("order",)
 
 
 class MatcherStratagem(models.Model):
     project = models.ForeignKey(MatcherProject, on_delete=models.CASCADE)
     name = models.CharField(max_length=300)
     graph = models.JSONField(default=None, null=True, blank=True)
-    order = models.IntegerField(default=0)
+    order = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ("order",)
 
 
 class MatcherNode(models.Model):
