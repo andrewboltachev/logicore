@@ -4,6 +4,7 @@ from django.db import models
 class MatcherProject(models.Model):
     name = models.CharField(max_length=300)
     order = models.PositiveIntegerField(default=0)
+    is_favourite = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -17,6 +18,7 @@ class MatcherStratagem(models.Model):
     name = models.CharField(max_length=300)
     graph = models.JSONField(default=None, null=True, blank=True)
     order = models.PositiveIntegerField(default=0)
+    is_favourite = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

@@ -1371,6 +1371,12 @@ const SortableItemsList = ({ user, items, title, onChange, what, detail_base, br
                       }}>
                         <i className="fa fa-edit" />
                       </a>
+                      {" "}
+                      <a href="#" onClick={async (e) => {
+                        onChange({action: 'toggle_favourite', id: item.id});
+                      }} className={item.is_favourite ? 'btn btn-sm btn-outline-light text-warning' : 'btn btn-sm btn-outline-light text-light'}>
+                        <i className="fa fa-heart" style={{ fontSize: '1.25rem' }} />
+                      </a>
                     </h5>
                     <p className='card-text text-secondary fw-bold'>
                       {/*{item.name}*/}

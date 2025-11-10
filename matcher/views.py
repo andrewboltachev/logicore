@@ -1,7 +1,7 @@
 import json
 from functools import cached_property
 
-from django.db.models import Max
+from django.db.models import Max, F
 
 from main.views import MainView, JsonResponse
 from matcher.models import MatcherProject, MatcherStratagem
@@ -31,7 +31,7 @@ class MatcherProjectsPage(MainView):
         return {
             "title": self.get_title(),
             "what": self.what,
-            "items": list(self.get_queryset().values("id", "name")),
+            "items": list(self.get_queryset().values("id", "name", "is_favourite")),
             "detail_base": self.get_detail_base(),
             "breadcrumbs": self.get_breadcrumbs(),
         }
@@ -75,6 +75,13 @@ class MatcherProjectsPage(MainView):
                 for k, v in data.items():
                     setattr(item, k, v)
                 item.save(update_fields=list(data.keys()))
+            case "toggle_favourite":
+                del data["action"]
+                item = self.model.objects.filter(
+                    **self.get_add_extra(),
+                ).get(pk=data["id"])
+                item.is_favourite = not item.is_favourite
+                item.save(update_fields=["is_favourite"])
         return JsonResponse(resp)
 
 
