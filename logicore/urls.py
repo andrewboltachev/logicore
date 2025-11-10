@@ -20,6 +20,7 @@ from django.views.generic.base import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from main import views as main_views
+from matcher import views as matcher_views
 from main import models
 import pprint
 from django.conf.urls.i18n import i18n_patterns
