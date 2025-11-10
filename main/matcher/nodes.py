@@ -1,9 +1,9 @@
 # Python Matcher Nodes
 import dataclasses
+import numbers
 from dataclasses import dataclass
 from typing import Any
 from unittest import case
-
 
 # Types of data: Value, Grammar, Result, Payload
 
@@ -52,7 +52,11 @@ class MatchAny(Node):
     def is_final(self):
         return False
 
+    def _check_type(self, value, path):
+        pass
+
     def forwards(self, *, value, path=None):
+        self._check_type(value, path)
         return value, None
 
     def backwards(self, *, result, payload, path=None):
@@ -69,24 +73,57 @@ class MatchAny(Node):
 
 
 @dataclass
-class MatchFunnel(Node):
-    def is_final(self):
-        return False
-
-    def forwards(self, *, value, path=None):
-        return value, None
-
-    def backwards(self, *, result, payload, path=None):
-        if payload is not None:
+class MatchStringAny(MatchAny):
+    def _check_type(self, value, path):
+        if not isinstance(value, str):
             raise self._error(
-                f"Payload must be null",
-                path=path,
-                payload=payload
+                "Not a string",
+                path=path
             )
-        return result
 
+
+@dataclass
+class MatchNumberAny(MatchAny):
+    def _check_type(self, value, path):
+        if not isinstance(value, numbers.Number):
+            raise self._error(
+                "Not a number",
+                path=path
+            )
+
+
+@dataclass
+class MatchBoolAny(MatchAny):
+    def _check_type(self, value, path):
+        if not isinstance(value, bool):
+            raise self._error(
+                "Not a boolean",
+                path=path
+            )
+
+
+@dataclass
+class MatchFunnel(MatchAny):
     def to_funnel(self, *, value, path=None):
         yield value
+
+
+@dataclass
+class MatchFunnelKeys(MatchAny):
+    def to_funnel(self, *, value, path=None):
+        if not isinstance(value, dict):
+            raise self._error(
+                "Not an object",
+                path=path
+            )
+        for k in value.keys():
+            yield k
+
+
+@dataclass
+class MatchFunnelType(MatchAny):
+    def to_funnel(self, *, value, path=None):
+        yield str(type(value))
 
 
 @dataclass
@@ -99,6 +136,29 @@ class MatchNone(Node):
 
     def backwards(self, *, result, payload, path=None):
         return payload
+
+    def to_funnel(self, *, value, path=None):
+        yield from []
+
+
+@dataclass
+class MatchExact(Node):
+    exact_value: Any
+
+    def is_final(self):
+        return True
+
+    def forwards(self, *, value, path=None):
+        if value != self.exact_value:
+            raise self._error(
+                f"Exact value doesn't match: {value}",
+                path=path,
+                value=value
+            )
+        return value, None
+
+    def backwards(self, *, result, payload, path=None):
+        return self.exact_value
 
     def to_funnel(self, *, value, path=None):
         yield from []
@@ -222,6 +282,123 @@ class MatchObjectFull(Node):
 
 
 @dataclass
+class MatchObjectKeys(Node):
+    map: dict[str, Node]
+    rest: Node
+
+    def is_final(self):
+        return all((x.is_final() for x in self.map.values()))
+
+    def forwards(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_type(path, value)
+        rest_value = dict(value)
+        result = {}
+        payload = {}
+        for k, g in self.map.items():
+            v = self._get_key(path, value, k)
+            try:
+                result_item, payload_item = g.forwards(
+                    value=v,
+                    path=path + [k]
+                )
+                if result_item:
+                    result[k] = result_item
+                if payload_item:
+                    payload[k] = payload_item
+                del rest_value[k]
+            except MatchError as e:
+                raise self._error(
+                    f"Key didn't match: {k}",
+                    path,
+                    key=k
+                ) from e
+        rest_result_and_payload = self.rest.forwards(
+            value=rest_value,
+            path=path,
+        )
+        if len(result) == 1:
+            result = list(result.values())[0]
+        if not result:
+            result = None
+        return result, {"obj": payload, "rest": rest_result_and_payload}
+
+    def backwards(self, *, result, payload, path=None):
+        if not path:
+            path = []
+        if not payload:
+            payload = {}
+        if "obj" not in payload:
+            payload["obj"] = {}
+        if "rest" not in payload:
+            payload["rest"] = [None, None]
+        # ...
+        # {}
+        # {f}
+        # {t}
+        # {f, t}
+        # {f, t, t}
+        regular_count = 0
+        last_key = None
+        for k, v in self.map.items():
+            if not v.is_final():
+                last_key = k
+                regular_count += 1
+            if regular_count >= 2:
+                break
+        match regular_count:
+            case 0:
+                result = {}
+            case 1:
+                result = {last_key: result}
+            case _:
+                pass
+        value = {}
+        for k, g in self.map.items():
+            result_item = result.get(k, None)
+            payload_item = payload["obj"].get(k, None)
+            value[k] = g.backwards(result=result_item, payload=payload_item)
+        rest_value = self.rest.backwards(result=payload["rest"][0], payload=payload["rest"][1])
+        return {**value, **rest_value}
+
+    def _check_type(self, path, value):
+        if type(value) != dict:
+            raise self._error(f"Not a dict", path, value=value) from None
+
+    def _get_key(self, path, value, key):
+        try:
+            return value[key]
+        except KeyError:
+            raise self._error(
+                f"Key missing: {key}",
+                path,
+                missing_key=key
+            ) from None
+
+    def to_funnel(self, *, value, path=None):
+        if not path:
+            path = []
+        self._check_type(path, value)
+        rest_value = dict(value)
+        for k, g in self.map.items():
+            v = self._get_key(path, value, k)
+            try:
+                yield from g.to_funnel(
+                    value=v,
+                    path=path + [k]
+                )
+                del rest_value[k]
+            except MatchError as e:
+                raise self._error(
+                    f"Key didn't match: {k}",
+                    path,
+                    key=k
+                ) from e
+        yield from self.rest.to_funnel(value=rest_value, path=path)
+
+
+@dataclass
 class MatchRecord(Node):
     item: Node
 
@@ -282,7 +459,7 @@ class MatchRecord(Node):
                 )
             except MatchError as e:
                 raise self._error(
-                    f"Element at key didn't match: {k}",
+                    f"Element didn't match at key: {k}",
                     path,
                     key=k
                 ) from e
@@ -291,6 +468,7 @@ class MatchRecord(Node):
 @dataclass
 class MatchArrayFull(Node):
     item: Node
+    key: Node | None = None
 
     def is_final(self):
         return False
@@ -299,22 +477,35 @@ class MatchArrayFull(Node):
         if not path:
             path = []
         self._check_type(path, value)
+        value = list(value)
         result = []
-        payload = []
+        payload = {}
         for i, v in enumerate(value):
             try:
-                result_item, payload_item = self.item.forwards(
-                    value=v,
-                    path=path + [i]
+                key_result, _ = self.key.forwards(
+                    value={"index": i, "value": v},
+                    path=[]
                 )
-                result.append(result_item)
-                payload.append(payload_item)
             except MatchError as e:
                 raise self._error(
-                    f"Element at index didn't match: {i}",
+                    f"Error defining key for element at index: {i}",
                     path,
                     index=i
                 ) from e
+            else:
+                try:
+                    result_item, payload_item = self.item.forwards(
+                        value=v,
+                        path=path + [i]
+                    )
+                    result.append(result_item)
+                    payload[key_result] = payload_item
+                except MatchError as e:
+                    raise self._error(
+                        f"Element at index didn't match: {i}",
+                        path,
+                        index=i
+                    ) from e
         if self.item.is_final():
             result = len(result)  # Optimization
         return result, payload
@@ -343,7 +534,7 @@ class MatchArrayFull(Node):
         return value
 
     def _check_type(self, path, value):
-        if type(value) != list:
+        if type(value) not in [list, tuple]:  # XXX: had to do
             raise self._error(f"Not a list", path, value=value) from None
 
     def to_funnel(self, *, value, path=None):
@@ -528,6 +719,75 @@ class MatchOr(Node):
         ) from last_error
 
 
+@dataclass
+class MatchBy(Node):
+    discriminator: Node
+    branches: dict[str, Node]
+    rest: Node
+
+    def is_final(self):
+        return False
+
+    def forwards(self, *, value, path=None):
+        if not path:
+            path = []
+        last_error = None
+
+        for k, b in self.branches.items():
+            try:
+                result, payload = b.forwards(
+                    value=value,
+                    path=path
+                )
+            except MatchError as e:
+                last_error = e
+            else:
+                return {k: result}, {k: payload}
+
+        raise self._error(
+            "Or fail",
+            path=path,
+        ) from last_error
+
+    def backwards(self, *, result, payload, path=None):
+        if not path:
+            path = []
+
+        k = list(result.keys())[0]
+
+        if not payload:
+            payload = {k: None}
+        try:
+            branch = self.branches[k]
+        except KeyError:
+            raise self._error(
+                "Branch not found",
+                path=path,
+                key=k
+            )
+        else:
+            return branch.backwards(result=result[k], payload=payload[k])
+
+    def to_funnel(self, *, value, path=None):
+        if not path:
+            path = []
+        last_error = None
+
+        for k, b in self.branches.items():
+            try:
+                yield from b.to_funnel(
+                    value=value,
+                    path=path
+                )
+            except MatchError as e:
+                last_error = e
+
+        raise self._error(
+            "Or fail",
+            path=path,
+        ) from last_error
+
+
 def to_dict(dcls: Any) -> Any:
     if dataclasses.is_dataclass(dcls.__class__):
         r = {k: to_dict(v) for k, v in dcls.__dict__.items()}
@@ -541,7 +801,7 @@ def to_dict(dcls: Any) -> Any:
         return dcls
 
 
-if __name__ == '__main__':
+def main():
     g = MatchObjectFull({"x": MatchAny(), "w": MatchNone()})
     print(to_dict(g))
     value = {"x": 1, "w": " "}
@@ -551,3 +811,7 @@ if __name__ == '__main__':
     v = g.backwards(result=r, payload=p)
     print("v", v)
     assert v == value
+
+
+if __name__ == '__main__':
+    main()
