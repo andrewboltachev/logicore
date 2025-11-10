@@ -23,7 +23,7 @@ class MatcherProjectsPage(MainView):
         return self.detail_base
 
     def get_queryset(self):
-        return self.model.objects.all()
+        return self.model.objects.filter(**self.get_add_extra())
 
     def get_data(self, request, *args, **kwargs):
         return {
@@ -39,6 +39,9 @@ class MatcherProjectsPage(MainView):
             {"title": "Matcher"}
         ]
 
+    def get_add_extra(self):
+        return {}
+
     def post(self, request, *args, **kwargs):
         resp = {
             "navigate": self.request.get_full_path()[len("/api"):],
@@ -46,9 +49,9 @@ class MatcherProjectsPage(MainView):
         data = json.loads(request.body)["data"]
         if data["action"] == "add":
             del data["action"]
-            added = MatcherProject.objects.create(**data)
+            added = self.model.objects.create(**data, **self.get_add_extra())
             resp = {
-                "navigate": f"/{self.get_detail_base()}/{added.id}/",
+                "navigate": f"{self.get_detail_base()}{added.id}/",
             }
         return JsonResponse(resp)
 
@@ -65,9 +68,6 @@ class MatcherProjectPage(MatcherProjectsPage):
     def get_detail_base(self):
         return self.request.get_full_path()[len("/api"):] + "/stratagem/"
 
-    def get_queryset(self):
-        return self.model.objects.filter(project_id=self.kwargs["id"])
-
     @cached_property
     def get_parent(self):
         return MatcherProject.objects.get(id=self.kwargs["id"])
@@ -77,6 +77,9 @@ class MatcherProjectPage(MatcherProjectsPage):
             {"title": "Matcher", "url": "/matcher/"},
             {"title": self.get_parent.name},
         ]
+
+    def get_add_extra(self):
+        return {"project_id": self.get_parent.id}
 
 
 class MatcherStratagemsPage(MainView):
