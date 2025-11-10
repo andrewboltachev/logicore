@@ -97,6 +97,16 @@ import hljs from 'highlight.js/lib/core'
 import typescript from 'highlight.js/lib/languages/typescript'
 import 'highlight.js/styles/github.css'
 import Python02Explorer from "./python_02_explorer.jsx";
+import {closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
+import {
+  arrayMove, rectSortingStrategy, rectSwappingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+import {SortableItem} from "./components/sortable/SortableItem.jsx";
+import {CSS} from "@dnd-kit/utilities";
 hljs.registerLanguage('typescript', typescript)
 
 const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url)
@@ -1287,9 +1297,102 @@ const fiddleTypes = {
   UI1
 }
 
-
-const SortableItemsList = ({ user, items, title, onChange, what, detail_base, breadcrumbs }) => {
+const SortableItemsListItem = ({ item, what, onChange, detail_base }) => {
   const { runModal } = useContext(ModalContext);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({id: item.id});
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+      <div ref={setNodeRef} className='card' style={{ width: '18rem', margin: 10, ...style }} {...attributes} {...listeners}>
+        <div className='card-body'>
+          <h5 className='card-title'>
+            {item.name}
+            {" "}
+            <a className="btn btn-sm btn-light" onClick={async (e) => {
+              const result = await runModal({
+                title: `Rename ${what} "${item.name}"`,
+                fields: {
+                  type: 'Fields',
+                  fields: [
+                    {
+                      type: 'TextField',
+                      k: 'name',
+                      label: 'New name',
+                      required: true,
+                    }
+                  ]
+                },
+                modalSize: 'md',
+                value: { name: item.name },
+              });
+              if (result) {
+                if (result.name === item.name) return;
+                onChange({...result, action: 'rename', id: item.id});
+              }
+            }}>
+              <i className="fa fa-edit" />
+            </a>
+            {" "}
+            <a href="#" onClick={async (e) => {
+              onChange({action: 'toggle_favourite', id: item.id});
+            }} className={item.is_favourite ? 'btn btn-sm btn-outline-light text-warning' : 'btn btn-sm btn-outline-light text-light'}>
+              <i className="fa fa-heart" style={{ fontSize: '1.25rem' }} />
+            </a>
+          </h5>
+          <p className='card-text text-secondary fw-bold'>
+            {/*{item.name}*/}
+          </p>
+        </div>
+        <a className="btn btn-primary" href={`${detail_base}${item.id}/`}>Go</a>
+      </div>
+  );
+}
+
+const SortableItemsList = ({ user, items: originalItems, title, onChange, what, detail_base, breadcrumbs }) => {
+  const { runModal } = useContext(ModalContext);
+
+  const [items, setItems] = useState(originalItems);
+
+  useEffect(() => {
+    setItems(originalItems);
+  }, [originalItems]);
+
+  const sensors = useSensors(
+      useSensor(PointerSensor),
+      useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+      })
+  );
+
+  function handleDragEnd(event) {
+    const {active, over} = event;
+
+    if (active?.id !== over?.id) {
+      setItems((items) => {
+        const ids = items.map((item) => item.id);
+        const oldIndex = ids.indexOf(active.id);
+        const newIndex = ids.indexOf(over.id);
+
+        setTimeout(() => {
+          onChange({action: 'sort', old_place_id: items[oldIndex].id, new_place_id: items[newIndex].id});
+        }, 1000)
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }
+
+
   return (
       <div className='container-fluid'>
         <div className='row align-items-stretch'>
@@ -1337,61 +1440,35 @@ const SortableItemsList = ({ user, items, title, onChange, what, detail_base, br
             </button>
           </div>
         </div>
-        <div
-            style={{ display: 'flex', flexWrap: 'wrap', margin: -10 }}
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
         >
-          {items?.map((item) => {
-            return (
-                <div key={item.id} className='card' style={{ width: '18rem', margin: 10 }}>
-                  <div className='card-body'>
-                    <h5 className='card-title'>
-                      {item.name}
-                      {" "}
-                      <a className="btn btn-sm btn-light" onClick={async (e) => {
-                        const result = await runModal({
-                          title: `Rename ${what} "${item.name}"`,
-                          fields: {
-                            type: 'Fields',
-                            fields: [
-                              {
-                                type: 'TextField',
-                                k: 'name',
-                                label: 'New name',
-                                required: true,
-                              }
-                            ]
-                          },
-                          modalSize: 'md',
-                          value: { name: item.name },
-                        });
-                        if (result) {
-                          if (result.name === item.name) return;
-                          onChange({...result, action: 'rename', id: item.id});
-                        }
-                      }}>
-                        <i className="fa fa-edit" />
-                      </a>
-                      {" "}
-                      <a href="#" onClick={async (e) => {
-                        onChange({action: 'toggle_favourite', id: item.id});
-                      }} className={item.is_favourite ? 'btn btn-sm btn-outline-light text-warning' : 'btn btn-sm btn-outline-light text-light'}>
-                        <i className="fa fa-heart" style={{ fontSize: '1.25rem' }} />
-                      </a>
-                    </h5>
-                    <p className='card-text text-secondary fw-bold'>
-                      {/*{item.name}*/}
-                    </p>
+          <SortableContext
+              items={items}
+              strategy={rectSortingStrategy}
+          >
+            <div
+                style={{ display: 'flex', flexWrap: 'wrap', margin: -10 }}
+            >
+              {items?.map((item) => (
+                <SortableItemsListItem
+                    key={item.id}
+                    item={item}
+                    what={what}
+                    onChange={onChange}
+                    detail_base={detail_base}
+                />
+              ))}
+              {!items.length && (
+                  <div style={{margin: "10px"}}>
+                    <Trans>No {what}s yet.</Trans>
                   </div>
-                  <a className="btn btn-primary" href={`${detail_base}${item.id}/`}>Go</a>
-                </div>
-            )
-          })}
-          {!items.length && (
-              <div style={{margin: "10px"}}>
-                <Trans>No {what}s yet.</Trans>
-              </div>
-          )}
-        </div>
+              )}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
   )
 }

@@ -1,7 +1,7 @@
 import json
 from functools import cached_property
 
-from django.db.models import Max, F
+from django.db.models import Max, F, Value
 
 from main.views import MainView, JsonResponse
 from matcher.models import MatcherProject, MatcherStratagem
@@ -82,6 +82,27 @@ class MatcherProjectsPage(MainView):
                 ).get(pk=data["id"])
                 item.is_favourite = not item.is_favourite
                 item.save(update_fields=["is_favourite"])
+            case "sort":
+                qs = self.model.objects.filter(**self.get_add_extra())
+                old_place_item = qs.only("id", "order").get(pk=data["old_place_id"])
+                new_place_item = self.model.objects.filter(
+                    **self.get_add_extra(),
+                ).only("id", "order").get(pk=data["new_place_id"])
+
+                if new_place_item.order < old_place_item.order:
+                    qs.filter(
+                        order__gte=Value(new_place_item.order),
+                        order__lt=old_place_item.order
+                    ).update(order=F("order") + Value(1))
+                    old_place_item.order = new_place_item.order
+                    old_place_item.save(update_fields=["order"])
+                else:
+                    qs.filter(
+                        order__lte=Value(new_place_item.order),
+                        order__gt=old_place_item.order
+                    ).update(order=F("order") - Value(1))
+                    old_place_item.order = new_place_item.order
+                    old_place_item.save(update_fields=["order"])
         return JsonResponse(resp)
 
 

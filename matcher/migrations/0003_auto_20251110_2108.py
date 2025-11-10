@@ -7,8 +7,8 @@ def forwards_func(apps, schema_editor):
     MatcherProject = apps.get_model("matcher", "MatcherProject")
     MatcherStratagem = apps.get_model("matcher", "MatcherStratagem")
     for model in [MatcherProject, MatcherStratagem]:
-        for order, item in enumerate(model.objects.all(), 1):
-            item.my_order = order
+        for order, item in enumerate(model.objects.all().order_by("id"), 1):
+            item.order = order
             item.save(update_fields=['order'])
 
 
