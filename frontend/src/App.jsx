@@ -1297,6 +1297,42 @@ const fiddleTypes = {
   UI1
 }
 
+
+export class NoDndPointerSensor extends PointerSensor {
+  static activators = [
+    {
+      eventName: 'onMouseDown',
+      handler: ({ nativeEvent: event }) => {
+        return shouldHandleEvent(event.target)
+      }
+    }
+  ]
+}
+
+export class NoDndKeyboardSensor extends KeyboardSensor {
+  static activators = [
+    {
+      eventName: 'onKeyDown',
+      handler: ({ nativeEvent: event }) => {
+        return shouldHandleEvent(event.target)
+      }
+    }
+  ]
+}
+
+function shouldHandleEvent(element) {
+  let cur = element
+
+  while (cur) {
+    if (cur.dataset && cur.dataset.noDnd) {
+      return false
+    }
+    cur = cur.parentElement
+  }
+
+  return true
+}
+
 const SortableItemsListItem = ({ item, what, onChange, detail_base }) => {
   const { runModal } = useContext(ModalContext);
 
@@ -1316,7 +1352,7 @@ const SortableItemsListItem = ({ item, what, onChange, detail_base }) => {
   return (
       <div ref={setNodeRef} className='card' style={{ width: '18rem', margin: 10, ...style }} {...attributes} {...listeners}>
         <div className='card-body'>
-          <h5 className='card-title'>
+          <h5 className='card-title' data-no-dnd="true">
             {item.name}
             {" "}
             <a className="btn btn-sm btn-light" onClick={async (e) => {
@@ -1369,8 +1405,8 @@ const SortableItemsList = ({ user, items: originalItems, title, onChange, what, 
   }, [originalItems]);
 
   const sensors = useSensors(
-      useSensor(PointerSensor),
-      useSensor(KeyboardSensor, {
+      useSensor(NoDndPointerSensor),
+      useSensor(NoDndKeyboardSensor, {
         coordinateGetter: sortableKeyboardCoordinates,
       })
   );
@@ -1386,12 +1422,11 @@ const SortableItemsList = ({ user, items: originalItems, title, onChange, what, 
 
         setTimeout(() => {
           onChange({action: 'sort', old_place_id: items[oldIndex].id, new_place_id: items[newIndex].id});
-        }, 1000)
+        }, 1)
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   }
-
 
   return (
       <div className='container-fluid'>
