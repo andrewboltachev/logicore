@@ -28,6 +28,7 @@ import {
   modifyHelper
 } from '../logicore-forms'
 import { axios, extend, update } from '../imports'
+import {Link} from "react-router-dom";
 
 const INITIAL_DATA = `{
   "type": "Fields",
