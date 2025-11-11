@@ -1416,7 +1416,7 @@ const SortableItemsListItem = ({ item, what, onChange, detail_base }) => {
             {/*{item.name}*/}
           </p>
         </div>
-        <a className="btn btn-primary" href={`${detail_base}${item.id}/`}>Go</a>
+        <Link data-no-dnd="true" className="btn btn-primary" to={`${detail_base}${item.id}/`}>Go</Link>
       </div>
   );
 }
