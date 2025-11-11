@@ -1352,10 +1352,10 @@ const SortableItemsListItem = ({ item, what, onChange, detail_base }) => {
   return (
       <div ref={setNodeRef} className='card' style={{ width: '18rem', margin: 10, ...style }} {...attributes} {...listeners}>
         <div className='card-body'>
-          <h5 className='card-title' data-no-dnd="true">
+          <h5 className='card-title'>
             {item.name}
             {" "}
-            <a className="btn btn-sm btn-light" onClick={async (e) => {
+            <a data-no-dnd="true" className="btn btn-sm btn-light" onClick={async (e) => {
               const result = await runModal({
                 title: `Rename ${what} "${item.name}"`,
                 fields: {
@@ -1380,14 +1380,14 @@ const SortableItemsListItem = ({ item, what, onChange, detail_base }) => {
               <i className="fa fa-edit" />
             </a>
             {" "}
-            <a href="#" onClick={async (e) => {
+            <a data-no-dnd="true" href="#" onClick={async (e) => {
               onChange({action: 'toggle_favourite', id: item.id});
             }} className={item.is_favourite ? 'btn btn-sm btn-outline-light text-warning' : 'btn btn-sm btn-outline-light text-light'}>
               <i className="fa fa-heart" style={{ fontSize: '1.25rem' }} />
             </a>
             {" "}
 
-            <a className="btn btn-sm btn-light" onClick={async (e) => {
+            <a data-no-dnd="true" className="btn btn-sm btn-light" onClick={async (e) => {
               const result = await runModal({
                 title: `Delete ${what} "${item.name}"`,
                 fields: {
