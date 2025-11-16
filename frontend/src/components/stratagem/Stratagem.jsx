@@ -21,7 +21,7 @@ function simpleLogDecorator(targetFn) {
     };
 }
 
-const Stratagem = ({ user, items, title, value, onChange, what, detail_base, breadcrumbs }) => {
+const Stratagem = ({ user, items, title, data: value, onChange, what, detail_base, breadcrumbs }) => {
     const {runModal} = useContext(ModalContext);
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
@@ -40,12 +40,53 @@ const Stratagem = ({ user, items, title, value, onChange, what, detail_base, bre
     // The WebSocket reference
     const ws = React.useRef(null);
 
-    const stratagemId = null;
-    console.log({value});
+    // console.log({value});
+
+    const throttleRef = React.useRef(null);
+
+    const receiver = useCallback((received) => {
+        console.log({received: received.length});
+    }, []);
+
+    const [producer, setProducer] = useState(null);
 
     useEffect(() => {
+        const interval = 500;
+        let handle = null;
+        let gen = null;
+        function* g() {
+            let lastUpdated = Date.now();
+            let accumulator = [];
+            while (true) {
+                const newValue = yield;
+                if (handle === null) {
+                    handle = setTimeout(() => {
+                        handle = null;
+                        gen.next(null);
+                    }, interval);
+                }
+                const now = Date.now();
+                if (newValue !== null) accumulator.push(newValue);
+                if (now >= lastUpdated + interval) {
+                    if (!accumulator.length) continue;
+                    receiver(accumulator);
+                    lastUpdated = now;
+                    accumulator = [];
+                }
+            }
+        }
+        gen = g();
+        gen.next(); // jump to yield
+        setProducer(gen);
+        return () => {
+            gen.return();
+            if (handle !== null) clearTimeout(handle);
+        }
+    }, [receiver]);
+
+    /*useEffect(() => {
             // 1. Establish the connection
-            ws.current = new WebSocket(`wss://127.0.0.1:8008/ws/${stratagemId}`);
+            ws.current = new WebSocket(`wss://127.0.0.1:8008/ws/${value.id}`);
 
             // 2. Event Handlers
 
@@ -80,6 +121,7 @@ const Stratagem = ({ user, items, title, value, onChange, what, detail_base, bre
                 }
             };
     }, []); // Empty dependency array means this runs only once on mount
+     */
 
     // Function to send a message
     const sendMessage = (message) => {
@@ -161,7 +203,10 @@ const Stratagem = ({ user, items, title, value, onChange, what, detail_base, bre
                 <div style={{ height: '100%', width: '100%' }}>
                     <ReactFlow
                         nodes={nodes}
-                        onNodesChange={simpleLogDecorator(onNodesChange)}
+                        onNodesChange={(changes) => {
+                            producer.next(changes);
+                            simpleLogDecorator(onNodesChange)(changes);
+                        }}
                         edges={edges}
                         onEdgesChange={onEdgesChange}
                     >

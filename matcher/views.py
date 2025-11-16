@@ -154,6 +154,7 @@ class MatcherStratagemPage(MainView):
     def get_project(self):
         return MatcherProject.objects.get(id=self.kwargs["project_id"])
 
+    @cached_property
     def get_stratagem(self):
         return MatcherStratagem.objects.filter(project=self.get_project()).get(
             id=self.kwargs["id"]
@@ -164,11 +165,16 @@ class MatcherStratagemPage(MainView):
             "title": self.get_title(),
             "what": self.what,
             "breadcrumbs": self.get_breadcrumbs(),
+            "data": {
+                k: v
+                for k, v in self.get_stratagem.__dict__.items()
+                if k !="_state"
+            },
         }
 
     def get_breadcrumbs(self):
         project = self.get_project()
-        stratagem = self.get_stratagem()
+        stratagem = self.get_stratagem
         return [
             {"title": "Matcher", "url": "/matcher/"},
             {"title": project.name, "url": f"/matcher-projects/{project.id}/"},

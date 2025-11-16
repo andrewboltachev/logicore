@@ -26,11 +26,6 @@ class MatcherStratagem(models.Model):
 
     class Meta:
         ordering = ("order",)
-        # TODO: indexes on keys for nodes and edges
-        # Learn: GIN index
-        _sql = """
-        CREATE INDEX idx_flow_data_keys_only ON my_table USING GIN (jsonb_field jsonb_path_ops);
-        """
 
 
 class MatcherNode(models.Model):
