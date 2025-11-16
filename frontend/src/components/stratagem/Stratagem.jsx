@@ -1,0 +1,3 @@
+const Stratagem = ({ value, onChange }) => {
+    // ...
+};
