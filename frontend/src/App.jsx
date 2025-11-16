@@ -107,6 +107,7 @@ import {
 } from "@dnd-kit/sortable";
 import {SortableItem} from "./components/sortable/SortableItem.jsx";
 import {CSS} from "@dnd-kit/utilities";
+import Stratagem from "./components/stratagem/Stratagem.jsx";
 hljs.registerLanguage('typescript', typescript)
 
 const addLang = (url) => addLangToPathName(window.CURRENT_LANGUAGE, url)
@@ -1534,38 +1535,11 @@ const SortableItemsList = ({ user, items: originalItems, title, onChange, what, 
   )
 }
 
-const MatcherStratagem = ({ user, items, title, onChange, what, detail_base, breadcrumbs }) => {
-  const { runModal } = useContext(ModalContext);
+const MatcherStratagem = ({ ...props }) => {
   return (
-      <div className='container-fluid'>
-        <div className='row align-items-stretch'>
-          <div className='col-md-12 flex-grow-1 d-flex align-items-center py-3 gap-2'>
-            {!!breadcrumbs?.length && (
-                <nav aria-label="breadcrumb" className="flex-grow-1">
-                  <ol className="breadcrumb" style={{background: '#e9ecef', padding: 10, borderRadius: 8, marginBottom: 0}}>
-                    {breadcrumbs.map((item, i) => (
-                        <li key={i} className={`breadcrumb-item ${ !item.url ? 'active' : '' }`}>
-                          {item?.url ? (
-                              <Link to={item.url}>{item.title}</Link>
-                          ) : (
-                              <>{item.title}</>
-                          )}
-                        </li>
-                    ))}
-                  </ol>
-                </nav>
-            )}
-          </div>
-        </div>
-        <div
-            style={{ display: 'flex', flexWrap: 'wrap' }}
-        >
-          hello
-        </div>
-      </div>
-  )
+      <Stratagem {...props} />
+  );
 }
-
 
 const Fiddle = (props) => {
   const [val, setVal] = useState(props.val)
