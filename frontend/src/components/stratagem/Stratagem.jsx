@@ -6,7 +6,7 @@ import '@xyflow/react/dist/style.css';
 import { useState, useCallback } from 'react';
 import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react';
 import { v4 as uuidv4 } from 'uuid'
-import { Subject, bufferTime, filter } from 'rxjs';
+import {Subject, bufferTime, filter, concatAll, mergeMap, groupBy, debounceTime} from 'rxjs';
 
 
 import nodeTypes from './nodeTypes.jsx';
@@ -29,7 +29,9 @@ function simpleLogDecorator(targetFn) {
  * @param {number} interval - The time window (in milliseconds) for batching.
  * @returns {Subject<any>} - The Subject/producer to send events to.
  */
-function useRxjsBatcher(receiver, interval = 500) {
+function useFlowEventsBatcher(receiver) {
+    const MOUSE_MOVE_INTERVAL = 200;
+    const BATCH_INTERVAL = 50;
     // 1. Create the Subject (the producer) once using useMemo.
     const eventStream = useMemo(() => new Subject(), []);
 
@@ -37,9 +39,21 @@ function useRxjsBatcher(receiver, interval = 500) {
     useEffect(() => {
         const subscription = eventStream.pipe(
             // Collect events into an array every 'interval' milliseconds
-            bufferTime(interval),
             // Ensure we only process batches with actual events
-            filter(batch => batch.length > 0)
+            //filter(batch => batch.length > 0),
+            concatAll(),
+            groupBy(event => event.type),
+            mergeMap(group => {
+                if (group.key === 'position') {
+                    // Apply debouncing ONLY to mousemove events
+                    return group.pipe(debounceTime(MOUSE_MOVE_INTERVAL));
+                } else {
+                    // Let all other events pass through immediately
+                    return group;
+                }
+            }),
+            bufferTime(BATCH_INTERVAL),
+            filter(batch => batch.length)
         ).subscribe(batch => {
             // This is the RxJS equivalent of your 'receiver(batch)'
             receiver(batch);
@@ -52,101 +66,10 @@ function useRxjsBatcher(receiver, interval = 500) {
             // Optional: Complete the subject if it won't be reused, although unsubscribe is often sufficient.
             eventStream.complete();
         };
-    }, [eventStream, receiver, interval]); // Dependencies: The stream object, receiver function, and interval
+    }, [eventStream, receiver]); // Dependencies: The stream object, receiver function, and interval
 
     // Return the Subject so the component can send events to it.
     return eventStream;
-}
-
-// --- Example Component Usage ---
-function EventLogger() {
-    const [logCount, setLogCount] = useState(0);
-
-    // The function that receives the batched events
-    const receiver = useCallback((batch) => {
-        console.log(`Received batch of ${batch.length} events at ${Date.now()}`);
-        setLogCount(c => c + batch.length);
-    }, []);
-
-    // Get the producer/Subject from the hook
-    const producer = useRxjsBatcher(receiver, 500);
-
-    // Function to simulate an incoming event
-    const sendEvent = useCallback(() => {
-        const event = { id: Date.now(), data: "user_action" };
-        // Send the event to the RxJS stream
-        producer.next(event);
-    }, [producer]);
-
-    return (
-        <div>
-            <h2>RxJS Batching Example</h2>
-            <p>Total Events Logged: **{logCount}**</p>
-            <button onClick={sendEvent}>
-                Click to Send Event (Batched every 500ms)
-            </button>
-            <button onClick={() => setLogCount(0)}>Reset Log</button>
-        </div>
-    );
-}
-
-// Recommended Ref-based Batcher
-function useBatcher(receiver, interval = 500) {
-    // 1. Ref to hold the mutable state (accumulator and timer ID)
-    const stateRef = useRef({
-        accumulator: [],
-        timerId: null
-    });
-
-    // 2. Function to execute the batch flush
-    const flush = useCallback(() => {
-        const { accumulator, timerId } = stateRef.current;
-
-        // 2a. Clear the timer and reset the timerId in the ref
-        if (timerId) {
-            clearTimeout(timerId);
-            stateRef.current.timerId = null;
-        }
-
-        // 2b. If there are events, call the receiver and clear the accumulator
-        if (accumulator.length > 0) {
-            receiver(accumulator);
-            stateRef.current.accumulator = [];
-        }
-    }, [receiver]); // Recreate if 'receiver' changes
-
-    // 3. The actual producer function exposed to the caller
-    const producer = useCallback((event) => {
-        const { accumulator, timerId } = stateRef.current;
-
-        // 3a. Add the event to the accumulator
-        accumulator.push(event);
-
-        // 3b. If no timer is running, set one up to flush after 'interval'
-        if (timerId === null) {
-            const newTimerId = setTimeout(() => {
-                // When the timer fires, call the flush function
-                flush();
-            }, interval);
-
-            // 3c. Update the ref with the new timer ID
-            stateRef.current.timerId = newTimerId;
-        }
-        // If a timer is already running, we let it continue,
-        // effectively debouncing the flush to be at most once every 'interval'.
-    }, [flush, interval]);
-
-    // 4. Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            // Clear any outstanding timer when the component unmounts
-            if (stateRef.current.timerId) {
-                clearTimeout(stateRef.current.timerId);
-            }
-        };
-    }, []);
-
-    return producer;
 }
 
 const Stratagem = ({ user, items, title, data: value, onChange, what, detail_base, breadcrumbs }) => {
@@ -174,12 +97,13 @@ const Stratagem = ({ user, items, title, data: value, onChange, what, detail_bas
 
     const receiver = useCallback((batch) => {
         console.log(`Received batch of ${batch.length} events at ${Date.now()}`);
-        // setLogCount(c => c + batch.length);
+        for (const event of batch) {
+            console.log(event);
+        }
     }, []);
 
     // Get the producer/Subject from the hook
-    const producer = useRxjsBatcher(receiver, 500);
-
+    const producer = useFlowEventsBatcher(receiver, 500);
 
     /*useEffect(() => {
             // 1. Establish the connection
@@ -298,7 +222,6 @@ const Stratagem = ({ user, items, title, data: value, onChange, what, detail_bas
                 }
             >
                 <div style={{ height: '100%', width: '100%' }}>
-                    <EventLogger />
                     <ReactFlow
                         nodes={nodes}
                         onNodesChange={(changes) => {
@@ -306,7 +229,10 @@ const Stratagem = ({ user, items, title, data: value, onChange, what, detail_bas
                             onNodesChange(changes);
                         }}
                         edges={edges}
-                        onEdgesChange={onEdgesChange}
+                        onEdgesChange={(changes) => {
+                            producer.next(changes);
+                            onEdgesChange(changes);
+                        }}
                     >
                         <Background />
                         <Controls />
