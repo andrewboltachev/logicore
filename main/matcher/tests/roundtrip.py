@@ -181,3 +181,14 @@ class TestMatchCons:
             [None, [1, 2, 3]],
             ["foo", None, None, None]
         )
+
+
+class TestMatchIso:
+    def test_single_regular_item(self):
+        t(
+            MatchIso(MatchAny(), int, str),
+            "123",
+            123,
+            None,
+            "123"
+        )

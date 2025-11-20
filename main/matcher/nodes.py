@@ -936,6 +936,35 @@ def to_dict(dcls: Any) -> Any:
         return dcls
 
 
+@dataclass
+class MatchIso(Node):
+    inner: Node
+    decoder: callable  # forwards: External -> Internal
+    encoder: callable  # backwards: Internal -> External
+
+    def is_final(self):
+        return self.inner.is_final()
+
+    def forwards(self, *, value, path=None):
+        # 1. Run inner match
+        inner_val, payload = self.inner.forwards(value=value, path=path)
+        # 2. Apply Decode (e.g. string -> Enum)
+        try:
+            decoded = self.decoder(inner_val)
+        except Exception as e:
+            raise self._error(f"Iso decode failed: {e}", path, val=inner_val)
+        return decoded, payload
+
+    def backwards(self, *, result, payload, path=None):
+        # 1. Apply Encode (e.g. Enum -> string)
+        encoded = self.encoder(result)
+        # 2. Pass back to inner
+        return self.inner.backwards(result=encoded, payload=payload, path=path)
+
+    def to_funnel(self, *, value, path=None):
+         yield from self.inner.to_funnel(value=value, path=path)
+
+
 def main():
     g = MatchObjectFull({"x": MatchAny(), "w": MatchNone()})
     print(to_dict(g))

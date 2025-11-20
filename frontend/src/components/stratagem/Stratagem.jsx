@@ -6,7 +6,7 @@ import '@xyflow/react/dist/style.css';
 import { useState, useCallback } from 'react';
 import { applyEdgeChanges, applyNodeChanges } from '@xyflow/react';
 import { v4 as uuidv4 } from 'uuid'
-import {Subject, bufferTime, filter, concatAll, mergeMap, groupBy, debounceTime} from 'rxjs';
+import {Subject, bufferTime, filter, concatAll, mergeMap, groupBy, debounceTime, takeUntil} from 'rxjs';
 
 
 import nodeTypes from './nodeTypes.jsx';
@@ -24,49 +24,63 @@ function simpleLogDecorator(targetFn) {
 }
 
 /**
- * Custom hook to manage an RxJS batching stream.
+ * Custom hook to manage an RxJS batching stream with guaranteed flush on unmount.
  * @param {function} receiver - The function to call with the batched events.
- * @param {number} interval - The time window (in milliseconds) for batching.
  * @returns {Subject<any>} - The Subject/producer to send events to.
  */
 function useFlowEventsBatcher(receiver) {
     const MOUSE_MOVE_INTERVAL = 200;
     const BATCH_INTERVAL = 50;
-    // 1. Create the Subject (the producer) once using useMemo.
+
+    // 1. Create the main event stream (producer)
     const eventStream = useMemo(() => new Subject(), []);
 
-    // 2. Manage the subscription lifecycle using useEffect.
+    // 2. Create the cleanup subject (flusher/terminator)
+    const cleanup$ = useMemo(() => new Subject(), []);
+
+    // 3. Manage the subscription lifecycle
     useEffect(() => {
         const subscription = eventStream.pipe(
-            // Collect events into an array every 'interval' milliseconds
-            // Ensure we only process batches with actual events
-            //filter(batch => batch.length > 0),
             concatAll(),
+            // 1. Splitting stream for special handling
             groupBy(event => event.type),
             mergeMap(group => {
                 if (group.key === 'position') {
-                    // Apply debouncing ONLY to mousemove events
+                    // Apply debouncing ONLY to 'position' (mousemove) events
                     return group.pipe(debounceTime(MOUSE_MOVE_INTERVAL));
                 } else {
                     // Let all other events pass through immediately
                     return group;
                 }
             }),
+
+            // 2. Batching
             bufferTime(BATCH_INTERVAL),
-            filter(batch => batch.length)
+            filter(batch => batch.length > 0),
+
+            // 3. Termination Strategy
+            // When cleanup$ emits, the stream completes and flushes the bufferTime cache.
+            takeUntil(cleanup$)
+
         ).subscribe(batch => {
-            // This is the RxJS equivalent of your 'receiver(batch)'
             receiver(batch);
         });
 
-        // 3. Cleanup function: runs on component unmount
+        // 4. Cleanup function: runs on component unmount
         return () => {
-            // Unsubscribe to stop processing and prevent memory leaks
+            // Step A: Emit a value on the cleanup$ subject.
+            // This triggers the stream to complete via takeUntil(cleanup$).
+            cleanup$.next(true);
+
+            // Step B: Unsubscribe the main stream.
+            // This ensures the completion signal is processed and the stream shuts down.
             subscription.unsubscribe();
-            // Optional: Complete the subject if it won't be reused, although unsubscribe is often sufficient.
+
+            // Step C: Complete the Subjects for proper resource deallocation.
             eventStream.complete();
+            cleanup$.complete();
         };
-    }, [eventStream, receiver]); // Dependencies: The stream object, receiver function, and interval
+    }, [eventStream, receiver, cleanup$]);
 
     // Return the Subject so the component can send events to it.
     return eventStream;
