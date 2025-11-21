@@ -212,9 +212,9 @@ class MatchObjectFull(Node):
                     value=v,
                     path=path + [k]
                 )
-                if result_item:
+                if not g.is_final():
                     result[k] = result_item
-                if payload_item:
+                if payload_item is not None:
                     payload[k] = payload_item
                 keys.remove(k)
             except MatchError as e:
@@ -231,7 +231,7 @@ class MatchObjectFull(Node):
             ) from None
         if len(result) == 1:
             result = list(result.values())[0]
-        if not result:
+        if self.is_final():
             result = None
         return result, payload
 
@@ -534,7 +534,7 @@ class MatchArrayFull(Node):
                     f"Result must be integer",
                     path,
                 )
-            result = [None] * result
+            result = [self.item.backwards(result=None, payload=[*payload[i:], None][0], path=path) for i in range(result)]
         value = []
         for i, result_item in enumerate(result):
             try:
@@ -963,6 +963,76 @@ class MatchIso(Node):
 
     def to_funnel(self, *, value, path=None):
          yield from self.inner.to_funnel(value=value, path=path)
+
+# A simple global registry for this stage.
+# In a production version, this would be a Context object passed in forwards/backwards.
+SCHEMA_REGISTRY = {}
+
+@dataclass
+class MatchRec(Node):
+    """
+    Defines a Recursive Type (μ).
+    Registers the 'body' node under 'name' so MatchRef can find it.
+    """
+    name: str
+    body: Node
+
+    def __post_init__(self):
+        # Register immediately.
+        # Warning: This is global state (side effect).
+        # For a pure version, pass 'context' dict in forwards/backwards.
+        SCHEMA_REGISTRY[self.name] = self.body
+
+    def is_final(self):
+        return self.body.is_final()
+
+    def forwards(self, *, value, path=None):
+        # Pass-through to the body
+        return self.body.forwards(value=value, path=path)
+
+    def backwards(self, *, result, payload, path=None):
+        return self.body.backwards(result=result, payload=payload, path=path)
+
+    def to_funnel(self, *, value, path=None):
+        yield from self.body.to_funnel(value=value, path=path)
+
+
+# A simple global registry for this stage.
+# In a production version, this would be a Context object passed in forwards/backwards.
+SCHEMA_REGISTRY = {}
+
+
+@dataclass
+class MatchRef(Node):
+    """
+    Refers to a type by name.
+    Delays resolution until execution time (Late Binding).
+    """
+    ref_name: str
+
+    def _get_node(self, path):
+        try:
+            return SCHEMA_REGISTRY[self.ref_name]
+        except KeyError:
+            raise self._error(f"Recursive reference '{self.ref_name}' not found", path)
+
+    def is_final(self):
+        # We assume False to avoid infinite recursion during checks,
+        # or we need to check the registry. Safest is False.
+        return False
+
+    def forwards(self, *, value, path=None):
+        node = self._get_node(path)
+        return node.forwards(value=value, path=path)
+
+    def backwards(self, *, result, payload, path=None):
+        # NOTE: This relies on the registry being populated!
+        node = self._get_node(path)
+        return node.backwards(result=result, payload=payload, path=path)
+
+    def to_funnel(self, *, value, path=None):
+        node = self._get_node(path)
+        yield from node.to_funnel(value=value, path=path)
 
 
 def main():

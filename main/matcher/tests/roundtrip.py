@@ -192,3 +192,167 @@ class TestMatchIso:
             None,
             "123"
         )
+
+
+def test_recursive_filesystem():
+    # 1. Define the Schema
+    # A Folder contains Files OR other Folders.
+
+    # We define the recursive structure for a "Node" in a tree
+    schema = MatchRec("FileSystemNode", MatchObjectFull({
+        "name": MatchStringAny(),
+        "type": MatchStringAny(), # "file" or "dir"
+        # Here is the recursion: A 'children' list containing 'FileSystemNode's
+        # We use MatchOr to handle Leaf (File) vs Node (Dir) logic if we wanted,
+        # but here we just allow a list of refs.
+        "children": MatchArrayFull(MatchRef("FileSystemNode"))
+    }))
+
+    # 2. The Data (Nested JSON)
+    data = {
+        "name": "root",
+        "type": "dir",
+        "children": [
+            {
+                "name": "etc",
+                "type": "dir",
+                "children": [
+                    {"name": "passwd", "type": "file", "children": []}
+                ]
+            },
+            {
+                "name": "var",
+                "type": "dir",
+                "children": []
+            }
+        ]
+    }
+
+    # 3. Execute
+    # Thin Value: We keep everything structural.
+    # In a real app, we might use MatchIso to convert "type": "dir" to an Enum.
+    result, payload = schema.forwards(value=data)
+
+    # 4. Verify Round Trip
+    restored = schema.backwards(result=result, payload=payload)
+    assert restored == data
+    print("Recursion Works!")
+
+
+class TestMatchRec:
+    def setup_method(self):
+        # CRITICAL: Clear registry before every test to avoid pollution
+        SCHEMA_REGISTRY.clear()
+
+    def test_simple_recursive_folder(self):
+        # Schema: A folder has a name and a list of children (which are also folders)
+        schema = MatchRec("Folder", MatchObjectFull({
+            "name": MatchStringAny(),
+            "children": MatchArrayFull(MatchRef("Folder"))
+        }))
+
+        # Case 1: Leaf Node (No children)
+        # Input
+        val_leaf = {"name": "leaf", "children": []}
+
+        # Expected Payload logic:
+        # MatchStringAny returns None payload -> excluded from Object payload
+        # MatchArrayFull returns [] payload
+        t(
+            schema,
+            val_leaf,
+            val_leaf,           # Result (structure preserved)
+            {"children": []},   # Payload
+            val_leaf            # Reconstructed without payload
+        )
+
+    def test_nested_recursion(self):
+        schema = MatchRec("Folder", MatchObjectFull({
+            "name": MatchStringAny(),
+            "children": MatchArrayFull(MatchRef("Folder"))
+        }))
+
+        # Case 2: Depth 2
+        val_tree = {
+            "name": "root",
+            "children": [
+                {"name": "sub1", "children": []},
+                {"name": "sub2", "children": []}
+            ]
+        }
+
+        # Payload analysis:
+        # Root payload has 'children' which is a list of payloads.
+        # Each child payload has 'children': []
+        expected_payload = {
+            "children": [
+                {"children": []},
+                {"children": []}
+            ]
+        }
+
+        t(
+            schema,
+            val_tree,
+            val_tree,           # Result
+            expected_payload,   # Payload
+            val_tree            # No Payload Value
+        )
+
+    def test_mixed_recursion_with_payload_erasure(self):
+        # Schema: Recursion where we actually ERASE data in the "Thin Value"
+        # Let's say we want to erase the "name" from the result (MatchNone),
+        # but keep the structure.
+
+        schema = MatchRec("GhostFolder", MatchObjectFull({
+            "name": MatchNone(), # This goes into Payload ONLY
+            "children": MatchArrayFull(MatchRef("GhostFolder"))
+        }))
+
+        val_input = {
+            "name": "root",
+            "children": [
+                {"name": "hidden", "children": []}
+            ]
+        }
+
+        # Result analysis:
+        # "name" is MatchNone -> returns None in result, "root" in payload
+        # If MatchObjectFull sees None result for "name", it keeps it (based on your impl logic)
+        # or collapses it.
+        # Based on your MatchObjectFull:
+        # if len(result) == 1 -> unwrap.
+        # Here we have "name": None, "children": [List].
+        # "children" is regular. "name" is final.
+
+        # Let's trace strictly:
+        # MatchArrayFull("children") -> returns list of children results.
+        # Child Result: {"children": []} (name is None) -> unwrapped?
+        # Let's assume strict dict output for clarity of the test:
+
+        expected_result = [[]]
+
+        expected_payload = {
+            "name": "root",
+            "children": [
+                {"name": "hidden", "children": []}
+            ]
+        }
+
+        # When reconstructing WITHOUT payload:
+        # MatchNone backwards without payload returns None.
+        # So we get the structure back, but names are None.
+        expected_no_payload_value = {
+            "name": None,
+            "children": [
+                {"name": None, "children": []}
+            ]
+        }
+
+        t(
+            schema,
+            val_input,
+            expected_result,
+            expected_payload,
+            expected_no_payload_value
+        )
