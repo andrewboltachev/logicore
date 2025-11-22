@@ -3,8 +3,11 @@ import dataclasses
 import json
 import numbers
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, get_type_hints, get_origin, get_args, Union
 from unittest import case
+
+from main.matcher.iso_registry import IsoRegistry
+
 
 # Types of data: Value, Grammar, Result, Payload
 
@@ -939,8 +942,7 @@ def to_dict(dcls: Any) -> Any:
 @dataclass
 class MatchIso(Node):
     inner: Node
-    decoder: callable  # forwards: External -> Internal
-    encoder: callable  # backwards: Internal -> External
+    iso_name: str  # Changed from decoder/encoder callables to a string ID
 
     def is_final(self):
         return self.inner.is_final()
@@ -948,21 +950,30 @@ class MatchIso(Node):
     def forwards(self, *, value, path=None):
         # 1. Run inner match
         inner_val, payload = self.inner.forwards(value=value, path=path)
-        # 2. Apply Decode (e.g. string -> Enum)
+
+        # 2. Look up Decoder
+        decoder, _ = IsoRegistry.get(self.iso_name)
+
+        # 3. Execute
         try:
-            decoded = self.decoder(inner_val)
+            decoded = decoder(inner_val)
         except Exception as e:
-            raise self._error(f"Iso decode failed: {e}", path, val=inner_val)
+            raise self._error(f"Iso '{self.iso_name}' decode failed: {e}", path, val=inner_val)
+
         return decoded, payload
 
     def backwards(self, *, result, payload, path=None):
-        # 1. Apply Encode (e.g. Enum -> string)
-        encoded = self.encoder(result)
-        # 2. Pass back to inner
+        # 1. Look up Encoder
+        _, encoder = IsoRegistry.get(self.iso_name)
+
+        # 2. Execute
+        encoded = encoder(result)
+
+        # 3. Pass back to inner
         return self.inner.backwards(result=encoded, payload=payload, path=path)
 
     def to_funnel(self, *, value, path=None):
-         yield from self.inner.to_funnel(value=value, path=path)
+        yield from self.inner.to_funnel(value=value, path=path)
 
 # A simple global registry for this stage.
 # In a production version, this would be a Context object passed in forwards/backwards.
@@ -1035,17 +1046,98 @@ class MatchRef(Node):
         yield from node.to_funnel(value=value, path=path)
 
 
+# def main():
+#     g = MatchObjectFull({"x": MatchAny(), "w": MatchNone()})
+#     print(to_dict(g))
+#     value = {"x": 1, "w": " "}
+#     r, p = g.forwards(value=value)
+#     print("r", r)
+#     print("p", p)
+#     v = g.backwards(result=r, payload=p)
+#     print("v", v)
+#     assert v == value
+
+
+
+# --- The Introspector Logic ---
+
+def describe_type(t: Any) -> Any:
+    """Recursively converts a Python Type into a JSON-like structure."""
+    origin = get_origin(t)
+    args = get_args(t)
+
+    # 1. Handle Generics (dict, list, etc.)
+    if origin is dict:
+        return {
+            "type": "dict",
+            "key": describe_type(args[0]),
+            "value": describe_type(args[1])
+        }
+    elif origin is list:
+        return {
+            "type": "list",
+            "item": describe_type(args[0])
+        }
+    elif origin is Union:
+        return {
+            "type": "union",
+            "options": [describe_type(arg) for arg in args]
+        }
+
+    # 2. Handle 'Any' specifically
+    if t is Any:
+        return "Any"
+
+    # 3. Handle Primitives and Classes
+    # getattr(t, "__name__", ...) handles classes; str(t) handles specialized types
+    return getattr(t, "__name__", str(t))
+
+
+def get_class_schema(cls):
+    """Extracts all fields and their types from a dataclass."""
+    if not dataclasses.is_dataclass(cls):
+        return {"error": "Not a dataclass"}
+
+    # Resolve type hints (handles forward refs like 'Node')
+    try:
+        hints = get_type_hints(cls)
+    except Exception as e:
+        # Fallback if types aren't resolvable (e.g. undefined forward refs)
+        return {"error": f"Type resolution failed: {str(e)}"}
+
+    schema = {}
+
+    # Iterate over actual dataclass fields to preserve order
+    for field in dataclasses.fields(cls):
+        name = field.name
+        # Get the resolved type from hints, fallback to the field's declared type
+        t = hints.get(name, field.type)
+        schema[name] = describe_type(t)
+
+    return schema
+
+def all_subclasses(cls):
+    """Recursively find all subclasses."""
+    for c in cls.__subclasses__():
+        for s in all_subclasses(c):
+            yield s
+        yield c
+
+# --- Main Execution ---
+
 def main():
-    g = MatchObjectFull({"x": MatchAny(), "w": MatchNone()})
-    print(to_dict(g))
-    value = {"x": 1, "w": " "}
-    r, p = g.forwards(value=value)
-    print("r", r)
-    print("p", p)
-    v = g.backwards(result=r, payload=p)
-    print("v", v)
-    assert v == value
+    # Create a registry of schemas
+    full_registry = {}
 
+    for cls in all_subclasses(Node):
+        cls_name = cls.__name__
+        print(f"Processing {cls_name}...")
 
-if __name__ == '__main__':
+        # Get schema for ALL fields in this class
+        full_registry[cls_name] = get_class_schema(cls)
+
+    print("\n--- Final Dump ---")
+    print(json.dumps(full_registry, indent=2))
+
+if __name__ == "__main__":
     main()
