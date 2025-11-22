@@ -2,7 +2,7 @@ import json
 import dataclasses
 from typing import Any
 
-from nodes import *  # Assuming your nodes are here
+from .nodes import *  # Assuming your nodes are here
 
 def serialize_schema(obj: Any) -> Any:
     """

@@ -1,4 +1,6 @@
 from ..nodes import *  # noqa
+from ..introspector import describe_type
+from ..serialize import serialize_schema
 
 
 def t(grammar, value, result, payload, no_payload_value):
@@ -9,6 +11,12 @@ def t(grammar, value, result, payload, no_payload_value):
     assert {"value": value2} == {"value": value}, "Value matches"
     value3 = grammar.backwards(result=result2, payload=None)
     assert {"no_payload_value": value3} == {"no_payload_value": no_payload_value}, "No-payload value matches"
+
+
+def t_simple(grammar, value):
+    result2, payload2 = grammar.forwards(value=value)
+    value2 = grammar.backwards(result=result2, payload=payload2)
+    assert {"value": value2} == {"value": value}, "Value matches"
 
 
 class TestMatchObjectFull:
@@ -186,7 +194,7 @@ class TestMatchCons:
 class TestMatchIso:
     def test_single_regular_item(self):
         t(
-            MatchIso(MatchAny(), int, str),
+            MatchIso(MatchAny(), "std.str_int"),
             "123",
             123,
             None,
@@ -356,3 +364,13 @@ class TestMatchRec:
             expected_payload,
             expected_no_payload_value
         )
+
+
+def test_self():
+    type_grammar = describe_type(Node)
+    type_value = serialize_schema(type_grammar)
+
+    t_simple(
+        type_grammar,
+        type_value,
+    )

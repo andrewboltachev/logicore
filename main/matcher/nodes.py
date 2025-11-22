@@ -827,8 +827,8 @@ class MatchOr(Node):
             except MatchError as e:
                 last_error = e
             else:
-                # return {k: result}, {k: payload}
-                return result, payload
+                return {k: result}, {k: payload}
+                #return result, payload
 
         raise self._error(
             "Or fail",
@@ -842,8 +842,7 @@ class MatchOr(Node):
         k = list(result.keys())[0]
 
         if not payload:
-            #payload = {k: None}
-            payload = None
+            payload = {k: None}
         try:
             branch = self.branches[k]
         except KeyError:
@@ -853,8 +852,7 @@ class MatchOr(Node):
                 key=k
             )
         else:
-            #return branch.backwards(result=result[k], payload=payload[k])
-            return branch.backwards(result=result, payload=payload)
+            return branch.backwards(result=result[k], payload=payload[k])
 
     def to_funnel(self, *, value, path=None):
         if not path:
@@ -1067,148 +1065,13 @@ class MatchRef(Node):
         yield from node.to_funnel(value=value, path=path)
 
 
-# def main():
-#     g = MatchObjectFull({"x": MatchAny(), "w": MatchNone()})
-#     print(to_dict(g))
-#     value = {"x": 1, "w": " "}
-#     r, p = g.forwards(value=value)
-#     print("r", r)
-#     print("p", p)
-#     v = g.backwards(result=r, payload=p)
-#     print("v", v)
-#     assert v == value
-
-
-
-# --- The Introspector Logic ---
-
-
-def all_included_subclasses(cls):
-    for c in cls.__subclasses__():
-        try:
-            strategy = c._type_desc_strategy
-        except AttributeError:
-            raise NotImplementedError("dataclass without _type_desc_strategy")
-        if strategy == TypeDescStrategy.ROOT:
-            raise ValueError("dataclass with ROOT strategy inside of another ROOT")
-        if strategy in [TypeDescStrategy.ALL]:
-            yield c
-        if strategy in [TypeDescStrategy.ALL, TypeDescStrategy.TRANSPARENT]:
-            yield from all_included_subclasses(c)
-
-
-def get_class_schema(cls, describe_fn) -> dict[str, Node]:
-    """Extracts all fields and their types from a dataclass."""
-    if not dataclasses.is_dataclass(cls):
-        raise ValueError("error: Not a dataclass")
-
-    # Resolve type hints (handles forward refs like 'Node')
-    try:
-        hints = ty.get_type_hints(cls)
-    except Exception as e:
-        # Fallback if types aren't resolvable (e.g. undefined forward refs)
-        raise ValueError(f"error: Type resolution failed: {str(e)}")
-
-    schema = {}
-
-    # Iterate over actual dataclass fields to preserve order
-    for field in dataclasses.fields(cls):
-        name = field.name
-        # Get the resolved type from hints, fallback to the field's declared type
-        t = hints.get(name, field.type)
-        schema[name] = describe_fn(t)
-
-    return schema
-
-def describe_type(t: Any) -> Any:
-    """Recursively converts a Python Type into a JSON-like structure."""
-    CLASS_REGISTRY = {}
-
-    def _describe_type(t: Any) -> Any:
-        origin = ty.get_origin(t)
-        args = ty.get_args(t)
-
-        # 1. Handle Generics (dict, list, etc.)
-        match origin:
-            case _ if dataclasses.is_dataclass(t):
-                match getattr(t, "_type_desc_strategy", None):
-                    case TypeDescStrategy.ROOT:
-                        branches = {}
-                        CLASS_REGISTRY[t.__name__] = True  # naïve approach with "single namespace"
-                        for cls in all_included_subclasses(Node):
-                            cls_name = cls.__name__
-                            CLASS_REGISTRY[cls_name] = True
-                            branches[cls_name] = _describe_type(cls)
-                        return MatchRec(t.__name__, MatchOr(branches))
-                    case TypeDescStrategy.ALL:
-                        fields_map = get_class_schema(t)
-                        fields_map["type"] = MatchExact(exact_value=t.__name__)
-                        return MatchObjectFull(map=fields_map)
-                    case _:
-                        raise NotImplementedError()
-            case builtins.dict:
-                return {
-                    "type": "dict",
-                    "key": _describe_type(args[0]),
-                    "value": _describe_type(args[1])
-                }
-            case builtins.list:
-                return {
-                    "type": "list",
-                    "item": _describe_type(args[0])
-                }
-            case ty.Union:
-                return MatchOr(branches={
-                    "type": "union",
-                    "options": [_describe_type(arg) for arg in args]
-                })
-            case _:
-                raise NotImplementedError(f"Unknown type '{t}'")
-
-    return _describe_type(t)
-
-
-def get_class_schema(cls):
-    """Extracts all fields and their types from a dataclass."""
-
-    CLASS_REGISTRY = {}
-
-    def _get_class_schema(cls):
-        if not dataclasses.is_dataclass(cls):
-            raise ValueError("Not a dataclass")
-
-        # Resolve type hints (handles forward refs like 'Node')
-        try:
-            hints = ty.get_type_hints(cls)
-        except Exception as e:
-            # Fallback if types aren't resolvable (e.g. undefined forward refs)
-            raise ValueError({"error": f"Type resolution failed: {str(e)}"}) from e
-
-        schema = {}
-
-        # Iterate over actual dataclass fields to preserve order
-        for field in dataclasses.fields(cls):
-            name = field.name
-            # Get the resolved type from hints, fallback to the field's declared type
-            t = hints.get(name, field.type)
-            schema[name] = describe_type(t)
-
-        return schema
-    return _get_class_schema(cls)
-
-def all_subclasses(cls):
-    """Recursively find all subclasses."""
-    for c in cls.__subclasses__():
-        for s in all_subclasses(c):
-            yield s
-        yield c
-
-# --- Main Execution ---
-
 def main():
-    # Create a registry of schemas
-    print("\n--- Final Dump ---")
-    print(describe_type(Node))
-
-if __name__ == "__main__":
-    main()
+    g = MatchObjectFull({"x": MatchAny(), "w": MatchNone()})
+    print(to_dict(g))
+    value = {"x": 1, "w": " "}
+    r, p = g.forwards(value=value)
+    print("r", r)
+    print("p", p)
+    v = g.backwards(result=r, payload=p)
+    print("v", v)
+    assert v == value
