@@ -1,15 +1,24 @@
 # Python Matcher Nodes
+import builtins
 import dataclasses
 import json
 import numbers
 from dataclasses import dataclass
-from typing import Any, get_type_hints, get_origin, get_args, Union
+from enum import Enum
+from typing import Any, Union
+import typing as ty
 from unittest import case
 
 from main.matcher.iso_registry import IsoRegistry
 
 
 # Types of data: Value, Grammar, Result, Payload
+
+
+class TypeDescStrategy(str, Enum):
+    ROOT = "ROOT"
+    ALL = "ALL"  # self and children
+    TRANSPARENT = "TRANSPARENT"  # children, but not itself
 
 
 class MatchError(Exception):
@@ -25,8 +34,20 @@ class MatchError(Exception):
         return f"{self.message}\n{self.klass}\nPath: {self.path}\n{params}"
 
 
+# 1. The Metaclass (The Interceptor)
+class TypeDescriptionMeta(type):
+    def __new__(mcs, name, bases, namespace, _type_desc_strategy=TypeDescStrategy.ALL, **kwargs):
+        # Create the class object
+        cls = super().__new__(mcs, name, bases, namespace, **kwargs)
+
+        # Set the flag explicitly on THIS class's __dict__
+        cls._type_desc_strategy = _type_desc_strategy
+        return cls
+
+
 @dataclass
-class Node:
+class Node(metaclass=TypeDescriptionMeta, _type_desc_strategy=TypeDescStrategy.ROOT):  # noqa
+
     def is_final(self):
         """
         returns True if this node is a 'final object',
@@ -1061,49 +1082,32 @@ class MatchRef(Node):
 
 # --- The Introspector Logic ---
 
-def describe_type(t: Any) -> Any:
-    """Recursively converts a Python Type into a JSON-like structure."""
-    origin = get_origin(t)
-    args = get_args(t)
 
-    # 1. Handle Generics (dict, list, etc.)
-    if origin is dict:
-        return {
-            "type": "dict",
-            "key": describe_type(args[0]),
-            "value": describe_type(args[1])
-        }
-    elif origin is list:
-        return {
-            "type": "list",
-            "item": describe_type(args[0])
-        }
-    elif origin is Union:
-        return {
-            "type": "union",
-            "options": [describe_type(arg) for arg in args]
-        }
-
-    # 2. Handle 'Any' specifically
-    if t is Any:
-        return "Any"
-
-    # 3. Handle Primitives and Classes
-    # getattr(t, "__name__", ...) handles classes; str(t) handles specialized types
-    return getattr(t, "__name__", str(t))
+def all_included_subclasses(cls):
+    for c in cls.__subclasses__():
+        try:
+            strategy = c._type_desc_strategy
+        except AttributeError:
+            raise NotImplementedError("dataclass without _type_desc_strategy")
+        if strategy == TypeDescStrategy.ROOT:
+            raise ValueError("dataclass with ROOT strategy inside of another ROOT")
+        if strategy in [TypeDescStrategy.ALL]:
+            yield c
+        if strategy in [TypeDescStrategy.ALL, TypeDescStrategy.TRANSPARENT]:
+            yield from all_included_subclasses(c)
 
 
-def get_class_schema(cls):
+def get_class_schema(cls, describe_fn) -> dict[str, Node]:
     """Extracts all fields and their types from a dataclass."""
     if not dataclasses.is_dataclass(cls):
-        return {"error": "Not a dataclass"}
+        raise ValueError("error: Not a dataclass")
 
     # Resolve type hints (handles forward refs like 'Node')
     try:
-        hints = get_type_hints(cls)
+        hints = ty.get_type_hints(cls)
     except Exception as e:
         # Fallback if types aren't resolvable (e.g. undefined forward refs)
-        return {"error": f"Type resolution failed: {str(e)}"}
+        raise ValueError(f"error: Type resolution failed: {str(e)}")
 
     schema = {}
 
@@ -1112,9 +1116,85 @@ def get_class_schema(cls):
         name = field.name
         # Get the resolved type from hints, fallback to the field's declared type
         t = hints.get(name, field.type)
-        schema[name] = describe_type(t)
+        schema[name] = describe_fn(t)
 
     return schema
+
+def describe_type(t: Any) -> Any:
+    """Recursively converts a Python Type into a JSON-like structure."""
+    CLASS_REGISTRY = {}
+
+    def _describe_type(t: Any) -> Any:
+        origin = ty.get_origin(t)
+        args = ty.get_args(t)
+
+        # 1. Handle Generics (dict, list, etc.)
+        match origin:
+            case _ if dataclasses.is_dataclass(t):
+                match getattr(t, "_type_desc_strategy", None):
+                    case TypeDescStrategy.ROOT:
+                        branches = {}
+                        CLASS_REGISTRY[t.__name__] = True  # naïve approach with "single namespace"
+                        for cls in all_included_subclasses(Node):
+                            cls_name = cls.__name__
+                            CLASS_REGISTRY[cls_name] = True
+                            branches[cls_name] = _describe_type(cls)
+                        return MatchRec(t.__name__, MatchOr(branches))
+                    case TypeDescStrategy.ALL:
+                        fields_map = get_class_schema(t)
+                        fields_map["type"] = MatchExact(exact_value=t.__name__)
+                        return MatchObjectFull(map=fields_map)
+                    case _:
+                        raise NotImplementedError()
+            case builtins.dict:
+                return {
+                    "type": "dict",
+                    "key": _describe_type(args[0]),
+                    "value": _describe_type(args[1])
+                }
+            case builtins.list:
+                return {
+                    "type": "list",
+                    "item": _describe_type(args[0])
+                }
+            case ty.Union:
+                return MatchOr(branches={
+                    "type": "union",
+                    "options": [_describe_type(arg) for arg in args]
+                })
+            case _:
+                raise NotImplementedError(f"Unknown type '{t}'")
+
+    return _describe_type(t)
+
+
+def get_class_schema(cls):
+    """Extracts all fields and their types from a dataclass."""
+
+    CLASS_REGISTRY = {}
+
+    def _get_class_schema(cls):
+        if not dataclasses.is_dataclass(cls):
+            raise ValueError("Not a dataclass")
+
+        # Resolve type hints (handles forward refs like 'Node')
+        try:
+            hints = ty.get_type_hints(cls)
+        except Exception as e:
+            # Fallback if types aren't resolvable (e.g. undefined forward refs)
+            raise ValueError({"error": f"Type resolution failed: {str(e)}"}) from e
+
+        schema = {}
+
+        # Iterate over actual dataclass fields to preserve order
+        for field in dataclasses.fields(cls):
+            name = field.name
+            # Get the resolved type from hints, fallback to the field's declared type
+            t = hints.get(name, field.type)
+            schema[name] = describe_type(t)
+
+        return schema
+    return _get_class_schema(cls)
 
 def all_subclasses(cls):
     """Recursively find all subclasses."""
@@ -1127,17 +1207,8 @@ def all_subclasses(cls):
 
 def main():
     # Create a registry of schemas
-    full_registry = {}
-
-    for cls in all_subclasses(Node):
-        cls_name = cls.__name__
-        print(f"Processing {cls_name}...")
-
-        # Get schema for ALL fields in this class
-        full_registry[cls_name] = get_class_schema(cls)
-
     print("\n--- Final Dump ---")
-    print(json.dumps(full_registry, indent=2))
+    print(describe_type(Node))
 
 if __name__ == "__main__":
     main()
