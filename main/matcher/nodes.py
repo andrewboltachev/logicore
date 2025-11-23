@@ -9,7 +9,7 @@ from typing import Any, Union
 import typing as ty
 from unittest import case
 
-from main.matcher.iso_registry import IsoRegistry
+from .iso_registry import IsoRegistry
 
 
 # Types of data: Value, Grammar, Result, Payload
