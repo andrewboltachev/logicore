@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Any, Union
 import typing as ty
 from unittest import case
+from collections import defaultdict
 
 from .iso_registry import IsoRegistry
 
@@ -674,7 +675,7 @@ class MatchArrayNamed(Node):
         if not path:
             path = []
         self._check_type(path, value)
-        pre_result = {}
+        pre_result = defaultdict(list)
         for i, v in enumerate(value):
             try:
                 name_result, _ = self.name.forwards(
@@ -691,15 +692,10 @@ class MatchArrayNamed(Node):
                         f"Name not a string or number: {name_result}",
                         path=path,
                     )
-                if name_result in pre_result:
-                    raise self._error(
-                        f"Duplicate name: {name_result}",
-                        path=path,
-                    )
-                pre_result[name_result] = v
+                pre_result[name_result].append(v)
         try:
             yield from self.item.to_funnel(
-                value=pre_result,
+                value=dict(pre_result),
                 path=path
             )
         except MatchError as e:
@@ -874,6 +870,95 @@ class MatchOr(Node):
                 "Or fail",
                 path=path,
             ) from last_error
+
+
+@dataclass
+class MatchUnion(Node):
+    """
+    Untagged Union. Tries branches in order.
+    Returns the raw result of the first matching branch.
+    The Payload stores which branch was selected.
+    """
+    branches: dict[str, Node]
+
+    def is_final(self):
+        return False
+
+    def forwards(self, *, value, path=None):
+        if not path:
+            path = []
+        last_error = None
+
+        for k, b in self.branches.items():
+            try:
+                result, inner_payload = b.forwards(
+                    value=value,
+                    path=path
+                )
+            except MatchError as e:
+                last_error = e
+            else:
+                # CRITICAL DIFFERENCE:
+                # We return 'result' directly (no wrapper).
+                # We store 'k' (the branch name) in the Payload.
+                return result, {"branch": k, "payload": inner_payload}
+
+        raise self._error(
+            "Union fail: No branches matched",
+            path=path,
+        ) from last_error
+
+    def backwards(self, *, result, payload, path=None):
+        if not path:
+            path = []
+
+        # 1. We MUST rely on the payload to know which branch we came from.
+        # Unlike MatchOr, the 'result' doesn't contain the key.
+        if not payload or "branch" not in payload:
+            # Fallback logic could go here (e.g. try to detect branch from result),
+            # but strictly speaking, a missing payload in a Union is a broken Lens.
+            raise self._error("Missing payload for Union reconstruction", path)
+
+        k = payload["branch"]
+        inner_payload = payload["payload"]
+
+        try:
+            branch = self.branches[k]
+        except KeyError:
+            raise self._error(
+                "Union branch from payload not found",
+                path=path,
+                key=k
+            )
+
+        # 2. Delegate to the specific branch
+        return branch.backwards(
+            result=result,
+            payload=inner_payload,
+            path=path
+        )
+
+    def to_funnel(self, *, value, path=None):
+        if not path:
+            path = []
+        last_error = None
+
+        for k, b in self.branches.items():
+            try:
+                yield from b.to_funnel(value=value, path=path)
+            except MatchError as e:
+                last_error = e
+            else:
+                # If a branch matches, we usually stop probing siblings
+                # in a union, unless we want to find ambiguous overlaps.
+                # Stopping on first match is consistent with forwards().
+                return
+
+        raise self._error(
+            "Union fail: No branches matched",
+            path=path,
+        ) from last_error
+
 
 
 @dataclass
