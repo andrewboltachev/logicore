@@ -1650,6 +1650,15 @@ def sort_rooted_copy_items(items):
     return dict(sorted(items.items(), key=lambda kv: [str_or_num(c) for c in kv[0].split(".")]))
 
 
+def is_included_fully(filename, full_paths):
+    for full_path in full_paths:
+        if not full_path.endswith(".py"):
+            full_path = full_path + "/"
+        if filename.startswith(full_path):
+            return Trueata
+    return False
+
+
 class RootedCopyExplorer(MainView):
     in_menu = False
     url_path = "/rc/<int:id>/<int:index>/"
@@ -1784,7 +1793,8 @@ class RootedCopyExplorer(MainView):
             files_split = rc.files.split("\n")
             files_split_indexed = list(enumerate(files_split, 1))
             for file_index, f in rotated(files_split_indexed, files_split.index(filename)):
-                if f.replace(rc.fs_path.rstrip("/") + "/", "") in full_paths:
+                #if f.replace(rc.fs_path.rstrip("/") + "/", "") in full_paths:
+                if is_included_fully(f.replace(rc.fs_path.rstrip("/") + "/", ""), full_paths):
                     continue  # whole file included
 
                 items = sort_rooted_copy_items(rc.items.get(f))

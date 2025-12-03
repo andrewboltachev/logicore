@@ -10,7 +10,13 @@ import typing as ty
 from unittest import case
 from collections import defaultdict
 
+import libcst
+
 from .iso_registry import IsoRegistry
+try:
+    from ..parser.python import serialize_dc
+except ImportError:
+    from ..parser import serialize_dc
 
 
 # Types of data: Value, Grammar, Result, Payload
@@ -333,10 +339,16 @@ class MatchObjectFull(Node):
             ) from None
 
 
+from dataclasses import dataclass, field
+from typing import Any
+
 @dataclass
 class MatchObjectKeys(Node):
     map: dict[str, Node]
     rest: Node
+    # New field for defaults.
+    # Example: {"version": 1, "is_active": True}
+    defaults: dict[str, Any] = field(default_factory=dict)
 
     def is_final(self):
         return all((x.is_final() for x in self.map.values()))
@@ -345,11 +357,29 @@ class MatchObjectKeys(Node):
         if not path:
             path = []
         self._check_type(path, value)
+
+        # We need a copy to track what is consumed
         rest_value = dict(value)
         result = {}
         payload = {}
+
         for k, g in self.map.items():
-            v = self._get_key(path, value, k)
+            # 1. Determine the value to process
+            if k in value:
+                v = value[k]
+                # If key was present, consume it so it doesn't go to 'rest'
+                del rest_value[k]
+            elif k in self.defaults:
+                # Key missing, but we have a default
+                v = self.defaults[k]
+            else:
+                # Key missing and no default -> Error
+                raise self._error(
+                    f"Key missing: {k}",
+                    path,
+                    missing_key=k
+                )
+
             try:
                 result_item, payload_item = g.forwards(
                     value=v,
@@ -359,21 +389,26 @@ class MatchObjectKeys(Node):
                     result[k] = result_item
                 if payload_item:
                     payload[k] = payload_item
-                del rest_value[k]
+
             except MatchError as e:
                 raise self._error(
                     f"Key didn't match: {k}",
                     path,
                     key=k
                 ) from e
+
+        # Process the remaining keys
         rest_result_and_payload = self.rest.forwards(
             value=rest_value,
             path=path,
         )
+
+        # Optimization: Implicit unwrapping if only 1 result
         if len(result) == 1:
             result = list(result.values())[0]
         if not result:
             result = None
+
         return result, {"obj": payload, "rest": rest_result_and_payload}
 
     def backwards(self, *, result, payload, path=None):
@@ -385,12 +420,8 @@ class MatchObjectKeys(Node):
             payload["obj"] = {}
         if "rest" not in payload:
             payload["rest"] = [None, None]
-        # ...
-        # {}
-        # {f}
-        # {t}
-        # {f, t}
-        # {f, t, t}
+
+        # Reconstruction logic logic regarding unwrapping
         regular_count = 0
         last_key = None
         for k, v in self.map.items():
@@ -399,54 +430,64 @@ class MatchObjectKeys(Node):
                 regular_count += 1
             if regular_count >= 2:
                 break
+
         match regular_count:
             case 0:
                 result = {}
             case 1:
+                # Re-wrap the single result back into a dict
                 result = {last_key: result}
             case _:
                 pass
+
         value = {}
         for k, g in self.map.items():
+            # Note: We rely on 'result' containing the data, even if it came from a default.
+            # If the user wants to strip defaults on save, that requires extra logic here.
+            # Currently, this will Explicitly write the default value back to the object.
             result_item = result.get(k, None)
             payload_item = payload["obj"].get(k, None)
             value[k] = g.backwards(result=result_item, payload=payload_item)
+
         rest_value = self.rest.backwards(result=payload["rest"][0], payload=payload["rest"][1])
         return {**value, **rest_value}
 
     def _check_type(self, path, value):
-        if type(value) != dict:
+        if not isinstance(value, dict):
             raise self._error(f"Not a dict", path, value=value) from None
-
-    def _get_key(self, path, value, key):
-        try:
-            return value[key]
-        except KeyError:
-            raise self._error(
-                f"Key missing: {key}",
-                path,
-                missing_key=key
-            ) from None
 
     def to_funnel(self, *, value, path=None):
         if not path:
             path = []
         self._check_type(path, value)
         rest_value = dict(value)
+
         for k, g in self.map.items():
-            v = self._get_key(path, value, k)
+            # Funnel logic mirrors forwards logic
+            if k in value:
+                v = value[k]
+                del rest_value[k]
+            elif k in self.defaults:
+                v = self.defaults[k]
+            else:
+                raise self._error(
+                    f"Key missing: {k}",
+                    path,
+                    key=k
+                )
+
             try:
                 yield from g.to_funnel(
                     value=v,
                     path=path + [k]
                 )
-                del rest_value[k]
             except MatchError as e:
                 raise self._error(
                     f"Key didn't match: {k}",
                     path,
                     key=k
                 ) from e
+
         yield from self.rest.to_funnel(value=rest_value, path=path)
 
 
@@ -605,7 +646,7 @@ class MatchArrayNamed(Node):
         if not path:
             path = []
         self._check_type(path, value)
-        pre_result = {}
+        pre_result = defaultdict(list)
         for i, v in enumerate(value):
             try:
                 name_result, _ = self.name.forwards(
@@ -622,10 +663,10 @@ class MatchArrayNamed(Node):
                         f"Name not a string or number: {name_result}",
                         path=path,
                     )
-                pre_result[name_result] = v
+                pre_result[name_result].append(v)
         try:
             post_result, post_payload = self.item.forwards(
-                value=pre_result,
+                value=dict(pre_result),
                 path=path
             )
         except MatchError as e:
@@ -1045,39 +1086,111 @@ def to_dict(dcls: Any) -> Any:
 
 @dataclass
 class MatchIso(Node):
+    """
+    Bi-directional transformation adapter.
+
+    Modes:
+    1. Registry Mode: Provide `iso_name`. Functions are looked up globally.
+    2. Manual Mode: Provide `forwards_fn` and `backwards_fn`.
+    """
     inner: Node
-    iso_name: str  # Changed from decoder/encoder callables to a string ID
+    # Mode 1
+    iso_name: ty.Optional[str] = None
+    # Mode 2
+    forwards_fn: ty.Optional[ty.Callable[[Any], Any]] = None
+    backwards_fn: ty.Optional[ty.Callable[[Any], Any]] = None
+
+    def __post_init__(self):
+        # Enforce "Either/Or" logic
+        has_name = self.iso_name is not None
+        has_funcs = self.forwards_fn is not None and self.backwards_fn is not None
+
+        if has_name and has_funcs:
+            raise ValueError("Ambiguous MatchIso: Provide 'iso_name' OR functions, not both.")
+
+        if not has_name and not has_funcs:
+            raise ValueError("Invalid MatchIso: Must provide 'iso_name' OR (forwards_fn + backwards_fn).")
+
+        # Validation for Manual Mode partials
+        if not has_name and (self.forwards_fn is None or self.backwards_fn is None):
+            raise ValueError("Manual MatchIso requires BOTH forwards_fn and backwards_fn.")
+
+    def _get_logic(self):
+        """Helper to resolve the logic source."""
+        if self.iso_name:
+            # Returns tuple (decoder, encoder) from registry
+            return IsoRegistry.get(self.iso_name)
+        else:
+            return self.forwards_fn, self.backwards_fn
 
     def is_final(self):
         return self.inner.is_final()
 
-    def forwards(self, *, value, path=None):
-        # 1. Run inner match
-        inner_val, payload = self.inner.forwards(value=value, path=path)
+    def forwards(self, *, value, path=None, context=None):
+        # 1. Run Inner
+        inner_result, payload = self.inner.forwards(
+            value=value, path=path  #, context=context
+        )
 
-        # 2. Look up Decoder
-        decoder, _ = IsoRegistry.get(self.iso_name)
+        # 2. Resolve Logic
+        fwd, _ = self._get_logic()
 
         # 3. Execute
         try:
-            decoded = decoder(inner_val)
+            outer_result = fwd(inner_result)
         except Exception as e:
-            raise self._error(f"Iso '{self.iso_name}' decode failed: {e}", path, val=inner_val)
+            source = f"'{self.iso_name}'" if self.iso_name else "custom function"
+            raise self._error(
+                f"Iso {source} forwards failed: {e}",
+                path,
+                value=inner_result
+            ) from e
 
-        return decoded, payload
+        return outer_result, payload
 
-    def backwards(self, *, result, payload, path=None):
-        # 1. Look up Encoder
-        _, encoder = IsoRegistry.get(self.iso_name)
+    def backwards(self, *, result, payload, path=None, context=None):
+        # 1. Resolve Logic
+        _, bwd = self._get_logic()
 
         # 2. Execute
-        encoded = encoder(result)
+        try:
+            inner_result = bwd(result)
+        except Exception as e:
+            source = f"'{self.iso_name}'" if self.iso_name else "custom function"
+            raise self._error(
+                f"Iso {source} backwards failed: {e}",
+                path,
+                result=result
+            ) from e
 
-        # 3. Pass back to inner
-        return self.inner.backwards(result=encoded, payload=payload, path=path)
+        # 3. Inner Backwards
+        return self.inner.backwards(
+            result=inner_result,
+            payload=payload,
+            path=path,
+            #context=context
+        )
 
     def to_funnel(self, *, value, path=None):
         yield from self.inner.to_funnel(value=value, path=path)
+
+    def to_ui_schema(self, *, value=None, path=None):
+        schema = {
+            "type": "MatchIso",
+            "inner": self.inner.to_ui_schema(value=value, path=path)
+        }
+
+        if self.iso_name:
+            # Good: The UI knows what this is (e.g. "snake_to_camel")
+            schema["iso_name"] = self.iso_name
+        else:
+            # Fallback: The UI knows logic exists, but can't describe it easily
+            # It might show "Custom Logic: <function ...>" as a read-only label
+            schema["iso_name"] = None
+            schema["custom_repr"] = f"Fwd: {self.forwards_fn.__name__} / Bwd: {self.backwards_fn.__name__}"
+
+        return schema
+
 
 # A simple global registry for this stage.
 # In a production version, this would be a Context object passed in forwards/backwards.
@@ -1148,6 +1261,91 @@ class MatchRef(Node):
     def to_funnel(self, *, value, path=None):
         node = self._get_node(path)
         yield from node.to_funnel(value=value, path=path)
+
+
+@dataclass
+class MatchPyTemplate(Node):
+    """
+    Parses a Python code string as a template.
+    Replaces occurrences of 'XXX' (as a Name node) with the 'hole' schema.
+
+    Usage:
+        MatchPyTemplate("a = XXX", hole=MatchNumberAny())
+        matches -> "a = 1", "a = 100"
+    """
+    template: str
+    hole: Node = field(default_factory=MatchAny)
+    hole_marker: str = "XXX"
+    _compiled: Node = None
+
+    def __post_init__(self):
+        # 1. Parse the template string
+        # We try to parse as module first, but if it's a snippet, we might need logic
+        # to extract the statement. For simplicity, we parse as Module.
+        try:
+            cst_tree = libcst.parse_module(self.template)
+        except Exception:
+            # Fallback for expressions?
+            raise ValueError(f"Could not parse template: {self.template}")
+
+        # 2. Serialize to your JSON-AST format
+        json_tree = serialize_dc(cst_tree)
+
+        # 3. Compile into a Matcher Tree
+        self._compiled = self._build_matcher(json_tree)
+
+    def _build_matcher(self, data):
+        """
+        Recursively transforms the JSON-AST data into a Matcher Node tree.
+        """
+
+        # --- 1. Detect the Hole ---
+        # LibCST parses "XXX" as a Name node: {"type": "Name", "value": "XXX", ...}
+        # If we see this specific structure, we replace the WHOLE node with the hole schema.
+        if isinstance(data, dict) and data.get("type") == "Name" and data.get("value") == self.hole_marker:
+            return self.hole
+
+        # --- 2. Handle Objects (CST Nodes) ---
+        if isinstance(data, dict):
+            # We construct a strict object matcher
+            field_map = {}
+            for k, v in data.items():
+                field_map[k] = self._build_matcher(v)
+
+            # We assume the "type" field must match exactly (e.g. "Assign", "Call")
+            # If your serialize_dc adds 'type', we match it.
+            if "type" in data:
+                field_map["type"] = MatchExact(data["type"])
+
+            return MatchObjectFull(field_map)
+
+        # --- 3. Handle Lists (Body blocks, arguments) ---
+        if isinstance(data, list):
+            # Since this is a template, the list structure is rigid.
+            # We use MatchCons to match [A, B, C] exactly.
+            node = MatchNil()
+            # Build linked list from end to start
+            for item in reversed(data):
+                node = MatchCons(head=self._build_matcher(item), tail=node)
+            return node
+
+        # --- 4. Primitives (Strings, Ints, None) ---
+        # These must match exactly (e.g. variable names that aren't XXX, operator types)
+        return MatchExact(data)
+
+    # --- Delegate Standard Methods ---
+
+    def is_final(self):
+        return self._compiled.is_final()
+
+    def forwards(self, *, value, path=None, context=None):
+        return self._compiled.forwards(value=value, path=path) #, context=context)
+
+    def backwards(self, *, result, payload, path=None, context=None):
+        return self._compiled.backwards(result=result, payload=payload, path=path) #, context=context)
+
+    def to_funnel(self, *, value, path=None):
+        yield from self._compiled.to_funnel(value=value, path=path)
 
 
 def main():

@@ -375,7 +375,9 @@ const RootedCopyExplorer = (props) => {
     let currentFullPath = null;
 
     // the shortest
-    outer: for (const p of _.sortBy(props.fullPaths, (p) => p.length)) {
+    outer: for (const p1 of _.sortBy(props.fullPaths, (p) => p.length)) {
+        let p = p1;
+        if (!p.endsWith('.py')) { p = `/${p}`; }
         if (props.shortFilename.startsWith(p)) {
             currentFullPath = p;
             break outer;
