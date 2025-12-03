@@ -1655,7 +1655,7 @@ def is_included_fully(filename, full_paths):
         if not full_path.endswith(".py"):
             full_path = full_path + "/"
         if filename.startswith(full_path):
-            return Trueata
+            return True
     return False
 
 
